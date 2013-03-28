@@ -1,10 +1,12 @@
 module command.command;
 
+import std.array;
+// import core.vararg;
 import derelict.sdl2.sdl;
-import userview;
+
+import manip;
 import env;
 import misc.direct;
-import command.command_op;
 import gui.gui;
 
 class Command
@@ -16,84 +18,11 @@ class Command
     abstract void execute(){}
 }
 
-// from command/command_op 
+import command.command_op;
 mixin operations;
 
 enum InputState{normal,insert};
 class KeyInterpreter{
-    private:
-    Slite slite;
-    InputState input_state;
-    ubyte* keyState;
-    SDL_Keymod ModState;
-    this(Slite s){
-        slite = s;
-    }
-    void updateKeyState(){
-        SDL_PumpEvents();
-        keyState = SDL_GetKeyboardState(null);
-        ModState = SDL_GetModState();
-    }
-    Command issueCommand(){
-        if(keyState[SDL_SCANCODE_ESCAPE]) slite.CMD_MODE_CHANGE_TO_NORMAL.execute();
-
-        final switch (input_state)
-        {
-            case InputState.normal:
-                switch (ModState){
-                    case KMOD_LCTRL:
-                        if(keyState[MOVE_L_KEY]) slite.CMD_MOVE_FOCUS_L.execute();
-                        if(keyState[MOVE_R_KEY]) slite.CMD_MOVE_FOCUS_R.execute();
-                        if(keyState[MOVE_U_KEY]) slite.CMD_MOVE_FOCUS_U.execute();
-                        if(keyState[MOVE_D_KEY]) slite.CMD_MOVE_FOCUS_D.execute();
-                        if(keyState[EXIT_KEY]) slite.CMD_QUIT.execute();
-                        break;
-                    default:
-                        break;
-                }
-                break;
-            case InputState.insert:
-        }
-        return null;
-    }
-    public:
-    Command DoIt(){
-        updateKeyState();
-        return issueCommand();
-    }
-}
-
-class Slite{
-    KeyInterpreter cmd_interpreter;
-    UserPageView user_view;
-    CellTable focused_table;
-    GUIManager gui;
-    
-    this(){
-        cmd_interpreter = new KeyInterpreter(this);
-        user_view = new UserPageView();
-        focused_table = user_view.focused_table;
-        gui = new GUIManager(user_view);
-        // もっといい方法があるに違いない
-        CMD_MOVE_BOX_L = new MOVE_BOX_L(this);
-        CMD_MOVE_BOX_R = new MOVE_BOX_R(this);
-        CMD_MOVE_BOX_D = new MOVE_BOX_D(this);
-        CMD_MOVE_BOX_U = new MOVE_BOX_U(this);
-        CMD_MOVE_FOCUS_L = new MOVE_FOCUS_L(this);
-        CMD_MOVE_FOCUS_R = new MOVE_FOCUS_R(this);
-        CMD_MOVE_FOCUS_D = new MOVE_FOCUS_D(this);
-        CMD_MOVE_FOCUS_U = new MOVE_FOCUS_U(this);
-
-        CMD_MODE_CHANGE = new MODE_CHANGE(this);
-        CMD_INSERT_TEXT = new INSERT_TEXT(this);
-        CMD_MODE_CHANGE_TO_NORMAL = new MODE_CHANGE_TO_NORMAL(this);
-        CMD_QUIT = new QUIT(this);
-    }
-    void work(){
-        cmd_interpreter.DoIt();
-        gui.draw();
-    }
-
     Command CMD_MOVE_BOX_R; 
     Command CMD_MOVE_BOX_L; 
     Command CMD_MOVE_BOX_U; 
@@ -102,8 +31,125 @@ class Slite{
     Command CMD_MOVE_FOCUS_R;
     Command CMD_MOVE_FOCUS_D;
     Command CMD_MOVE_FOCUS_U;
+    Command CMD_EXPAND_SELECT_L;
+    Command CMD_EXPAND_SELECT_R;
+    Command CMD_EXPAND_SELECT_D;
+    Command CMD_EXPAND_SELECT_U;
     Command CMD_MODE_CHANGE;
     Command CMD_INSERT_TEXT;
+    Command CMD_MANIP_MODE_NORMAL;
     Command CMD_MODE_CHANGE_TO_NORMAL;
     Command CMD_QUIT;
+    Command CMD_RENDER_WINDOW;
+    Command CMD_START_SELECT_MODE;
+
+    ubyte* keyState;
+    SDL_Keymod ModState;
+    Slite slite;
+
+    this(Slite s){
+        slite = s;
+        CMD_MOVE_BOX_R = new MOVE_BOX_R(slite); 
+        CMD_MOVE_BOX_L = new MOVE_BOX_L(slite); 
+        CMD_MOVE_BOX_U = new MOVE_BOX_U(slite);                   
+        CMD_MOVE_BOX_D = new MOVE_BOX_D(slite); 
+        CMD_MOVE_FOCUS_L = new MOVE_FOCUS_L(slite);
+        CMD_MOVE_FOCUS_R = new MOVE_FOCUS_R(slite);
+        CMD_MOVE_FOCUS_D = new MOVE_FOCUS_D(slite);
+        CMD_MOVE_FOCUS_U = new MOVE_FOCUS_U(slite);
+        CMD_EXPAND_SELECT_L = new EXPAND_SELECT_L(slite);
+        CMD_EXPAND_SELECT_R = new EXPAND_SELECT_R(slite);
+        CMD_EXPAND_SELECT_D = new EXPAND_SELECT_D(slite);
+        CMD_EXPAND_SELECT_U = new EXPAND_SELECT_U(slite);
+        CMD_MODE_CHANGE = new MODE_CHANGE(slite);
+        CMD_MANIP_MODE_NORMAL = new MANIP_MODE_NORMAL(slite);
+        CMD_INSERT_TEXT = new INSERT_TEXT(slite);
+        CMD_MODE_CHANGE_TO_NORMAL = new MODE_CHANGE_TO_NORMAL(slite);
+        CMD_QUIT = new QUIT(slite);
+        CMD_RENDER_WINDOW = new RENDER_WINDOW(slite);
+        CMD_START_SELECT_MODE = new START_SELECT_MODE(slite);
+    }
+    void updateKeyState(){
+        SDL_PumpEvents();
+        keyState = SDL_GetKeyboardState(null);
+        ModState = SDL_GetModState();
+    }
+    Command[] command_queue;
+    void add_to_queue(Command[] cmds ...){
+        foreach(cmd; cmds)
+        {
+            command_queue ~= cmd;
+        }
+    }
+    InputState input_state;
+    private void issue(){
+        if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MODE_CHANGE_TO_NORMAL);
+
+        final switch (input_state)
+        {
+            case InputState.normal:
+                switch (ModState){
+                    case KMOD_LCTRL:
+                        if(keyState[EXIT_KEY]) command_queue ~= CMD_QUIT;
+                        if(slite.manip_table.mode == focus_mode.select)
+                        {
+                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_EXPAND_SELECT_L, CMD_MOVE_FOCUS_L); }
+                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_EXPAND_SELECT_R, CMD_MOVE_FOCUS_R); }
+                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U, CMD_MOVE_FOCUS_U); }
+                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D, CMD_MOVE_FOCUS_D); }
+                                        
+                            if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MANIP_MODE_NORMAL);
+                        }else{
+                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_L); command_queue ~= CMD_MOVE_FOCUS_L; }
+                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_R); command_queue ~= CMD_MOVE_FOCUS_R; }
+                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_U); command_queue ~= CMD_MOVE_FOCUS_U; }
+                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_D); command_queue ~= CMD_MOVE_FOCUS_D; }
+                        }
+                        return;
+                    default:
+                        if(keyState[MOVE_L_KEY]) add_to_queue (CMD_MOVE_FOCUS_L);
+                        if(keyState[MOVE_R_KEY]) add_to_queue (CMD_MOVE_FOCUS_R);
+                        if(keyState[MOVE_U_KEY]) add_to_queue (CMD_MOVE_FOCUS_U);
+                        if(keyState[MOVE_D_KEY]) add_to_queue (CMD_MOVE_FOCUS_D);
+                        return ;
+                }
+            case InputState.insert:
+                return;
+        }
+        return;
+    }
+    public:
+    void execute(){
+        updateKeyState(); // keyState updated
+        issue();
+        
+        if(!command_queue.empty){
+            foreach(cmd; command_queue)
+                cmd.execute();
+            command_queue.clear();
+            CMD_RENDER_WINDOW.execute();
+        }
+    }
+}
+
+class Slite{
+    Window mainWindow;
+    KeyInterpreter cmd_interpreter;
+    ManipTable manip_table;
+    CellTable focused_table;
+    
+    this(){
+        mainWindow = new Window();
+        cmd_interpreter = new KeyInterpreter(this);
+        focused_table = new CellTable();
+        manip_table = new ManipTable(focused_table);
+        
+        mainWindow.attach(new ControlPanel(mainWindow));
+        mainWindow.attach(new PageView(mainWindow,focused_table,manip_table));
+
+        mainWindow.Redraw(); // first draw 
+    }
+    void work(){
+        cmd_interpreter.execute();
+    }
 }

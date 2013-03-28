@@ -3,42 +3,31 @@ module gui.gui;
 import derelict.sdl2.sdl;
 import std.stdio;
 import std.string;
+import std.array;
 import env;
 import misc.draw_rect;
 import misc.sdl_utils;
 import cell.cell;
-import userview;
+import manip;
+import misc.direct;
+import std.algorithm;
 
 SDL_Window* mainWin;
 SDL_Renderer* mainRend;
 immutable int start_size_w = 960;
 immutable int start_size_h = 640;
 
-static class GUIManager{
-    Window mainWindow;
-    this(UserPageView uv){
-        mainWindow = new Window();
-        mainWindow.attach(new ControlPanel(mainWindow));
-        mainWindow.attach(new PageView(mainWindow,uv));
-    }
-    void draw(){
-        mainWindow.Redraw();
-    }
-}
-
 class Window{
     SDL_Window* window;
     SDL_Renderer* renderer;
     this(){
         window = SDL_CreateWindow(appname.toStringz,
-                SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,
-                start_size_w,start_size_h,SDL_WINDOW_SHOWN);
+                 SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,
+                 start_size_w,start_size_h,SDL_WINDOW_SHOWN);
         renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
         update_window_size();
     }
-    void Redraw()
-    {
-        SDL_SetRenderDrawColor(renderer,255,255,255,255); // 最背面の色
+    void Redraw(){
         SDL_RenderClear(renderer);
         foreach(ref widget; owned_widgets)
         {
@@ -59,6 +48,9 @@ class Window{
 }
 
 abstract class Widget{
+    // Widgetは描き方を規定するが、
+    // 描く必要があるときはWindowを通してWindowごとRedraw
+    // 再ドローの必要があるかはWidgetが内包するものによる
     Window attached_window;
     SDL_Renderer* renderer;
     this(Window win,int x,int y,int w_per_win,int h_per_win)out{
@@ -85,7 +77,7 @@ class ControlPanel : Widget {
     SDL_Texture* deco;
     this(Window w){
         super(w,0,0,25,100);
-        deco = createTexture(w.renderer,"decoration/deco.bmp");
+        deco = createTexture(w.renderer,control_deco);
     }
     ~this(){
         SDL_DestroyTexture(deco);
@@ -97,12 +89,13 @@ class ControlPanel : Widget {
     }
 }
 
-import userview;
 class PageView : Widget {
-    UserPageView user_view;
-    this(Window w,UserPageView uv){
+    ManipTable manip_table; // userの操作による効果を描画する役目
+    CellTable table;    // 描画すべき対象
+    this(Window w,CellTable ct,ManipTable uv){
         super(w,25,0,75,100);
-        user_view = uv;
+        manip_table = uv;
+        table = ct;
     }
     void backDesign(){
         SDL_SetRenderDrawColor(renderer,96,96,96,255);
@@ -118,28 +111,108 @@ class PageView : Widget {
         }
         drw_rect = holding_area;
         drw_rect.w = 1;
-        for(;drw_rect.x < holding_area.w+holding_area.x; drw_rect.x += gridSpace)
+        for(;drw_rect.x < holding_area.w + holding_area.x; drw_rect.x += gridSpace)
         {
             SDL_RenderFillRect(renderer,&drw_rect);
         }
     }
     void renderBody(){
         showGrid();
-        emphasizeFocus();
+        if(manip_table.mode != focus_mode.select)
+            renderFocus();
+        else renderSelect();
     }
-    void emphasizeFocus(){
-        emphasizeGrid(user_view.focus);
+    void renderFocus(){
+        emphasizeGrid(manip_table.focus,emphasizedLineColor,emphasizedLineWidth);
     }
-    void emphasizeGrid(const Cell cell){
+    void renderSelect(){
+        emphasizeGrids(manip_table.select.keys,selected_cell_border,selectedLineWidth);
+    }
+    private:
+    void emphasizeGrid(const Cell cell,const SDL_Color grid_color,const ubyte grid_width){
         SDL_Rect grid_rect = {cell.column * gridSpace + holding_area.x,
                           cell.row * gridSpace + holding_area.y,
                           gridSpace, gridSpace};
-        SetRenderColor(renderer,focused_grid_color,alpha_master_value);
-        for(int i; i<emphasizedLineWidth ; ++i){
+        SetRenderColor(renderer,grid_color,alpha_master_value);
+        for(int i; i<grid_width ; ++i)
+        {
             SDL_RenderDrawRect(renderer,&grid_rect);
             grid_rect = SDL_Rect(grid_rect.x+1, grid_rect.y+1,
                          grid_rect.w-2, grid_rect.h-2);
         }
-            
+    }
+    void emphasizeGrids(const Cell[] cells,const SDL_Color grid_color,const ubyte grid_width){
+        if(cells.empty) return;
+
+        foreach(a; cells)
+        {
+            const auto adjusted = adjusted_info(cells,a);
+            if(!adjusted) return;
+            for(auto dir = Direct.min; dir <= Direct.max; ++dir)
+            {
+                if(!adjusted[dir])
+                    drawCellLine(a,dir,grid_color,grid_width);
+            }
+        }
+    }
+    void drawCellLine(const Cell cell,const Direct dir,SDL_Color color,ubyte width){
+        int startx,starty,endx,endy;
+        final switch(dir)
+        {
+            case Direct.right:
+                startx = (cell.column + 1) * gridSpace + holding_area.x;
+                starty = cell.row * gridSpace + holding_area.y;
+                endx = startx;
+                endy = starty + gridSpace;
+                for(ubyte w; w<width; ++w)
+                {
+                    SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
+                    --startx;
+                    --endx;
+                }
+                break;
+            case Direct.left:
+                startx = cell.column * gridSpace + holding_area.x;
+                starty = cell.row * gridSpace + holding_area.y;
+                endx = startx;
+                endy = starty + gridSpace;
+                for(ubyte w; w<width; ++w)
+                {
+                    SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
+                    ++startx;
+                    ++endx;
+                }
+                break;
+            case Direct.up:
+                startx = cell.column * gridSpace + holding_area.x;
+                starty = cell.row * gridSpace + holding_area.y;
+                endx = startx + gridSpace;
+                endy = starty;
+                for(ubyte w; w<width; ++w)
+                {
+                    SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
+                    --starty;
+                    --endy;
+                }
+                break;
+            case Direct.down:
+                startx = cell.column * gridSpace + holding_area.x;
+                starty = (cell.row + 1) * gridSpace + holding_area.y;
+                endx = startx + gridSpace;
+                endy = starty;
+                for(ubyte w; w<width; ++w)
+                {
+                    SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
+                    ++starty;
+                    ++endy;
+                }
+                break;
+        }
+    }
+    void table_check(){
+        if(table.changed_flg){
+            attached_window.Redraw();
+            table.changed_flg = false;
+        }
     }
 }

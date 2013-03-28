@@ -1,6 +1,7 @@
 module cell.cell;
 
 import misc.direct;
+import std.array;
 
 struct Cell
 {
@@ -27,35 +28,66 @@ void move_cell(ref Cell cell,Direct dir){
     assert(0);
 }
 
+bool[Direct] adjusted_info(const Cell[] cells,const Cell searching){
+    bool[Direct] result;
+    if(cells.empty) return null;
+        foreach(a; cells)
+        {
+            if(a.column == searching.column)
+            {
+                if(a.row-1 == searching.row)  result[Direct.up] = true;
+                else result[Direct.up] = false;
+                if(a.row+1 == searching.row)  result[Direct.down] = true;
+                else result[Direct.down] = false;
+            }else{ 
+                result[Direct.up] = result[Direct.down] = false;
+            }
+            if(a.row == searching.row)
+            {
+                if(a.column-1 == searching.column) result[Direct.left] = true;
+                else result[Direct.left] = false;
+                if(a.column+1 == searching.column) result[Direct.right] = true;
+                else result[Direct.right] = false;
+            }else{
+                result[Direct.left] = result[Direct.right] = false;
+            }
+        }
+        return result;
+}
+
 class CellBOX{
-    // int table_key;
     CellTable attachedTable;
 
-    Cell cell;
+    static int __id_counter;
+    int id;
+    this(){ id = __id_counter++; }
+
+    Cell[] cells;
     int width,height;
-    this(){}
-    void notify(){ 
-        attachedTable.update();
+    void notify(){ // notify to make window redraw 
+        attachedTable.changed_flg= true;
     }
     void move(Direct dir){
         // 端点でテーブル自体にオフセットかける？
-        move_cell(cell,dir);
+        foreach(cell; cells)
+            move_cell(cell,dir);
     }
 }
 
 class CellTable{
-    CellBOX[][Cell] table;
+    CellBOX[int][Cell] table; // Cellに対応するCellBOXsのidによるmapがtable
+    bool changed_flg;
 
     void atach(CellBOX cell_obj)
     {
-        // cell_obj.table_key = table.length+1;
-        table[cell_obj.cell] ~= cell_obj;
+        foreach(cell;cell_obj.cells)
+            table[cell][cell_obj.id] = cell_obj;
     }
     void detach(CellBOX cell_obj){
-        table.remove(cell_obj.cell);
+        foreach(cell;cell_obj.cells)
+            table[cell].remove(cell_obj.id);
     }
-    CellBOX[] whichBOX(Cell c){
+    CellBOX[int] whichBOX(Cell c){
         return table[c];
     }
-    void update(){}
 }
