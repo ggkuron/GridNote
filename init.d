@@ -6,8 +6,9 @@ import derelict.sdl2.ttf;
 import derelict.sdl2.mixer;
 import derelict.sdl2.image;
 import env;
+import command.command;
 // import input . input;
-import gui.gui;
+// import gui.gui;
 
 import std.string;
 void Init()
@@ -31,9 +32,9 @@ void Quit()
 void main()
 {
     Init();
-    auto gui = new GUIManager();
+    Slite slite = new Slite();
     while(1){
-        gui.draw();
+        slite.work();
     }
     Quit();
 }

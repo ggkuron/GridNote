@@ -1,15 +1,14 @@
-module cell;
+module cell.cell;
 
-public import misc.direct;
+import misc.direct;
 
 struct Cell
 {
     int row;
     int column;
-    int width;
-    int height;
 }
-void move_cell(Cell cell,Direct dir){
+
+void move_cell(ref Cell cell,Direct dir){
     // 端点でテーブル自体にオフセットかける？
     final switch(dir){
         case Direct.right: 
@@ -17,7 +16,7 @@ void move_cell(Cell cell,Direct dir){
             return;
         case Direct.left:
             --cell.column;
-            return
+            return;
         case Direct.up:
             --cell.row;
             return;
@@ -28,37 +27,35 @@ void move_cell(Cell cell,Direct dir){
     assert(0);
 }
 
-mixin template CellBOX_common{
-    int table_key;
+class CellBOX{
+    // int table_key;
     CellTable attachedTable;
-    Cell owned;
 
-    Cell[] ownedCells;
+    Cell cell;
+    int width,height;
     this(){}
     void notify(){ 
         attachedTable.update();
     }
     void move(Direct dir){
         // 端点でテーブル自体にオフセットかける？
-        move_cell(owned,dir);
+        move_cell(cell,dir);
     }
-}
-
-interface CellBOX{
-    void move(Direct);
-    void notify(){
 }
 
 class CellTable{
-    CellBOX[int] table;
-    // CellBOX focusedBOX;
+    CellBOX[][Cell] table;
+
     void atach(CellBOX cell_obj)
     {
-        cell_obj.table_key = table.length+1;
-        table[$+1] = cell_obj;
+        // cell_obj.table_key = table.length+1;
+        table[cell_obj.cell] ~= cell_obj;
     }
     void detach(CellBOX cell_obj){
-        table.remove(cell_obj.table_key);
+        table.remove(cell_obj.cell);
     }
-    void update();
+    CellBOX[] whichBOX(Cell c){
+        return table[c];
+    }
+    void update(){}
 }

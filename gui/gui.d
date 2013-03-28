@@ -5,6 +5,9 @@ import std.stdio;
 import std.string;
 import env;
 import misc.draw_rect;
+import misc.sdl_utils;
+import cell.cell;
+import userview;
 
 SDL_Window* mainWin;
 SDL_Renderer* mainRend;
@@ -13,10 +16,10 @@ immutable int start_size_h = 640;
 
 static class GUIManager{
     Window mainWindow;
-    this(){
+    this(UserPageView uv){
         mainWindow = new Window();
         mainWindow.attach(new ControlPanel(mainWindow));
-        mainWindow.attach(new PageView(mainWindow));
+        mainWindow.attach(new PageView(mainWindow,uv));
     }
     void draw(){
         mainWindow.Redraw();
@@ -57,12 +60,14 @@ class Window{
 
 abstract class Widget{
     Window attached_window;
+    SDL_Renderer* renderer;
     this(Window win,int x,int y,int w_per_win,int h_per_win)out{
         assert( holding_area.w != 0 );
         assert( holding_area.h != 0 );
     }
     body{
         attached_window = win;
+        renderer = win.renderer;
         assert( attached_window !is null );
         holding_area.x = attached_window.width * x / 100;
         holding_area.y = attached_window.height * y / 100;
@@ -80,45 +85,61 @@ class ControlPanel : Widget {
     SDL_Texture* deco;
     this(Window w){
         super(w,0,0,25,100);
-        deco = createTexture(attached_window.renderer,"./deco.bmp");
+        deco = createTexture(w.renderer,"decoration/deco.bmp");
     }
     ~this(){
         SDL_DestroyTexture(deco);
     }
     void backDesign(){
-        auto renderer = attached_window.renderer;
         SDL_SetRenderDrawColor(renderer,128,128,128,255);
         SDL_RenderFillRect(renderer,&holding_area);
         drawRect(renderer,deco,holding_area);
     }
 }
+
+import userview;
 class PageView : Widget {
-    this(Window w){
+    UserPageView user_view;
+    this(Window w,UserPageView uv){
         super(w,25,0,75,100);
+        user_view = uv;
     }
     void backDesign(){
-        auto renderer = attached_window.renderer;
         SDL_SetRenderDrawColor(renderer,96,96,96,255);
         SDL_RenderFillRect(renderer,&holding_area);
     }
     void showGrid(){
-        auto renderer = attached_window.renderer;
-
-        SDL_SetRenderDrawColor(renderer,grid_color.r,grid_color.g,grid_color.b,grid_alpha);
+        SetRenderColor(renderer,grid_color,grid_alpha);
         SDL_Rect drw_rect = holding_area;
         drw_rect.h = 1;
-        for(;drw_rect.y < holding_area.h; drw_rect.y += gridBandWidth)
+        for(;drw_rect.y < holding_area.h; drw_rect.y += gridSpace)
         {
             SDL_RenderFillRect(renderer,&drw_rect);
         }
         drw_rect = holding_area;
         drw_rect.w = 1;
-        for(;drw_rect.x < holding_area.w + holding_area.x; drw_rect.x += gridBandWidth)
+        for(;drw_rect.x < holding_area.w+holding_area.x; drw_rect.x += gridSpace)
         {
             SDL_RenderFillRect(renderer,&drw_rect);
         }
     }
     void renderBody(){
         showGrid();
+        emphasizeFocus();
+    }
+    void emphasizeFocus(){
+        emphasizeGrid(user_view.focus);
+    }
+    void emphasizeGrid(const Cell cell){
+        SDL_Rect grid_rect = {cell.column * gridSpace + holding_area.x,
+                          cell.row * gridSpace + holding_area.y,
+                          gridSpace, gridSpace};
+        SetRenderColor(renderer,focused_grid_color,alpha_master_value);
+        for(int i; i<emphasizedLineWidth ; ++i){
+            SDL_RenderDrawRect(renderer,&grid_rect);
+            grid_rect = SDL_Rect(grid_rect.x+1, grid_rect.y+1,
+                         grid_rect.w-2, grid_rect.h-2);
+        }
+            
     }
 }
