@@ -1,13 +1,12 @@
 module command.command;
 
 import std.array;
-// import core.vararg;
 import derelict.sdl2.sdl;
 
 import manip;
 import env;
 import misc.direct;
-import gui.gui;
+import slite;
 
 class Command
 {
@@ -129,27 +128,5 @@ class KeyInterpreter{
             command_queue.clear();
             CMD_RENDER_WINDOW.execute();
         }
-    }
-}
-
-class Slite{
-    Window mainWindow;
-    KeyInterpreter cmd_interpreter;
-    ManipTable manip_table;
-    CellTable focused_table;
-    
-    this(){
-        mainWindow = new Window();
-        cmd_interpreter = new KeyInterpreter(this);
-        focused_table = new CellTable();
-        manip_table = new ManipTable(focused_table);
-        
-        mainWindow.attach(new ControlPanel(mainWindow));
-        mainWindow.attach(new PageView(mainWindow,focused_table,manip_table));
-
-        mainWindow.Redraw(); // first draw 
-    }
-    void work(){
-        cmd_interpreter.execute();
     }
 }

@@ -1,7 +1,7 @@
 # Makefile
 
 PROJECTDIR = ./
-SRC 	= env.d init.d gui/gui.d misc/draw_rect.d  misc/sdl_utils.d misc/direct.d manip.d cell/cell.d  command/command.d command/command_op.d
+SRC 	= env.d init.d gui/gui.d misc/draw_rect.d  misc/sdl_utils.d misc/direct.d manip.d cell/cell.d  command/command.d command/command_op.d slite.d
 FLAGS	= -L-L/usr/local/lib -L-lDerelictUtil -L-lDerelictSDL2 -L-lSDL2 -L-lSDL2_ttf -L-lSDL2_mixer -L-lSDL2_image -L-lpthread 
 OUT		= m
 

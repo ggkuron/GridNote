@@ -1,3 +1,4 @@
+module init;
 pragma(lib,"/usr/local/lib/libDerelictUtil.a");
 pragma(lib,"/usr/local/lib/libDerelictSDL2.a");
 
@@ -5,10 +6,9 @@ import derelict.sdl2.sdl;
 import derelict.sdl2.ttf;
 import derelict.sdl2.mixer;
 import derelict.sdl2.image;
+
 import env;
-import command.command;
-// import input . input;
-// import gui.gui;
+import slite;
 
 import std.string;
 void Init()
@@ -18,16 +18,12 @@ void Init()
         return;
     DerelictSDL2ttf.load("./libSDL2_ttf.so");
     TTF_Init();
-
 }
-
 void Quit()
 {
     SDL_Quit();
     TTF_Quit();
 }
-
-
 
 void main()
 {
