@@ -10,10 +10,18 @@ class ManipTable{
 
     focus_mode mode;
     Cell focus;
-    Cell[Cell] select;
+    CellBOX select;
     this(CellTable table){
         focused_table = table;
         focus = Cell(3,3); 
+        select = new CellBOX();
+    }
+        
+    void delete_from_select(Cell c){
+        select.remove(c);
+    }
+    void delete_focus_from_select(){
+        select.remove(focus);
     }
     void move_focus(Direct dir){
         move_cell(focus,dir);
@@ -23,16 +31,16 @@ class ManipTable{
     }
     void start_select(){
         mode = focus_mode.select;
-        select[focus] = focus;
+        select.add(focus);
     }
     void expand_select(Direct dir)
     in{ assert(mode == focus_mode.select);
     }out{
         assert(mode == focus_mode.select);
     }body{
-        auto wannabe_adjusted_cell = focus; // Cell は struct
-        move_cell(wannabe_adjusted_cell,dir);
-        select[wannabe_adjusted_cell] = wannabe_adjusted_cell; // 
+        auto adjacent = focus; // Cell は struct
+        move_cell(adjacent,dir);
+        select.add(adjacent); // 
     }
     void delete_from_select(){
         select.remove(focus);

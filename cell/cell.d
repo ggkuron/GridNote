@@ -28,36 +28,31 @@ void move_cell(ref Cell cell,Direct dir){
     assert(0);
 }
 
-bool[Direct] adjusted_info(const Cell[] cells,const Cell searching){
+bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
+    if(cells.empty) assert(0);
     bool[Direct] result;
-    if(cells.empty) return null;
-        foreach(a; cells)
+    foreach(dir; Direct.min .. Direct.max+1){ result[cast(Direct)dir] = false; }
+
+    foreach(a; cells)
+    {
+        if(a.column == searching.column)
+        {   // may be adjacent to up or down
+            if(a.row == searching.row-1)  result[Direct.up] = true;
+            if(a.row == searching.row+1)  result[Direct.down] = true;
+        } 
+        if(a.row == searching.row)
         {
-            if(a.column == searching.column)
-            {
-                if(a.row-1 == searching.row)  result[Direct.up] = true;
-                else result[Direct.up] = false;
-                if(a.row+1 == searching.row)  result[Direct.down] = true;
-                else result[Direct.down] = false;
-            }else{ 
-                result[Direct.up] = result[Direct.down] = false;
-            }
-            if(a.row == searching.row)
-            {
-                if(a.column-1 == searching.column) result[Direct.left] = true;
-                else result[Direct.left] = false;
-                if(a.column+1 == searching.column) result[Direct.right] = true;
-                else result[Direct.right] = false;
-            }else{
-                result[Direct.left] = result[Direct.right] = false;
-            }
+            if(a.column == searching.column-1) result[Direct.left] = true;
+            if(a.column == searching.column+1) result[Direct.right] = true;
         }
-        return result;
+    }
+    return result;
 }
 
 class CellBOX{
     CellTable attachedTable;
-
+    int[Direct] edge_info; // left,right:colum num 
+                           // up,down: row num 
     static int __id_counter;
     int id;
     this(){ id = __id_counter++; }
@@ -66,6 +61,36 @@ class CellBOX{
     int width,height;
     void notify(){ // notify to make window redraw 
         attachedTable.changed_flg= true;
+    }
+    void add(Cell c){
+        cells ~= c;
+    }
+    void remove(Cell target){
+        Cell[] result;
+        foreach(c ; cells)
+        {
+            if(c != target)
+                result ~= c;
+        }
+        cells = result;
+    }
+    void update_edge_info(){
+        int min_column = int.max;
+        int min_row = int.max;
+        int max_column, max_row;
+        foreach(c; cells)
+        {
+            auto row = c.row;
+            auto column = c.column;
+            if(row > max_row) max_row = row;
+            if(row < min_row) min_row = row;
+            if(column > max_column) max_column = column;            
+            if(column < min_column) min_column = column;            
+        }
+        edge_info[Direct.left] = min_column;
+        edge_info[Direct.right] = max_column;
+        edge_info[Direct.up] = min_row;
+        edge_info[Direct.down] = max_row;
     }
     void move(Direct dir){
         // 端点でテーブル自体にオフセットかける？

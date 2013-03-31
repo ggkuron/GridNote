@@ -9,7 +9,7 @@ class Text
 }
     
 class TextBOX : CellBOX
-{
+{   // text の行数を Cellの高さに対応させてみる
     Text text;
     int cursor;
     int current_line;

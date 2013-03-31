@@ -131,6 +131,13 @@ mixin template operations()
             SDL_Delay(210);
         }
     }
+    class DELETE_FOCUS_FROM_SELECT:Command
+    {
+        mixin super_ctor;
+        void execute(){
+            slite.manip_table.delete_focus_from_select();
+        }
+    }
     class QUIT:Command
     {   
         mixin super_ctor;

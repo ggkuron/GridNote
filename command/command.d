@@ -41,6 +41,7 @@ class KeyInterpreter{
     Command CMD_QUIT;
     Command CMD_RENDER_WINDOW;
     Command CMD_START_SELECT_MODE;
+    Command CMD_DELETE_FOCUS_FROM_SELECT;
 
     ubyte* keyState;
     SDL_Keymod ModState;
@@ -67,6 +68,7 @@ class KeyInterpreter{
         CMD_QUIT = new QUIT(slite);
         CMD_RENDER_WINDOW = new RENDER_WINDOW(slite);
         CMD_START_SELECT_MODE = new START_SELECT_MODE(slite);
+        CMD_DELETE_FOCUS_FROM_SELECT = new DELETE_FOCUS_FROM_SELECT(slite);
     }
     void updateKeyState(){
         SDL_PumpEvents();

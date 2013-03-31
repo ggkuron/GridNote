@@ -15,7 +15,7 @@ void Init()
 {
     DerelictSDL2.load();
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER) !=0)
-        return;
+        assert(0);
     DerelictSDL2ttf.load("./libSDL2_ttf.so");
     TTF_Init();
 }
