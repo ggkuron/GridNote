@@ -17,5 +17,6 @@ SDL_Scancode MOVE_R_KEY = SDL_SCANCODE_L;
 SDL_Scancode MOVE_U_KEY = SDL_SCANCODE_K;
 SDL_Scancode MOVE_D_KEY = SDL_SCANCODE_J;
 SDL_Scancode EXIT_KEY = SDL_SCANCODE_Q;
+SDL_Scancode DELETE_KEY = SDL_SCANCODE_X;
 
 string control_deco = "decoration/deco.bmp";

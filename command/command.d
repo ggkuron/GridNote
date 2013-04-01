@@ -98,6 +98,7 @@ class KeyInterpreter{
                             if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_EXPAND_SELECT_R, CMD_MOVE_FOCUS_R); }
                             if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U, CMD_MOVE_FOCUS_U); }
                             if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D, CMD_MOVE_FOCUS_D); }
+                            if(keyState[DELETE_KEY]){ add_to_queue (CMD_DELETE_FOCUS_FROM_SELECT); }
                                         
                             if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MANIP_MODE_NORMAL);
                         }else{

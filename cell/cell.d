@@ -66,13 +66,16 @@ class CellBOX{
         cells ~= c;
     }
     void remove(Cell target){
-        Cell[] result;
-        foreach(c ; cells)
+        foreach(i,c ; cells)
         {
-            if(c != target)
-                result ~= c;
+            if(c == target)
+            {
+                auto init = cells[0 .. i];
+                auto tail = cells[i+1 .. $];
+                cells = init ~ tail;
+                return;
+            }
         }
-        cells = result;
     }
     void update_edge_info(){
         int min_column = int.max;
