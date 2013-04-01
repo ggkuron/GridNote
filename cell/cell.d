@@ -2,6 +2,7 @@ module cell.cell;
 
 import misc.direct;
 import std.array;
+import misc.array;
 
 struct Cell
 {
@@ -50,34 +51,40 @@ bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
 }
 
 class CellBOX{
-    CellTable attachedTable;
-    int[Direct] edge_info; // left,right:colum num 
-                           // up,down: row num 
-    static int __id_counter;
+    CellTable attachedTable; // table にアタッチされていない状態(== null)も取りうる
+
+    immutable num_of_special_id = 30;  // stored for special BOX like selecter
+    immutable selecter_id = 0; // box user creates
+    static int __id_counter = num_of_special_id;
     int id;
     this(){ id = __id_counter++; }
+    this(int special_id)
+    in{
+        assert(special_id <  num_of_special_id);
+    }body{
+         id = special_id; 
+    }
 
     Cell[] cells;
     int width,height;
-    void notify(){ // notify to make window redraw 
+    void notify()
+    in{ // 
+        assert(attachedTable !is null);
+    }body{ // notify to make window redraw 
         attachedTable.changed_flg= true;
     }
     void add(Cell c){
         cells ~= c;
     }
     void remove(Cell target){
-        foreach(i,c ; cells)
-        {
-            if(c == target)
-            {
-                auto init = cells[0 .. i];
-                auto tail = cells[i+1 .. $];
-                cells = init ~ tail;
-                return;
-            }
-        }
+        misc.array.remove(cells,target);
     }
-    void update_edge_info(){
+    private int edge_num(Direct dir){
+        return get_edge_info()[dir];
+    }
+    private int[Direct] get_edge_info(){
+        int[Direct] edge_info; // left,right:colum num 
+                               // up,down: row num 
         int min_column = int.max;
         int min_row = int.max;
         int max_column, max_row;
@@ -94,6 +101,33 @@ class CellBOX{
         edge_info[Direct.right] = max_column;
         edge_info[Direct.up] = min_row;
         edge_info[Direct.down] = max_row;
+        return edge_info;
+    }
+    Cell[] in_row(int row){
+        Cell[] result;
+        foreach(c; cells)
+        {
+            if(c.row == row)
+                result ~= c;
+        }
+        return result;
+    }
+    Cell[] in_column(int column){
+        Cell[] result;
+        foreach(c;cells)
+        {
+            if(c.column == column)
+                result ~= c;
+        }
+        return result;
+    }
+    void expand(Direct dir){
+        auto edge_cells = in_column(edge_num(dir));
+        foreach(c; edge_cells)
+        {
+            move_cell(c,dir);
+            add(c);
+        }
     }
     void move(Direct dir){
         // 端点でテーブル自体にオフセットかける？
@@ -103,19 +137,19 @@ class CellBOX{
 }
 
 class CellTable{
-    CellBOX[int][Cell] table; // Cellに対応するCellBOXsのidによるmapがtable
+    CellBOX[int][Cell] box_table; // Cellに対応するCellBOXesのidによるmapがtable
     bool changed_flg;
 
     void atach(CellBOX cell_obj)
     {
         foreach(cell;cell_obj.cells)
-            table[cell][cell_obj.id] = cell_obj;
+            box_table[cell][cell_obj.id] = cell_obj;
     }
     void detach(CellBOX cell_obj){
         foreach(cell;cell_obj.cells)
-            table[cell].remove(cell_obj.id);
+            box_table[cell].remove(cell_obj.id);
     }
     CellBOX[int] whichBOX(Cell c){
-        return table[c];
+        return box_table[c];
     }
 }

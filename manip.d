@@ -1,12 +1,15 @@
 module manip;
 
 import misc.direct;
-public import cell.cell;
+import cell.boxes;
+import cell.cell;
 
 enum focus_mode{ normal,select,edit }
 class ManipTable{
     CellTable focused_table;
     CellBOX focused_box;
+
+    ManipTextBOX manip_text;
 
     focus_mode mode;
     Cell focus;
@@ -14,7 +17,7 @@ class ManipTable{
     this(CellTable table){
         focused_table = table;
         focus = Cell(3,3); 
-        select = new CellBOX();
+        select = new CellBOX(CellBOX.selecter_id);
     }
         
     void delete_from_select(Cell c){
@@ -37,8 +40,9 @@ class ManipTable{
     in{ assert(mode == focus_mode.select);
     }out{
         assert(mode == focus_mode.select);
+        assert(focus == focus);
     }body{
-        auto adjacent = focus; // Cell は struct
+        auto adjacent = focus; // Cell は struct . focusは変わらない
         move_cell(adjacent,dir);
         select.add(adjacent); // 
     }
@@ -52,7 +56,46 @@ class ManipTable{
         assert(mode == focus_mode.normal);
     }body{
         select.clear();
+        select = new CellBOX(CellBOX.selecter_id);
         mode = focus_mode.normal;
     }
-        
+}
+
+class ManipCellBOX{
+    void reconcider_my_shape(){
+    }
+}
+class ManipTextBOX : ManipCellBOX{
+    TextBOX createBOX(){
+        return new TextBOX();
+    }
+    void move_cursor(TextBOX box, Direct dir){
+        void move_R(){
+        if(box.cursor < box.text.line[box.current_line].length)
+            ++box.cursor;
+        }
+        void move_L(){
+            if(box.cursor != 0)
+                --box.cursor;
+        }
+        void move_D(){
+            if(box.text.num_of_lines > box.current_line)
+                ++box.current_line;
+        }
+        void move_U(){
+            if(box.current_line != 0)
+                --box.current_line;
+        }
+        final switch(dir){
+            case Direct.right:
+                move_R(); return;
+            case Direct.left:
+                move_L(); return;
+            case Direct.up:
+                move_U(); return;
+            case Direct.down:
+                move_D(); return;
+        }
+        assert(0);
+    }
 }

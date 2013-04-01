@@ -3,6 +3,7 @@ module slite;
 import gui.gui;
 import manip;
 import command.command;
+import cell.cell;
 
 class Slite{
     Window mainWindow; // guiは全部こいつが引き受ける

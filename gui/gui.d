@@ -8,6 +8,8 @@ import env;
 import misc.draw_rect;
 import misc.sdl_utils;
 import cell.cell;
+import cell.boxes;
+import text.text;
 import manip;
 import misc.direct;
 import std.algorithm;
@@ -109,7 +111,7 @@ class PageView : Widget {
     SDL_Color focused_grid_color = {255,0,0};
     SDL_Color selected_cell_border_color = {0,255,255};
     SDL_Color normal_focus_color = {0,255,255};
-    SDL_Color selected_focus_color = {255,0,0};
+    SDL_Color selected_focus_color = {0,0,255};
     SDL_Color white = {255,255,255};
     ubyte grid_alpha = 255;
 
@@ -123,7 +125,17 @@ class PageView : Widget {
         SDL_SetRenderDrawColor(renderer,96,96,96,255);
         SDL_RenderFillRect(renderer,&holding_area);
     }
-    void showGrid(){
+    void renderTable(){
+        foreach(cells_boxes; table.box_table)
+        foreach(box; cells_boxes)
+        {
+            renderBOX(box);
+        }
+    }
+    void renderBOX(CellBOX box){
+    }
+
+    void renderGrid(){
         SetRenderColor(renderer,grid_color,grid_alpha);
         SDL_Rect drw_rect = holding_area;
         drw_rect.h = 1;
@@ -139,7 +151,7 @@ class PageView : Widget {
         }
     }
     void renderBody(){
-        showGrid();
+        renderGrid();
         renderSelect();
         renderFocus();
     }
@@ -159,8 +171,7 @@ class PageView : Widget {
     void renderSelect(){
         emphasizeGrids(manip_table.select.cells,selected_cell_border_color,selectedLineWidth);
     }
-    private:
-    void emphasizeGrid(const Cell cell,const SDL_Color grid_color,const ubyte grid_width){
+    private void emphasizeGrid(const Cell cell,const SDL_Color grid_color,const ubyte grid_width){
         SDL_Rect grid_rect = {get_x(cell),get_y(cell),gridSpace, gridSpace};
         for(int i; i<grid_width ; ++i)
         {
@@ -170,7 +181,7 @@ class PageView : Widget {
                          grid_rect.w-2, grid_rect.h-2);
         }
     }
-    void emphasizeGrids(const Cell[] cells,const SDL_Color color,const ubyte grid_width){
+    private void emphasizeGrids(const Cell[] cells,const SDL_Color color,const ubyte grid_width){
         if(cells.empty) return;
 
         foreach(a; cells)
@@ -187,7 +198,7 @@ class PageView : Widget {
     }
     private int get_x(Cell c){ return c.column * gridSpace + holding_area.x; }
     private int get_y(Cell c){ return c.row * gridSpace + holding_area.y; }
-    void drawCellLine(const Cell cell,const Direct dir,SDL_Color color,ubyte width){
+    private void drawCellLine(const Cell cell,const Direct dir,SDL_Color color,ubyte width){
         auto startx = get_x(cell);
         auto starty = get_y(cell);
         int endx,endy;

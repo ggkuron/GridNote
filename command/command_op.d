@@ -174,4 +174,10 @@ mixin template operations()
             slite.manip_table.return_to_normal_mode();
         }
     }
+    class CREATE_TEXTBOX:Command
+    {
+        mixin super_ctor;
+        void execute(){
+        }
+    }
 }
