@@ -99,15 +99,17 @@ class ControlPanel : Widget {
 }
 
 class PageView : Widget {
-    ManipTable manip_table; // userの操作による効果を描画する役目
-    CellTable table;    // 描画すべき対象
+    ManipTable manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
+    CellTable table;    // 描画すべき対象: 
 
     ubyte emphasizedLineWidth = 2;
     ubyte selectedLineWidth = 2;
     SDL_Color grid_color = {48,48,48};
-    SDL_Color emphasizedLineColor = {255,0,0};
+        // SDL_Color emphasizedLineColor = {255,0,0};
     SDL_Color focused_grid_color = {255,0,0};
-    SDL_Color selected_cell_border = {0,255,255};
+    SDL_Color selected_cell_border_color = {0,255,255};
+    SDL_Color normal_focus_color = {0,255,255};
+    SDL_Color selected_focus_color = {255,0,0};
     SDL_Color white = {255,255,255};
     ubyte grid_alpha = 255;
 
@@ -138,21 +140,31 @@ class PageView : Widget {
     }
     void renderBody(){
         showGrid();
-        if(manip_table.mode != focus_mode.select)
-            renderFocus();
-        else renderSelect();
+        renderSelect();
+        renderFocus();
     }
     void renderFocus(){
-        emphasizeGrid(manip_table.focus,emphasizedLineColor,emphasizedLineWidth);
+        // 現在は境界色を変えてるだけだけど他の可能性も考えられるのでswitchしてる
+        // cellの色を変えるとか（透過させるとか
+        final switch(manip_table.mode)
+        {
+            case focus_mode.normal:
+                emphasizeGrid(manip_table.focus,normal_focus_color,emphasizedLineWidth); break;
+            case focus_mode.select:
+                emphasizeGrid(manip_table.focus,selected_focus_color,emphasizedLineWidth); break;
+            case focus_mode.edit:
+                break;
+        }
     }
     void renderSelect(){
-        emphasizeGrids(manip_table.select.cells,selected_cell_border,selectedLineWidth);
+        emphasizeGrids(manip_table.select.cells,selected_cell_border_color,selectedLineWidth);
     }
     private:
     void emphasizeGrid(const Cell cell,const SDL_Color grid_color,const ubyte grid_width){
         SDL_Rect grid_rect = {get_x(cell),get_y(cell),gridSpace, gridSpace};
         for(int i; i<grid_width ; ++i)
         {
+            SetRenderColor(renderer,grid_color,grid_alpha);
             SDL_RenderDrawRect(renderer,&grid_rect);
             grid_rect = SDL_Rect(grid_rect.x+1, grid_rect.y+1,
                          grid_rect.w-2, grid_rect.h-2);
@@ -168,7 +180,7 @@ class PageView : Widget {
             {
                 if(!ad_info[cast(Direct)dir]){ // 隣接してない方向の境界を書く
                     drawCellLine(a,cast(Direct)dir,white,grid_width); // 先にホワイトで既に存在する色を消す
-                    drawCellLine(a,cast(Direct)dir,selected_cell_border,grid_width);
+                    drawCellLine(a,cast(Direct)dir,selected_cell_border_color,grid_width);
                 }
             }
         }
@@ -187,7 +199,7 @@ class PageView : Widget {
                 endy = starty + gridSpace;
                 for(ubyte w; w<width; ++w)
                 {
-                    SetRenderColor(renderer,color,alpha);
+                    SetRenderColor(renderer,color,grid_alpha);
                     SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
                     --startx;
                     --endx;
@@ -198,7 +210,7 @@ class PageView : Widget {
                 endy = starty + gridSpace;
                 for(ubyte w; w<width; ++w)
                 {
-                    SetRenderColor(renderer,color,alpha);
+                    SetRenderColor(renderer,color,grid_alpha);
                     SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
                     ++startx;
                     ++endx;
@@ -209,7 +221,7 @@ class PageView : Widget {
                 endy = starty;
                 for(ubyte w; w<width; ++w)
                 {
-                    SetRenderColor(renderer,color,alpha);
+                    SetRenderColor(renderer,color,grid_alpha);
                     SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
                     ++starty;
                     ++endy;
@@ -221,7 +233,7 @@ class PageView : Widget {
                 endy = starty;
                 for(ubyte w; w<width; ++w)
                 {
-                    SetRenderColor(renderer,color,alpha);
+                    SetRenderColor(renderer,color,grid_alpha);
                     SDL_RenderDrawLine(renderer,startx,starty,endx,endy);
                     --starty;
                     --endy;
