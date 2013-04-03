@@ -42,6 +42,7 @@ class KeyInterpreter{
     Command CMD_RENDER_WINDOW;
     Command CMD_START_SELECT_MODE;
     Command CMD_DELETE_FOCUS_FROM_SELECT;
+    Command CMD_CREATE_TEXT_BOX; 
 
     ubyte* keyState;
     SDL_Keymod ModState;
@@ -69,6 +70,7 @@ class KeyInterpreter{
         CMD_RENDER_WINDOW = new RENDER_WINDOW(slite);
         CMD_START_SELECT_MODE = new START_SELECT_MODE(slite);
         CMD_DELETE_FOCUS_FROM_SELECT = new DELETE_FOCUS_FROM_SELECT(slite);
+        CMD_CREATE_TEXT_BOX = new CREATE_TEXTBOX(slite);
     }
     void updateKeyState(){
         SDL_PumpEvents();
@@ -94,18 +96,19 @@ class KeyInterpreter{
                         if(keyState[EXIT_KEY]) command_queue ~= CMD_QUIT;
                         if(slite.manip_table.mode == focus_mode.select)
                         {
-                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_EXPAND_SELECT_L, CMD_MOVE_FOCUS_L); }
-                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_EXPAND_SELECT_R, CMD_MOVE_FOCUS_R); }
-                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U, CMD_MOVE_FOCUS_U); }
-                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D, CMD_MOVE_FOCUS_D); }
+                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_EXPAND_SELECT_L); }
+                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_EXPAND_SELECT_R); }
+                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U); }
+                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D); }
                             if(keyState[DELETE_KEY]){ add_to_queue (CMD_DELETE_FOCUS_FROM_SELECT); }
+                            if(keyState[INSERT_KEY]){ add_to_queue (CMD_CREATE_TEXT_BOX); }
                                         
                             if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MANIP_MODE_NORMAL);
                         }else{
-                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_L); command_queue ~= CMD_MOVE_FOCUS_L; }
-                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_R); command_queue ~= CMD_MOVE_FOCUS_R; }
-                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_U); command_queue ~= CMD_MOVE_FOCUS_U; }
-                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_D); command_queue ~= CMD_MOVE_FOCUS_D; }
+                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_L); }
+                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_R); }
+                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_U); }
+                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_D); }
                         }
                         return;
                     default:

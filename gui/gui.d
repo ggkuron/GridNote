@@ -8,11 +8,12 @@ import env;
 import misc.draw_rect;
 import misc.sdl_utils;
 import cell.cell;
-import cell.boxes;
+import cell.textbox;
 import text.text;
 import manip;
 import misc.direct;
 import std.algorithm;
+import gui.textbox;
 
 SDL_Window* mainWin;
 SDL_Renderer* mainRend;
@@ -80,7 +81,7 @@ abstract class Widget{
     void Shring(){}
     void Expand(){}
     void Notify(){}
-    abstract void backDesign(){}
+    void backDesign(){}
     void renderBody(){}
 }
 
@@ -102,12 +103,15 @@ class ControlPanel : Widget {
 
 class PageView : Widget {
     ManipTable manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
-    CellTable table;    // 描画すべき対象: 
+    CellBOX table;    // 描画すべき対象: 
+    CellBOX in_view;    // table にattachされた 表示領域
 
+    RenderTextBOX render_text;
+
+    int gridSpace =40; // □の1辺長
     ubyte emphasizedLineWidth = 2;
     ubyte selectedLineWidth = 2;
     SDL_Color grid_color = {48,48,48};
-        // SDL_Color emphasizedLineColor = {255,0,0};
     SDL_Color focused_grid_color = {255,0,0};
     SDL_Color selected_cell_border_color = {0,255,255};
     SDL_Color normal_focus_color = {0,255,255};
@@ -115,27 +119,49 @@ class PageView : Widget {
     SDL_Color white = {255,255,255};
     ubyte grid_alpha = 255;
 
-    this(Window w,CellTable ct,ManipTable uv){
+    this(Window w,CellBOX ct,ManipTable uv, Cell start_offset = Cell(0,0)){
         super(w,25,0,75,100);
         manip_table = uv;
         table = ct;
         grid_alpha = alpha;
+
+        in_view = new CellBOX(CellBOX.view_id,table,start_offset);
+        render_text = new RenderTextBOX(renderer, this);
+        update();
     }
-    void backDesign(){
+    void set_in_view(){
+        foreach(table_cell,box; table.cells)
+        {
+            in_view.cells[minus(table_cell,in_view.offset)] = box;
+        }
+    }
+    void replace_offset_of_table_in_view(){
+    }
+    private void backDesign(){
         SDL_SetRenderDrawColor(renderer,96,96,96,255);
         SDL_RenderFillRect(renderer,&holding_area);
     }
     void renderTable(){
-        foreach(cells_boxes; table.box_table)
-        foreach(box; cells_boxes)
+        import std.stdio;
+        writeln("render table");
+        set_in_view();
+        static int cnt;
+        if(!in_view.cells.keys.empty)
+        foreach(box; in_view.cells)
         {
-            renderBOX(box);
+            
+            writef("hit %d \n",++cnt);
+            if(auto tb = cast(TextBOX)box) render_text.render(tb);
         }
     }
-    void renderBOX(CellBOX box){
+    int grid_length(int depth){
+        auto result = gridSpace;
+        auto view_depth = in_view.recursive_depth();
+        foreach(i;view_depth+1 .. depth)
+            result /= 2;
+        return result;
     }
-
-    void renderGrid(){
+    private void renderGrid(){
         SetRenderColor(renderer,grid_color,grid_alpha);
         SDL_Rect drw_rect = holding_area;
         drw_rect.h = 1;
@@ -151,7 +177,9 @@ class PageView : Widget {
         }
     }
     void renderBody(){
+        backDesign();
         renderGrid();
+        renderTable();
         renderSelect();
         renderFocus();
     }
@@ -169,7 +197,7 @@ class PageView : Widget {
         }
     }
     void renderSelect(){
-        emphasizeGrids(manip_table.select.cells,selected_cell_border_color,selectedLineWidth);
+        emphasizeGrids(manip_table.select.cells.keys,selected_cell_border_color,selectedLineWidth);
     }
     private void emphasizeGrid(const Cell cell,const SDL_Color grid_color,const ubyte grid_width){
         SDL_Rect grid_rect = {get_x(cell),get_y(cell),gridSpace, gridSpace};
@@ -196,8 +224,8 @@ class PageView : Widget {
             }
         }
     }
-    private int get_x(Cell c){ return c.column * gridSpace + holding_area.x; }
-    private int get_y(Cell c){ return c.row * gridSpace + holding_area.y; }
+    int get_x(Cell c){ return c.column * gridSpace + holding_area.x; }
+    int get_y(Cell c){ return c.row * gridSpace + holding_area.y; }
     private void drawCellLine(const Cell cell,const Direct dir,SDL_Color color,ubyte width){
         auto startx = get_x(cell);
         auto starty = get_y(cell);
@@ -251,6 +279,11 @@ class PageView : Widget {
                 }
                 break;
         }
+    }
+    void update(){
+        in_view.clear();
+        in_view.hold(in_view.offset,holding_area.w/gridSpace, holding_area.h/gridSpace);
+        set_in_view();
     }
     void table_check(){
         if(table.changed_flg){

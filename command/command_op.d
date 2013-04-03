@@ -103,7 +103,7 @@ mixin template operations()
     {   
         mixin super_ctor;
         void execute(){
-            slite.manip_table.expand_select(Direct.down);
+            slite.manip_table.expand_if_on_edge(Direct.down);
             SDL_Delay(210);
         }
     }
@@ -111,7 +111,7 @@ mixin template operations()
     {   
         mixin super_ctor;
         void execute(){
-            slite.manip_table.expand_select(Direct.left);
+            slite.manip_table.expand_if_on_edge(Direct.left);
             SDL_Delay(210);
         }
     }
@@ -119,7 +119,7 @@ mixin template operations()
     {   
         mixin super_ctor;
         void execute(){
-            slite.manip_table.expand_select(Direct.right);
+            slite.manip_table.expand_if_on_edge(Direct.right);
             SDL_Delay(210);
         }
     }
@@ -127,7 +127,7 @@ mixin template operations()
     {   
         mixin super_ctor;
         void execute(){
-            slite.manip_table.expand_select(Direct.up);
+            slite.manip_table.expand_if_on_edge(Direct.up);
             SDL_Delay(210);
         }
     }
@@ -150,14 +150,14 @@ mixin template operations()
     {
         mixin super_ctor;
         void execute(){
-            ++gridSpace;
+            ++(slite.page_view.gridSpace);
         }
     }
     class ZOOM_OUT_GRID:Command
     {
         mixin super_ctor;
         void execute(){
-            --gridSpace;
+            --(slite.page_view.gridSpace);
         }
     }
     class RENDER_WINDOW:Command
@@ -178,6 +178,7 @@ mixin template operations()
     {
         mixin super_ctor;
         void execute(){
+            slite.manip_table.create_text_box();
         }
     }
 }
