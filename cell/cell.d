@@ -87,23 +87,23 @@ class CellBOX{
         replace_of(replace);
     }
     this(CellBOX attach, Cell _offset){
-        attached_to(attach,_offset);
+        attach_to(attach,_offset);
     }
     this(BOX_ID special_id, CellBOX attach, Cell _offset){
         this(special_id);
-        attached_to(attach,_offset);
+        attach_to(attach,_offset);
     }
-    void attached_to(CellBOX box,Cell _offset){
+    void attach_to(CellBOX box,Cell _offset){
         attached = box;
         offset = _offset;
-        box.cells[offset] = this; 
+        foreach(c; box.cells)
+            cells[offset] = c; 
     }
     void replace_of(CellBOX box){
         attached = box.attached;
         offset = box.offset;
         cells = box.cells;
     }
-
     bool changed_flg;
     void notify()
     in{ // 
@@ -112,7 +112,7 @@ class CellBOX{
         attached.changed_flg= true;
     }
     // Manipulations
-    void add(Cell c){
+    void add(const Cell c){
         cells[c] = null;
     }
     void add(Cell c,CellBOX box){

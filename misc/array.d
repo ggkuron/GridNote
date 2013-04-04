@@ -1,5 +1,6 @@
 module misc.array;
 import std.array;
+import std.algorithm;
 
 void remove(T)(ref T[] array,T del){
     foreach(i,a ; array)
@@ -34,3 +35,8 @@ bool is_in(T)(const T[] array,const T b){ // some kind of search
     return false;
 }
 
+T max_in(T)(const T[] array){
+    auto copy = array.dup;
+    copy.sort();
+    return copy[$];
+}

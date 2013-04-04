@@ -109,42 +109,24 @@ class ManipTextBOX : ManipTable{
         super(mt);
     }
     void move_cursor(TextBOX box, Direct dir){
-        void move_R(){
-        if(box.cursor < box.text.line[box.current_line].length)
-            ++box.cursor;
-        }
-        void move_L(){
-            if(box.cursor != 0)
-                --box.cursor;
-        }
-        void move_D(){
-            if(box.text.num_of_lines > box.current_line)
-                ++box.current_line;
-        }
-        void move_U(){
-            if(box.current_line != 0)
-                --box.current_line;
-        }
         final switch(dir){
             case Direct.right:
-                move_R(); return;
+                box.move_cursorR(); return;
             case Direct.left:
-                move_L(); return;
+                box.move_cursorL(); return;
             case Direct.up:
-                move_U(); return;
+                box.move_cursorU(); return;
             case Direct.down:
-                move_D(); return;
+                box.move_cursorD(); return;
         }
         assert(0);
     }
     void start_input(TextBOX box){
         import std.stdio;
-        writeln("in start");
         SDL_Event event;
+        SDL_Rect tmp = SDL_Rect(20,20,300,400);
+        SDL_SetTextInputRect(&tmp);
         SDL_StartTextInput();
-        writeln("started");
-
-
         bool done;
         while(!done)
         {
@@ -153,21 +135,21 @@ class ManipTextBOX : ManipTable{
                 switch(event.type)
                 {
                     case SDL_TEXTINPUT: // non IME text-input
-                        writeln("in textinput");
-                        writef("input: %c \n",event.text.text[0]); 
-                        box.text.insert(box.current_line,event.text.text[0]);
-                        redraw();
+                        box.insert_char(event.text.text[0]);
+                        if(event.text.text[0] == 'q') SDL_Quit();
                         break;
                     case SDL_TEXTEDITING:   // composition is changed or started
-                        writeln("in textediting");
+                        writeln("in editing");
                         box.composition = event.edit.text;
-                        box.cursor = event.edit.start;
+                        box.set_cursor(event.edit.start);
                         redraw();
                         // selection_len = event.edit.length;
                         break;
                     default:
+                        writeln("which i am without concern");
                         break;
                 }
+                redraw();
             }
         }
         return;

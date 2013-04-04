@@ -101,7 +101,9 @@ class KeyInterpreter{
                             if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U); }
                             if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D); }
                             if(keyState[DELETE_KEY]){ add_to_queue (CMD_DELETE_FOCUS_FROM_SELECT); }
-                            if(keyState[INSERT_KEY]){ add_to_queue (CMD_CREATE_TEXT_BOX); }
+                            if(keyState[INSERT_KEY]){ SDL_Delay(1000); add_to_queue (CMD_CREATE_TEXT_BOX); }
+                            // コマンド生成のキーが入力に混じらないためにDelay
+                            // 優先順位を実装するか　DelayをCMDにするか -- Delay をCMD化したところで旨みはない
                                         
                             if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MANIP_MODE_NORMAL);
                         }else{

@@ -1,27 +1,51 @@
 module text.text;
 
+import std.array;
 import misc.array;
 import std.string;
-struct Text
+
+import std.stdio; // printf dbg
+class Text
 {
-    int num_of_lines;
-    char[][int] line;
+    this(){
+        static int cnt;
+        writefln("i am created for %d times",cnt++);
+    }
+    int lines = 1;
+    int cursor;
+    alias int pos;
+    alias int line;
+    char[pos][line] writing;
     int current_line;
-    @property auto str(){
-        string tmp = cast(string)line[current_line];
-        return tmp.toStringz;
+    int position;
+    ulong insert(int line_num,char c){
+        writing[line_num][position++] = c;
+        writef("%s\n",writing[line_num]);
+        return writing[line_num].length;
     }
-    void insert(int line_num,char c){
-        line[line_num] ~= c;
-    }
-    void insert(int line_num,char[32LU] c){
-        line[line_num] = c;
-    }
-    void insertLine(int line_num,string str){
-        line[line_num] = cast(char[])str;
+    @property bool empty(){
+        return writing.keys.empty();
     }
     void deleteChar(int line_num,int pos){
-        remove(line[line_num],pos);
+        writing[line_num].remove(pos);
+    }
+    @property string str(){
+
+        if(!writing.keys.empty() || !writing[current_line].values.empty()) return null;
+        return cast(string)(writing[current_line].values);
+    }   
+    int right_edge_pos(){
+        int[] line_arry = writing[current_line].keys;
+        return max_in(line_arry);
+    }
+    void move_cursor(alias pred, alias manip_cursor)(){
+        if(mixin (pred))
+            mixin (manip_cursor);
+    }
+    void set_cursor()(int pos)
+        // move_cursor に課せられたpred を全部課したい
+    {
+        cursor = pos;
     }
 }
 

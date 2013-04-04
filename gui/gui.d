@@ -106,7 +106,7 @@ class PageView : Widget {
     CellBOX table;    // 描画すべき対象: 
     CellBOX in_view;    // table にattachされた 表示領域
 
-    RenderTextBOX render_text;
+    RenderTextBOX render_text ;
 
     int gridSpace =40; // □の1辺長
     ubyte emphasizedLineWidth = 2;
@@ -126,14 +126,11 @@ class PageView : Widget {
         grid_alpha = alpha;
 
         in_view = new CellBOX(CellBOX.view_id,table,start_offset);
-        render_text = new RenderTextBOX(renderer, this);
+        render_text =  new RenderTextBOX(renderer, this);
         update();
     }
     void set_in_view(){
-        foreach(table_cell,box; table.cells)
-        {
-            in_view.cells[minus(table_cell,in_view.offset)] = box;
-        }
+            in_view.attach_to(table,in_view.offset);
     }
     void replace_offset_of_table_in_view(){
     }
@@ -143,15 +140,13 @@ class PageView : Widget {
     }
     void renderTable(){
         import std.stdio;
-        writeln("render table");
         set_in_view();
         static int cnt;
         if(!in_view.cells.keys.empty)
         foreach(box; in_view.cells)
         {
-            
-            writef("hit %d \n",++cnt);
-            if(auto tb = cast(TextBOX)box) render_text.render(tb);
+            if(auto tb = cast(TextBOX)box) 
+                render_text.render(tb);
         }
     }
     int grid_length(int depth){

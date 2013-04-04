@@ -5,6 +5,7 @@ import cell.textbox;
 import cell.cell;
 import gui.gui;
 import std.array;
+import std.string;
 
 import derelict.sdl2.sdl;
 import derelict.sdl2.ttf;
@@ -13,31 +14,41 @@ class RenderTextBOX : RenderBOX{
     // TTF_Font[string] fonts; // key: fontname , size
     TTF_Font* font;
     ubyte fontsize=40;
-    SDL_Color color = {0xff,0xff,0xff};
+    SDL_Color color = {0,0,0};
     this(SDL_Renderer* r,PageView pv)
-    {
+        in{
+        }out{
+            assert(font !is null);
+    }body{
         super(r, pv);
-        font = TTF_OpenFont("Ricty-Regular.ttf",fontsize/*page_view.gridSpace*/);
         fontsize = cast(ubyte)pv.gridSpace;
+        font = TTF_OpenFont("Ricty-Regular.ttf",24);
+        import std.stdio;
+        import std.conv;
+        assert(TTF_WasInit());
+        writefln(" -> Error: %s", to!(string)(TTF_GetError()));
     }
     void setBOX(TextBOX box){
         // fonts[box.fontname] = TTF_OpenFont(box.fontname.toStringz,box.font_size); 
+        assert(box !is null);
         import std.stdio;
         import std.string;
         writef("%s",box.text.str);
-        auto srf = TTF_RenderUTF8_Blended(font,box.text.str,color);
+        auto srf = TTF_RenderUTF8_Blended(font,box.text.str.toStringz,color);
         box.texture = SDL_CreateTextureFromSurface(renderer,srf);
         SDL_FreeSurface(srf);
         box.loaded_flg = true;
     }
     void render(TextBOX box){
         import std.stdio;
-        writeln("ok");
-        if(!box.text.line.keys.empty()) setBOX(box);
-        auto pos = get_position(box);
-        writef("%d %d %d %d :SDL \n",pos.x,pos.y,pos.w,pos.h);
-        SDL_RenderCopy(renderer,box.texture,null,&pos);
-        // assert(box.texture !is null);
+        if(!box.text.empty()) setBOX(box);
+        // if(!box.loaded_flg) return;
+        else{
+            setBOX(box);
+            auto pos = get_position(box);
+            writef("%d %d %d %d :\n",pos.x,pos.y,pos.w,pos.h);
+            SDL_RenderCopy(renderer,box.texture,null,&pos);
+        }
     }
     ~this()
     {
