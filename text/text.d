@@ -3,10 +3,11 @@ module text.text;
 import std.array;
 import misc.array;
 import std.string;
+import std.algorithm;
 
 import std.stdio; // printf dbg
 class Text
-{
+{   // あらゆるところで触られるよ 変えたらだめだよ
     this(){
         static int cnt;
         writefln("i am created for %d times",cnt++);
@@ -26,17 +27,23 @@ class Text
     @property bool empty(){
         return writing.keys.empty();
     }
-    void deleteChar(int line_num,int pos){
-        writing[line_num].remove(pos);
+    void deleteChar(int pos){
+        writing[current_line].remove(pos);
     }
     @property string str(){
-
-        if(!writing.keys.empty() || !writing[current_line].values.empty()) return null;
-        return cast(string)(writing[current_line].values);
+        if(!writing.keys.empty())
+        if(!writing[current_line].values.empty()){
+            string s;   // こざかしいこと
+            foreach(i; writing[current_line].keys.sort())
+                s ~= writing[current_line][i];
+            return s;
+        }else return null;
+        return null;
     }   
     int right_edge_pos(){
-        int[] line_arry = writing[current_line].keys;
-        return max_in(line_arry);
+        auto linepos = writing[current_line].keys.sort();
+        writefln("type:%s",typeid(linepos));
+        return linepos[$-1];
     }
     void move_cursor(alias pred, alias manip_cursor)(){
         if(mixin (pred))
@@ -48,6 +55,4 @@ class Text
         cursor = pos;
     }
 }
-
-
 

@@ -34,9 +34,8 @@ bool is_in(T)(const T[] array,const T b){ // some kind of search
     }
     return false;
 }
-
 T max_in(T)(const T[] array){
     auto copy = array.dup;
     copy.sort();
-    return copy[$];
+    return copy[$-1];
 }

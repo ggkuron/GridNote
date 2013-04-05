@@ -38,10 +38,12 @@ mixin template operations()
         }
     }
     // text box
-    class INSERT_TEXT : Command
+    class START_INSERT_NORMAL_TEXT : Command
     {
         mixin super_ctor;
         void execute(){
+            // slite.manip_table.(); // CREATE_TEXTBOX
+            slite.manip_table.start_insert_normal_text();
         }
     }
     class MODE_CHANGE :Command
@@ -172,13 +174,6 @@ mixin template operations()
         mixin super_ctor;
         void execute(){
             slite.manip_table.return_to_normal_mode();
-        }
-    }
-    class CREATE_TEXTBOX:Command
-    {
-        mixin super_ctor;
-        void execute(){
-            slite.manip_table.create_text_box();
         }
     }
 }

@@ -10,28 +10,32 @@ struct Cell
     int row;
     int column;
 }
+void show(Cell c){
+    import std.stdio;
+    writefln("column:%d,row:%d",c.column,c.row);
+}
 
-void move_cell(ref Cell cell,Direct dir){
+Cell move_own(ref Cell cell,Direct dir){
     // 端点でテーブル自体にオフセットかける？
     final switch(dir){
         case Direct.right: 
             ++cell.column;
-            return;
+            break;
         case Direct.left:
             --cell.column;
-            return;
+            break;
         case Direct.up:
             --cell.row;
-            return;
+            break;
         case Direct.down:
             ++cell.row;
-            return;
+            break;
     }
-    assert(0);
+    return cell;
 }
-Cell move(const Cell c,Direct to){
+Cell if_moved(const Cell c,Direct to){
     Cell result = c;
-    move_cell(result,to);
+    move_own(result,to);
     return result;
 }
 
@@ -176,7 +180,7 @@ class CellBOX{
         auto _cells = edge_cells[dir];
         foreach(c; _cells)
         {
-            move_cell(c,dir);
+            move_own(c,dir);
             add(c);
         }
     }
@@ -186,7 +190,7 @@ class CellBOX{
         foreach(cell; cells.keys)
         {
             auto saved = cell;
-            move_cell(cell,dir);
+            move_own(cell,dir);
             tmp[cell] = cells[saved];
         }
         cells = tmp;
@@ -234,8 +238,14 @@ class CellBOX{
     }
     int count_linedcells(Cell from,Direct to){
         int result;
-        if(is_in!(Cell)(cells.keys,.move(from,to))) ++result;
-        return result;
+        while(is_in!(Cell)(cells.keys, from))
+        {
+            from = if_moved(from,to);
+            ++result;
+            // import std.stdio;
+            // writefln("result:%d",result);
+        }
+        return result-1; // 自身のセルの分の1
     }
 }
 

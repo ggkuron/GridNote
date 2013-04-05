@@ -13,10 +13,6 @@ class TextBOX : CellBOX
         text = new Text();
         super(replace);
     }
-    // this(TextBOX replace){
-    //     text = new Text();
-    //     super(replace);
-    // }
     ~this(){ SDL_DestroyTexture(texture); }
 
     Text text;
@@ -31,10 +27,19 @@ class TextBOX : CellBOX
     SDL_Color font_color;
     SDL_Texture* texture;
     invariant(){
-        // assert(current_line <= text.num_of_lines);
+        assert(current_line <= text.lines);
     }
     Text exportText(){
         return text;
+    }
+    @property auto c_str(){
+        return text.str.toStringz;
+    }
+    SDL_Texture* get_texture()
+        in{
+            assert(texture != null);
+    }body{
+        return texture;
     }
     void insert_char(char c){
         import std.stdio;
@@ -43,8 +48,10 @@ class TextBOX : CellBOX
         writefln("position :%d",text.position);
         text.insert(current_line,c);
     }
-    alias text.move_cursor!("cursor < right_edge_pos()",
-            "++cursor;" )  move_cursorR; 
+    void move_cursorR(){
+        text.move_cursor!("cursor < right_edge_pos()",
+            "++cursor;" )();
+    }
     alias text.move_cursor!("cursor != 0",
             "--cursor;" )  move_cursorL; 
     alias text.move_cursor!("lines > current_line",

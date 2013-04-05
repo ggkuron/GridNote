@@ -22,6 +22,7 @@ mixin operations;
 
 enum InputState{normal,insert};
 class KeyInterpreter{
+    SDL_Event event;
     Command CMD_MOVE_BOX_R; 
     Command CMD_MOVE_BOX_L; 
     Command CMD_MOVE_BOX_U; 
@@ -35,14 +36,14 @@ class KeyInterpreter{
     Command CMD_EXPAND_SELECT_D;
     Command CMD_EXPAND_SELECT_U;
     Command CMD_MODE_CHANGE;
-    Command CMD_INSERT_TEXT;
+    //  Command CMD_INSERT_TEXT;
     Command CMD_MANIP_MODE_NORMAL;
     Command CMD_MODE_CHANGE_TO_NORMAL;
     Command CMD_QUIT;
     Command CMD_RENDER_WINDOW;
     Command CMD_START_SELECT_MODE;
     Command CMD_DELETE_FOCUS_FROM_SELECT;
-    Command CMD_CREATE_TEXT_BOX; 
+    Command CMD_START_INSERT_NORMAL_TEXT; 
 
     ubyte* keyState;
     SDL_Keymod ModState;
@@ -64,16 +65,16 @@ class KeyInterpreter{
         CMD_EXPAND_SELECT_U = new EXPAND_SELECT_U(slite);
         CMD_MODE_CHANGE = new MODE_CHANGE(slite);
         CMD_MANIP_MODE_NORMAL = new MANIP_MODE_NORMAL(slite);
-        CMD_INSERT_TEXT = new INSERT_TEXT(slite);
+        // CMD_INSERT_TEXT = new INSERT_TEXT(slite);
         CMD_MODE_CHANGE_TO_NORMAL = new MODE_CHANGE_TO_NORMAL(slite);
         CMD_QUIT = new QUIT(slite);
         CMD_RENDER_WINDOW = new RENDER_WINDOW(slite);
         CMD_START_SELECT_MODE = new START_SELECT_MODE(slite);
         CMD_DELETE_FOCUS_FROM_SELECT = new DELETE_FOCUS_FROM_SELECT(slite);
-        CMD_CREATE_TEXT_BOX = new CREATE_TEXTBOX(slite);
+        CMD_START_INSERT_NORMAL_TEXT = new START_INSERT_NORMAL_TEXT(slite);
     }
     void updateKeyState(){
-        SDL_PumpEvents();
+        // SDL_PumpEvents();
         keyState = SDL_GetKeyboardState(null);
         ModState = SDL_GetModState();
     }
@@ -101,7 +102,6 @@ class KeyInterpreter{
                             if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U); }
                             if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D); }
                             if(keyState[DELETE_KEY]){ add_to_queue (CMD_DELETE_FOCUS_FROM_SELECT); }
-                            if(keyState[INSERT_KEY]){ SDL_Delay(1000); add_to_queue (CMD_CREATE_TEXT_BOX); }
                             // コマンド生成のキーが入力に混じらないためにDelay
                             // 優先順位を実装するか　DelayをCMDにするか -- Delay をCMD化したところで旨みはない
                                         
@@ -118,6 +118,7 @@ class KeyInterpreter{
                         if(keyState[MOVE_R_KEY]) add_to_queue (CMD_MOVE_FOCUS_R);
                         if(keyState[MOVE_U_KEY]) add_to_queue (CMD_MOVE_FOCUS_U);
                         if(keyState[MOVE_D_KEY]) add_to_queue (CMD_MOVE_FOCUS_D);
+                        if(keyState[INSERT_KEY]){ SDL_Delay(200); add_to_queue (CMD_MODE_CHANGE,CMD_START_INSERT_NORMAL_TEXT); }
                         return ;
                 }
             case InputState.insert:
