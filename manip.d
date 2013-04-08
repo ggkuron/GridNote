@@ -5,6 +5,7 @@ import derelict.sdl2.sdl;
 import misc.direct;
 import cell.textbox;
 import cell.cell;
+import command.command;
 import gui.gui;
 
 enum focus_mode{ normal,select,edit }
@@ -13,19 +14,21 @@ class ManipTable{
     CellBOX focused_table;
     CellBOX focused_box;
     Window window;
+    InputInterpreter key_interpreter;
 
     ManipTextBOX manip_textbox;
 
     focus_mode mode;
     Cell focus;
     CellBOX select;
-    this(Window w,CellBOX table, SDL_Event* ev){
+    this(Window w,CellBOX table,InputInterpreter ki,SDL_Event* ev){
         // 最終的にはwindow はもちたくない // 実装の優先順位的怠惰さ // またの名をToDo
         // slite に委譲できるような機構が欲しい
         focused_table = table;
         focus = Cell(3,3); 
         select = new CellBOX(CellBOX.selecter_id,focused_table,Cell(0,0));
         window = w; // 消し去りたい
+        key_interpreter = ki;
         event = ev;
 
         manip_textbox = new ManipTextBOX(this);
@@ -41,7 +44,6 @@ class ManipTable{
         import std.stdio;
         writeln("redraw");
     }
-        
     void delete_from_select(Cell c){
         select.remove(c);
     }
@@ -67,7 +69,7 @@ class ManipTable{
         in{ assert(mode == focus_mode.select);
         }out{
             assert(mode == focus_mode.select);
-        }body{
+    }body{
             select.expand(dir);
     }
     void single_expand_select(Direct dir)
@@ -75,7 +77,7 @@ class ManipTable{
         }out{
             assert(mode == focus_mode.select);
             assert(focus == focus);
-        }body{
+    }body{
             auto adjacent = focus; // Cell は struct . focusは変わらない
             move_own(adjacent,dir);
             select.add(adjacent); // 
@@ -84,10 +86,10 @@ class ManipTable{
         select.remove(focus);
     }
     void return_to_normal_mode()
-    in{
-        assert(mode == focus_mode.select);
-    }out{
-        assert(mode == focus_mode.normal);
+        in{
+            assert(mode == focus_mode.select);
+        }out{
+            assert(mode == focus_mode.normal);
     }body{
         select.clear();
         select = new CellBOX(CellBOX.selecter_id);
@@ -116,10 +118,8 @@ class ManipCellBOX{
 }
 class ManipTextBOX {
     ManipTable manip_table;
-    // SDL_Event* event;
     this(ManipTable mt){
         manip_table = mt;
-        // event = mt.event;
     }
     void move_cursor(TextBOX box, Direct dir){
         final switch(dir){
@@ -145,6 +145,7 @@ class ManipTextBOX {
         SDL_Event event;
         SDL_WaitEvent(&event);
         SDL_StartTextInput();
+
         while(!done)
         {
             SDL_WaitEvent(&event);

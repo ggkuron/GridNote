@@ -1,6 +1,7 @@
 module gui.gui;
 
 import derelict.sdl2.sdl;
+import deimos.cairo.cairo;
 import std.stdio;
 import std.string;
 import std.array;
@@ -23,6 +24,8 @@ immutable int start_size_h = 640;
 class Window{
     SDL_Window* window;
     SDL_Renderer* renderer;
+    SDL_Surface* win_srf;
+
     this(){
         window = SDL_CreateWindow(appname.toStringz,
                  SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,

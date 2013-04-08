@@ -13,16 +13,16 @@ class Slite{
     CellBOX focused_table;
 
     // 使うもの
-    KeyInterpreter cmd_interpreter;
+    InputInterpreter interpreter;
     ManipTable manip_table;
     PageView page_view;
     ControlPanel con_pane;
     
     this(){
         mainWindow = new Window();
-        cmd_interpreter = new KeyInterpreter(this);
         focused_table = new CellBOX(CellBOX.table_id);
-        manip_table = new ManipTable(mainWindow,focused_table,&event);
+        interpreter = new InputInterpreter(this);
+        manip_table = new ManipTable(mainWindow,focused_table,interpreter,&event);
         
         con_pane = new ControlPanel(mainWindow);
         page_view = new PageView(mainWindow,focused_table,manip_table);
@@ -34,6 +34,6 @@ class Slite{
     }
     void work(){
         SDL_PollEvent(&event);
-        cmd_interpreter.execute();
+        interpreter.execute();
     }
 }

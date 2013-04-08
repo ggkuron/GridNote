@@ -48,6 +48,11 @@ class TextBOX : CellBOX
         writefln("position :%d",text.position);
         text.insert(current_line,c);
     }
+    void line_feed(){
+        expand(Direct.down);
+        move_cursorD();
+
+    }
     void move_cursorR(){
         text.move_cursor!("cursor < right_edge_pos()",
             "++cursor;" )();

@@ -40,6 +40,10 @@ class Text
         }else return null;
         return null;
     }   
+    void line_feed(){
+        ++current_line;
+        if(current_line > lines) lines = current_line;
+    }
     int right_edge_pos(){
         auto linepos = writing[current_line].keys.sort();
         writefln("type:%s",typeid(linepos));

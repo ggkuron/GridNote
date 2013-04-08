@@ -50,16 +50,16 @@ mixin template operations()
     {
         mixin super_ctor;
         void execute(){
-            if(slite.cmd_interpreter.input_state == InputState.normal)
-                slite.cmd_interpreter.input_state = InputState.insert;
-            else slite.cmd_interpreter.input_state = InputState.normal;
+            if(slite.interpreter.input_state == InputState.normal)
+                slite.interpreter.input_state = InputState.insert;
+            else slite.interpreter.input_state = InputState.normal;
         }
     }
     class MODE_CHANGE_TO_NORMAL :Command
     {
         mixin super_ctor;
         void execute(){
-            slite.cmd_interpreter.input_state = InputState.normal;
+            slite.interpreter.input_state = InputState.normal;
         }
     }
     class MOVE_FOCUS_L:Command

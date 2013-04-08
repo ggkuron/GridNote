@@ -6,10 +6,10 @@ import derelict.sdl2.sdl;
 import manip;
 import env;
 import misc.direct;
+import misc.tuple;
 import slite;
 
-class Command
-{
+class Command{
     Slite slite;
     this(Slite s){
         slite = s;
@@ -21,8 +21,7 @@ import command.command_op;
 mixin operations;
 
 enum InputState{normal,insert};
-class KeyInterpreter{
-    SDL_Event event;
+class InputInterpreter{
     Command CMD_MOVE_BOX_R; 
     Command CMD_MOVE_BOX_L; 
     Command CMD_MOVE_BOX_U; 
@@ -74,7 +73,6 @@ class KeyInterpreter{
         CMD_START_INSERT_NORMAL_TEXT = new START_INSERT_NORMAL_TEXT(slite);
     }
     void updateKeyState(){
-        // SDL_PumpEvents();
         keyState = SDL_GetKeyboardState(null);
         ModState = SDL_GetModState();
     }
@@ -125,6 +123,28 @@ class KeyInterpreter{
                 return;
         }
         return;
+    }
+    void input_start()
+        in{ assert(input_state != InputState.insert); } 
+    body{
+        input_state = InputState.insert;
+        SDL_StartTextInput();
+    }
+    void input_end()
+        in{ assert(input_state == InputState.insert); }
+    body{
+        input_state = InputState.normal;
+        SDL_StopTextInput();
+    }
+    ubyte* get_keys()
+        in{ assert(input_state == InputState.insert); }
+    body{
+        return keyState;
+    }
+    SDL_Keymod get_mod()
+        in{ assert(input_state == InputState.insert); }
+    body{
+        return ModState;
     }
     public:
     void execute(){
