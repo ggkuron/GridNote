@@ -5,27 +5,28 @@ import derelict.sdl2.ttf;
 import cell.cell;
 import text.text;
 import std.string;
+import std.utf;
 import misc.direct;
+import shape.shape;
 
-class TextBOX : CellBOX
+class TextBOX : ContentBOX
 {   // text の行数を Cellの高さに対応させてみる
-    this(CellBOX replace){ 
+    this(ContentBOX parent,Cell[] offset){ 
         text = new Text();
-        super(replace);
+        super(parent,offset);
     }
-    ~this(){ SDL_DestroyTexture(texture); }
+    ~this(){ }
 
     Text text;
     Cell text_offset;
 
     bool loaded_flg;
-    // int cursor;
+    int caret;
     int current_line;
     string font_name;
     char[] composition;
     int font_size;
-    SDL_Color font_color;
-    SDL_Texture* texture;
+    Color font_color;
     invariant(){
         assert(current_line <= text.lines);
     }
@@ -33,37 +34,38 @@ class TextBOX : CellBOX
         return text;
     }
     @property auto c_str(){
-        return text.str.toStringz;
+        return text.c_str;
     }
-    SDL_Texture* get_texture()
-        in{
-            assert(texture != null);
-    }body{
-        return texture;
-    }
-    void insert_char(char c){
+    void insert_char(const dchar c){
         import std.stdio;
-        writefln("insert :%c",c);
-        writefln("current_line :%d",current_line);
-        writefln("position :%d",text.position);
         text.insert(current_line,c);
     }
+    void insert(dstring s){
+        import std.stdio;
+        foreach(c; s)
+            text.insert(current_line,c);
+    }
+    void insert_char(char[32LU] cs){
+        import std.stdio;
+        dstring s = cast(dstring)cs;
+        insert_char(s[0]);
+    }
+
     void line_feed(){
         expand(Direct.down);
-        move_cursorD();
-
+        move_caretD();
     }
-    void move_cursorR(){
-        text.move_cursor!("cursor < right_edge_pos()",
-            "++cursor;" )();
+    void move_caretR(){
+        text.move_caret!("caret < right_edge_pos()",
+            "++caret;" )();
     }
-    alias text.move_cursor!("cursor != 0",
-            "--cursor;" )  move_cursorL; 
-    alias text.move_cursor!("lines > current_line",
-            "++current_line;" )  move_cursorD; 
-    alias text.move_cursor!("current_line != 0",
-            "--current_line;" )  move_cursorU; 
-    void set_cursor()(int pos){
-        text.set_cursor(pos); // 
+    alias text.move_caret!("caret != 0",
+            "--caret;" )  move_caretL; 
+    alias text.move_caret!("lines > current_line",
+            "++current_line;" )  move_caretD; 
+    alias text.move_caret!("current_line != 0",
+            "--current_line;" )  move_caretU; 
+    void set_caret()(int pos){
+        text.set_caret(pos); // 
     }
 }

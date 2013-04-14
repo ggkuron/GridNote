@@ -9,52 +9,43 @@ import std.string;
 
 import derelict.sdl2.sdl;
 import derelict.sdl2.ttf;
+import deimos.cairo.cairo;
+import std.stdio;
+import shape.shape;
 
 class RenderTextBOX : RenderBOX{
-    // TTF_Font[string] fonts; // key: fontname , size
-    TTF_Font* font;
+    cairo_t* cr;
+    cairo_text_extents_t extents;
+    const(char)* str;
     ubyte fontsize=40;
-    SDL_Color color = {0,0,0};
-    this(SDL_Renderer* r,PageView pv)
-        in{
-        }out{
-            assert(font !is null);
-    }body{
-        super(r, pv);
+    Color fontcolor;
+    this(PageView pv)
+    body{
+        cr = pv.cr;
+        super(cr, pv);
         fontsize = cast(ubyte)pv.gridSpace;
-        font = TTF_OpenFont("Ricty-Regular.ttf",fontsize);
-        import std.stdio;
-        import std.conv;
-        assert(TTF_WasInit());
-        writefln(" -> Error: %s", to!(string)(TTF_GetError()));
+        cairo_select_font_face(cr,"Sans",CairoFontSlant.Normal,CairoFontWeight.Bold);
+        cairo_set_font_size(cr,fontsize);
+        fontcolor = black;
+        cairo_text_extents(cr,str,&extents);
     }
     void setBOX(TextBOX box){
-        // fonts[box.fontname] = TTF_OpenFont(box.fontname.toStringz,box.font_size); 
         assert(box !is null);
-        import std.stdio;
-        import std.string;
-        auto srf = TTF_RenderUTF8_Blended(font,box.c_str,color);
-        box.texture = SDL_CreateTextureFromSurface(renderer,srf);
-        SDL_FreeSurface(srf);
         box.loaded_flg = true;
     }
     void render(TextBOX box){
-        import std.stdio;
-        // if(!box.loaded_flg) return;
-            setBOX(box);
-            auto pos = get_position(box); // Cell.Cell::get_position
-            writef("%d %d %d %d :\n",pos.x,pos.y,pos.w,pos.h);
-            SDL_RenderCopy(renderer,box.texture,null,&pos);
+        setBOX(box);
+        auto pos = get_position(box); // Cell.Cell::get_position
+        str = box.c_str;
+        writef("%f %f %f %f :\n",pos.x,pos.y,pos.w,pos.h);
+        cairo_move_to(cr,pos.x,pos.y);
+        cairo_show_text(cr,str);
+        writeln("wt ",str);
     }
     ~this()
     {
         // foreach(font; fonts)
-            TTF_CloseFont(font);
     }
     private:
-    void set_color(ubyte R,ubyte G,ubyte B)
-    {
-        color= SDL_Color(R,G,B); 
-    }
 }
  

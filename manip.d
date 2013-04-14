@@ -11,8 +11,8 @@ import gui.gui;
 enum focus_mode{ normal,select,edit }
 class ManipTable{
     SDL_Event* event; // referrence
-    CellBOX focused_table;
-    CellBOX focused_box;
+    ContentBOX focused_table;
+    ContentBOX focused_box;
     Window window;
     InputInterpreter key_interpreter;
 
@@ -20,13 +20,12 @@ class ManipTable{
 
     focus_mode mode;
     Cell focus;
-    CellBOX select;
-    this(Window w,CellBOX table,InputInterpreter ki,SDL_Event* ev){
+    SelectBOX select;
+    this(Window w,ContentBOX table,InputInterpreter ki,SDL_Event* ev){
         // 最終的にはwindow はもちたくない // 実装の優先順位的怠惰さ // またの名をToDo
-        // slite に委譲できるような機構が欲しい
         focused_table = table;
         focus = Cell(3,3); 
-        select = new CellBOX(CellBOX.selecter_id,focused_table,Cell(0,0));
+        select = new SelectBOX(focused_table,Cell(0,0));
         window = w; // 消し去りたい
         key_interpreter = ki;
         event = ev;
@@ -92,7 +91,6 @@ class ManipTable{
             assert(mode == focus_mode.normal);
     }body{
         select.clear();
-        select = new CellBOX(CellBOX.selecter_id);
         mode = focus_mode.normal;
     }
     void add_to_table(CellBOX box){
@@ -100,7 +98,7 @@ class ManipTable{
             focused_table.add(c,box);
     }
     private TextBOX create_text_box(){
-        auto tb = new TextBOX(select);
+        auto tb = new TextBOX(focused_table,select.cells.keys);
         add_to_table(tb);
         return tb;
     }
@@ -121,16 +119,16 @@ class ManipTextBOX {
     this(ManipTable mt){
         manip_table = mt;
     }
-    void move_cursor(TextBOX box, Direct dir){
+    void move_caret(TextBOX box, Direct dir){
         final switch(dir){
             case Direct.right:
-                box.move_cursorR(); return;
+                box.move_caretR(); return;
             case Direct.left:
-                box.move_cursorL(); return;
+                box.move_caretL(); return;
             case Direct.up:
-                box.move_cursorU(); return;
+                box.move_caretU(); return;
             case Direct.down:
-                box.move_cursorD(); return;
+                box.move_caretD(); return;
         }
         assert(0);
     }
@@ -155,11 +153,11 @@ class ManipTextBOX {
                     if(first_flg){ 
                     //     // 切り替え入力を食う 
                           first_flg = false;
-                          box.insert_char(event.text.text[0]);
+                          box.insert_char(event.text.text);
                     }else{
-                        box.insert_char(event.text.text[0]);
+                        box.insert_char(event.text.text);
                         box.expand(Direct.right);
-                        box.move_cursorR();
+                        box.move_caretR();
                         manip_table.move_focus(Direct.right);
                     }
                     if(event.text.text[0] == 'q') SDL_Quit();
@@ -167,7 +165,7 @@ class ManipTextBOX {
                 case SDL_TEXTEDITING:   // composition is changed or started
                     writeln("in editing");
                     box.composition = event.edit.text;
-                    box.set_cursor(event.edit.start);
+                    box.set_caret(event.edit.start);
                     manip_table.redraw();
                     // selection_len = event.edit.length;
                     break;

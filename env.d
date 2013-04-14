@@ -20,4 +20,4 @@ SDL_Scancode EXIT_KEY = SDL_SCANCODE_Q;
 SDL_Scancode DELETE_KEY = SDL_SCANCODE_X;
 SDL_Scancode INSERT_KEY = SDL_SCANCODE_I;
 
-string control_deco = "decoration/deco.bmp";
+string control_deco = "decoration/decoE.png";

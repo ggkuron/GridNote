@@ -1,8 +1,8 @@
 # Makefile
 
 PROJECTDIR = ./
-SRC 	= env.d init.d gui/*.d misc/*.d  manip.d cell/*.d  command/*.d slite.d text/*.d 
-FLAGS	= -L-L/usr/local/lib -L-lDerelictUtil -L-lDerelictSDL2 -L-lSDL2 -L-lSDL2_ttf -L-lSDL2_mixer -L-lSDL2_image -L-lpthread -L-lfreetype
+SRC 	= env.d init.d gui/*.d misc/*.d  manip.d cell/*.d  command/*.d slite.d text/*.d shape/*
+FLAGS	= -L-L/usr/local/lib -L-lDerelictUtil -L-lDerelictSDL2 -L-lSDL2 -L-lSDL2_ttf -L-lSDL2_mixer -L-lSDL2_image -L-lpthread -L-lfreetype  -L-lcairo -version=CairoHasPngFunctions
 OUT		= m
 
 .PHONY : all

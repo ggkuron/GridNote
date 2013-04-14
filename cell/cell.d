@@ -4,11 +4,20 @@ import derelict.sdl2.sdl;
 import misc.direct;
 import std.array;
 import misc.array;
+import std.exception;
 
 struct Cell
 {
     int row;
     int column;
+    Cell opBinary(string op)(Cell rhs) if(op =="+"){
+        return  Cell(row + rhs.row, column + rhs.column);
+    }
+    Cell opBinary(string op)(Cell rhs) if(op =="-"){
+        auto result = Cell(row - rhs.row, column - rhs.column);
+        enforce(result.row >= 0 && result.column >= 0);
+        return result;
+    }
 }
 void show(Cell c){
     import std.stdio;
@@ -39,10 +48,6 @@ Cell if_moved(const Cell c,Direct to){
     return result;
 }
 
-Cell minus(Cell a, Cell b){
-    return Cell(a.row - b.row,
-                a.column - b.column);
-}
 bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
     if(cells.empty) assert(0);
     bool[Direct] result;
@@ -51,7 +56,7 @@ bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
     foreach(a; cells)
     {
         if(a.column == searching.column)
-        {   // may be adjacent to up or down
+        {   // adjacent to up or down
             if(a.row == searching.row-1)  result[Direct.up] = true;
             if(a.row == searching.row+1)  result[Direct.down] = true;
         } 
@@ -68,49 +73,32 @@ alias int BOX_ID;
 
 class CellBOX{
     CellBOX attached; // table にアタッチされていない状態(== null)も取りうる
-    Cell offset;
+    Cell[] using_cells;
     CellBOX[Cell] cells;
 
     // singletonもどきたちのための
     enum num_of_special_id = 30;  // stored for special BOX like selecter
     enum empty_cell_id = 0;
     enum selecter_id = 1; // box user creates
-    enum view_id = 2; // largest BOX in window
+    enum view_id = 2; // user view of table
     enum table_id = 3;
-    static BOX_ID __id_counter = num_of_special_id;
+    static BOX_ID _id_counter = num_of_special_id;
     BOX_ID id;
-    // this(){ id = __id_counter++; }
-    this(BOX_ID special_id)
-    in{
+    this(BOX_ID special_id,CellBOX a)
+        in{
         assert(special_id <  num_of_special_id);
         assert(special_id != empty_cell_id );
     }body{
          id = special_id; 
+         attached = a;
     }
-    this(CellBOX replace){
-        replace_of(replace);
-    }
-    this(CellBOX attach, Cell _offset){
-        attach_to(attach,_offset);
-    }
-    this(BOX_ID special_id, CellBOX attach, Cell _offset){
-        this(special_id);
-        attach_to(attach,_offset);
-    }
-    void attach_to(CellBOX box,Cell _offset){
-        attached = box;
-        offset = _offset;
-        foreach(c; box.cells)
-            cells[offset] = c; 
-    }
-    void replace_of(CellBOX box){
-        attached = box.attached;
-        offset = box.offset;
-        cells = box.cells;
+    this(CellBOX a){
+        id = _id_counter++;
+        attached = a;
     }
     bool changed_flg;
     void notify()
-    in{ // 
+        in{ // 
         assert(attached !is null);
     }body{ // notify need window to redraw 
         attached.changed_flg= true;
@@ -137,10 +125,17 @@ class CellBOX{
         cells.clear();
     }
     void hold(int row,int column,int w,int h){
-        foreach(r ; row .. w)
-        foreach(c ; column .. h)
+        foreach(r; row .. w)
+        foreach(c; column .. h)
         {
             add(Cell(r,c));
+        }
+    }
+    void hold(CellBOX b,int row,int column,int w,int h){
+        foreach(r; row .. w)
+        foreach(c; column .. h)
+        {
+            add(Cell(r,c),b);
         }
     }
     void hold(Cell c,int w,int h){
@@ -155,7 +150,7 @@ class CellBOX{
         return false;
     }
     bool is_on_edge(Cell c, Direct on){
-        return is_in(this.edge_cells[on], c);
+        return is_in(edge_cells[on], c);
     }
     @property Cell[][Direct] edge_cells(){
         Cell[][Direct] result;
@@ -169,10 +164,10 @@ class CellBOX{
             if(c.column > max_column) max_column = c.column;            
             if(c.column < min_column) min_column = c.column;            
         }
-        result[Direct.left] = in_column(min_column);
-        result[Direct.right] = in_column(max_column);
-        result[Direct.up] = in_row(min_row);
-        result[Direct.down] = in_row(max_row);
+        result[Direct.left] = cells_in_column(min_column);
+        result[Direct.right] = cells_in_column(max_column);
+        result[Direct.up] = cells_in_row(min_row);
+        result[Direct.down] = cells_in_row(max_row);
 
         return result;
     }
@@ -186,17 +181,17 @@ class CellBOX{
     }
     void move(Direct dir){
         // 端点でテーブル自体にオフセットかける？
-        CellBOX[Cell] tmp;
+        CellBOX[Cell] result;
         foreach(cell; cells.keys)
-        {
+        {   // in this block brought no influence on member or external values
             auto saved = cell;
-            move_own(cell,dir);
-            tmp[cell] = cells[saved];
+            auto next = if_moved(cell,dir);
+            result[next] = cells[saved];
         }
-        cells = tmp;
+        cells = result;
     }
     // Get Info
-    Cell[] in_row(const int row)const{
+    Cell[] cells_in_row(const int row)const{
         Cell[] result;
         foreach(c; cells.keys)
         {
@@ -205,7 +200,7 @@ class CellBOX{
         }
         return result;
     }
-    Cell[] in_column(const int column)const{
+    Cell[] cells_in_column(const int column)const{
         Cell[] result;
         foreach(c;cells.keys)
         {
@@ -214,39 +209,129 @@ class CellBOX{
         }
         return result;
     }
-    static int __recursion;
+    static int _recursion;
     int recursive_depth(){
-        __recursion = 0;
+        _recursion = 0;
         return check_recursion();
     }
     int check_recursion(){
         if(attached)
-        {
-            ++__recursion;
+        {   ++_recursion;
             return attached.check_recursion();
-        }else return __recursion;
+        }else return _recursion;
     }
     @property Cell upper_left(){
+        return upper_left(cells.keys);
+    }
+    @property Cell upper_left(const Cell[] cells){
         int min_column = int.max;
         int min_row = int.max;
-        foreach(c; cells.keys)
+        foreach(c; cells)
             if(c.column <= min_column)  min_column = c.column;
-        Cell[] on_left_edge = in_column(min_column);
-        foreach(c; cells.keys)
+        Cell[] on_left_edge = cells_in_column(min_column);
+        foreach(c; cells)
             if(c.row <= min_row) min_row = c.row;
+        assert(min_column != int.max && min_row != int.max);
+        if(min_column == int.max || min_row == int.max){
+            import std.stdio;
+            writeln("!!!! somethingi is wrong with func 'upper_left' !!, but it ");
+            return cast(Cell)null;
+        }
         return Cell(min_row,min_column);
     }
+
     int count_linedcells(Cell from,Direct to){
         int result;
-        while(is_in!(Cell)(cells.keys, from))
+        while(is_in(cells.keys, from))
         {
             from = if_moved(from,to);
             ++result;
-            // import std.stdio;
-            // writefln("result:%d",result);
         }
         return result-1; // 自身のセルの分の1
     }
 }
 
 
+ContentBOX change_with(TableBOX table,ContentBOX content)
+    in{
+    assert(content.attached is table);
+    }
+    out{
+    assert(is(content == TableBOX));
+    assert(is(table == ContentBOX));
+    }
+body{
+    content.attached = null;
+    content = cast(TableBOX)content;
+    table.attached = content;
+    table.using_cells = content.using_cells;
+    auto result = new ContentBOX(content,content.using_cells);
+    content.using_cells.clear();
+    table.clear();
+    return result;
+    // tableはもう捨てる
+    // 型変更できるならその方がいい
+    // D言語力不足
+}
+
+class ContentBOX : CellBOX{
+    this(BOX_ID special_id, CellBOX attach, Cell[] contents_area){
+        super(special_id,attach);
+        attach_to(contents_area);
+    }
+    this(ContentBOX attach, Cell[] contents_area){
+        super(attach);
+        attach_to(contents_area); 
+    }
+    this(ContentBOX attach){
+        super(attach);
+    }
+    private void attach_to(Cell[] contents_area){
+        using_cells = contents_area;
+        auto offset = upper_left(using_cells);
+        foreach(c,box; cells)
+        {
+            if(!(c in attached.cells))
+            attached.cells[c + offset] = box; 
+            // テーブルに空きがないと無視されるぞ！！
+        }
+    }
+}
+class TableBOX : ContentBOX{
+    this(){
+        attached = null;
+        super(null);
+    }
+    invariant(){
+        assert(attached is null);
+    }
+}
+class ReferBOX : CellBOX{
+    Cell offset;
+    this(ContentBOX attach, Cell ul,int w,int h)
+    body{
+        super(view_id,attach);
+        capture_to(ul,w,h);
+    }
+    void capture_to(Cell ul,int w,int h){
+        offset = ul;
+        foreach(r; ul.row .. w)
+        foreach(c; ul.column .. h)
+        {
+            auto itr = Cell(r,c);
+            if(is_in(attached.cells.keys,ul+itr))
+                add(itr, attached.cells[ul + itr]);
+        }
+    }
+    override @property Cell upper_left(){
+        return offset;
+    }
+}
+class SelectBOX : CellBOX{
+    Cell cursor;
+    this(ContentBOX attach,Cell cursor)
+    body{
+        super(selecter_id,attach);
+        this.cursor = cursor;
+    }
+}

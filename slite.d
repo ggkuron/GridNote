@@ -10,7 +10,7 @@ class Slite{
     // 使われるもの
     Window mainWindow; // guiは全部こいつが引き受ける
     SDL_Event event;
-    CellBOX focused_table;
+    TableBOX focused_table;
 
     // 使うもの
     InputInterpreter interpreter;
@@ -20,7 +20,7 @@ class Slite{
     
     this(){
         mainWindow = new Window();
-        focused_table = new CellBOX(CellBOX.table_id);
+        focused_table = new TableBOX();
         interpreter = new InputInterpreter(this);
         manip_table = new ManipTable(mainWindow,focused_table,interpreter,&event);
         

@@ -4,27 +4,32 @@ import derelict.sdl2.sdl;
 import gui.gui;
 import cell.cell;
 import misc.direct;
+import deimos.cairo.cairo;
+import shape.shape;
 
 class RenderBOX{
-    SDL_Renderer* renderer;
+    cairo_t* cr;
     PageView page_view;
     CellBOX in_view;
     // SDL_Rect[] contents_positions;
-    this(SDL_Renderer* r,PageView pv){
-        renderer = r;
+    this(cairo_t* r,PageView pv){
+        cr = r;
         page_view = pv;
         in_view = pv.in_view;
     }
-    SDL_Rect get_position(CellBOX box){
-        auto ul_c = box.upper_left;
+    Rect get_position(CellBOX box){
+        auto ul = box.upper_left;
 
         auto depth = box.recursive_depth();
         auto grid = page_view.grid_length(depth) ;
         import std.stdio;
-        // writef("depth:%d grid:%d cw%d ch%d \n",depth,grid);
-        int w = grid * (box.count_linedcells(ul_c,Direct.right) + 1);
-        int h = grid * (box.count_linedcells(ul_c,Direct.down) + 1);
+        writef("depth:%d grid:%d \n",depth,grid);
+        int w = grid * (box.count_linedcells(ul,Direct.right) + 1);
+        int h = grid * (box.count_linedcells(ul,Direct.down) + 1);
 
-        return SDL_Rect(page_view.get_x(ul_c),page_view.get_y(ul_c), w, h);
+        auto result =  new Rect(page_view.get_x(ul),page_view.get_y(ul), w, h);
+        writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
+        writefln("lu is %d %d ",ul.row,ul.column);
+        return result;
     }
 }
