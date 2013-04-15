@@ -175,7 +175,9 @@ class PageView : Widget {
         update();
     }
     void set_in_view(){
-        in_view.capture_to(in_view.offset,cast(int)(holding_area.w/gridSpace),cast(int)(holding_area.h/gridSpace));
+        in_view.capture_to(in_view.offset,
+                cast(int)(holding_area.w/gridSpace),
+                cast(int)(holding_area.h/gridSpace));
     }
     Rect back;
     RectDrawer backdrw;
@@ -189,7 +191,9 @@ class PageView : Widget {
         foreach(box_in_view; in_view.cells)
         {
             if(auto tb = cast(TextBOX)box_in_view) 
+            { 
                 render_text.render(tb);
+            }
         }
     }
     int grid_length(int depth){ // 階層化に対応してる？？
@@ -240,9 +244,9 @@ class PageView : Widget {
         final switch(manip_table.mode)
         {
             case focus_mode.normal:
-                emphasizeGrid(manip_table.focus,normal_focus_color,emphasizedLineWidth); break;
+                emphasizeGrid(manip_table.select.focus,normal_focus_color,emphasizedLineWidth); break;
             case focus_mode.select:
-                emphasizeGrid(manip_table.focus,selected_focus_color,emphasizedLineWidth); break;
+                emphasizeGrid(manip_table.select.focus,selected_focus_color,emphasizedLineWidth); break;
             case focus_mode.edit:
                 break;
         }

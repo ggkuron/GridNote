@@ -33,19 +33,20 @@ class RenderTextBOX : RenderBOX{
         assert(box !is null);
         box.loaded_flg = true;
     }
-    void render(TextBOX box){
+    void render(TextBOX box)
+        in{
+        assert(!box.cells.keys.empty);
+        }
+    body{
         setBOX(box);
-        auto pos = get_position(box); // Cell.Cell::get_position
+        auto pos = get_position(box); // gui.render_box::get_position
         str = box.c_str;
         writef("%f %f %f %f :\n",pos.x,pos.y,pos.w,pos.h);
         cairo_move_to(cr,pos.x,pos.y);
         cairo_show_text(cr,str);
         writeln("wt ",str);
     }
-    ~this()
-    {
-        // foreach(font; fonts)
-    }
+    ~this(){}
     private:
 }
  

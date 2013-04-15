@@ -6,7 +6,6 @@ import derelict.sdl2.sdl;
 import manip;
 import env;
 import misc.direct;
-import misc.tuple;
 import slite;
 
 class Command{

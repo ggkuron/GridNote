@@ -11,9 +11,9 @@ import shape.shape;
 
 class TextBOX : ContentBOX
 {   // text の行数を Cellの高さに対応させてみる
-    this(ContentBOX parent,Cell[] offset){ 
+    this(ContentBOX parent,Cell[] areas){ 
+        super(parent,areas);
         text = new Text();
-        super(parent,offset);
     }
     ~this(){ }
 
@@ -22,14 +22,11 @@ class TextBOX : ContentBOX
 
     bool loaded_flg;
     int caret;
-    int current_line;
+    // int current_line;
     string font_name;
     char[] composition;
     int font_size;
     Color font_color;
-    invariant(){
-        assert(current_line <= text.lines);
-    }
     Text exportText(){
         return text;
     }
@@ -38,12 +35,12 @@ class TextBOX : ContentBOX
     }
     void insert_char(const dchar c){
         import std.stdio;
-        text.insert(current_line,c);
+        text.insert(c);
     }
     void insert(dstring s){
         import std.stdio;
         foreach(c; s)
-            text.insert(current_line,c);
+            text.insert(c);
     }
     void insert_char(char[32LU] cs){
         import std.stdio;

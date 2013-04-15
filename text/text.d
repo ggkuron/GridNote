@@ -20,10 +20,10 @@ class Text
     dchar[pos][line] writing;
     int current_line;
     int position;
-    ulong insert(int line_num,dchar c){
-        writing[line_num][position++] = c;
-        writef("insert : %s\n",writing[line_num]);
-        return writing[line_num].length;
+    ulong insert(dchar c){
+        writing[current_line][position++] = c;
+        writef("insert : %s\n",writing[current_line]);
+        return writing[current_line].length;
     }
     @property bool empty(){
         return writing.keys.empty();
