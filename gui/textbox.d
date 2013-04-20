@@ -14,20 +14,15 @@ import std.stdio;
 import shape.shape;
 
 class RenderTextBOX : RenderBOX{
-    cairo_t* cr;
     cairo_text_extents_t extents;
     const(char)* str;
     ubyte fontsize=40;
     Color fontcolor;
     this(PageView pv)
     body{
-        cr = pv.cr;
-        super(cr, pv);
+        super(pv);
         fontsize = cast(ubyte)pv.gridSpace;
-        cairo_select_font_face(cr,"Sans",CairoFontSlant.Normal,CairoFontWeight.Bold);
-        cairo_set_font_size(cr,fontsize);
         fontcolor = black;
-        cairo_text_extents(cr,str,&extents);
     }
     void setBOX(TextBOX box){
         assert(box !is null);
@@ -35,16 +30,22 @@ class RenderTextBOX : RenderBOX{
     }
     void render(TextBOX box)
         in{
-        assert(!box.cells.keys.empty);
+        assert(!box.managed_area.keys.empty);
         }
     body{
+        cairo_set_source_rgb(cr,1,1,0);
+        cairo_select_font_face(cr,"cairo:monospace",CairoFontSlant.Normal,CairoFontWeight.Bold);
+        cairo_set_font_size(cr,fontsize);//cr,fontsize);
+        // cairo_text_extents(cr,"hello",&extents);
+
         setBOX(box);
         auto pos = get_position(box); // gui.render_box::get_position
         str = box.c_str;
-        writef("%f %f %f %f :\n",pos.x,pos.y,pos.w,pos.h);
-        cairo_move_to(cr,pos.x,pos.y);
+        cairo_move_to(cr,pos.x,pos.y+page_view.gridSpace);
+        // cairo_move_to(cr,0.5-extents.width/2 - extents.x_bearing,
+                //0.5-extents.height/2 - extents.y_bearing);
         cairo_show_text(cr,str);
-        writeln("wt ",str);
+        writefln("wt %s",str);
     }
     ~this(){}
     private:

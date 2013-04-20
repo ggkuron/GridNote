@@ -56,10 +56,12 @@ class ManipTable{
     }
     void move_focus(Direct dir){
         move_own(select.focus,dir);
+        import std.stdio;
+        writeln("focus: ",select.focus);
     }
-    CellBOX fucus_to_box(){
-        return focused_table.cells[select.focus];
-    }
+    // CellBOX fucus_to_box(){
+    //     return focused_table.managed_area[select.focus];
+    // }
     void start_select(){
         mode = focus_mode.select;
         select.add(select.focus);
@@ -71,18 +73,25 @@ class ManipTable{
         move_focus(dir);
     }
     void side_expand_select(Direct dir)
-        in{ assert(mode == focus_mode.select);
-        }out{
-            assert(mode == focus_mode.select);
-    }body{
+        in{
+        assert(mode == focus_mode.select
+             ||mode == focus_mode.edit);
+        }
+        out{
+        assert(mode == focus_mode.select
+             ||mode == focus_mode.edit);
+        }
+    body{
             select.expand(dir);
     }
     void single_expand_select(Direct dir)
-        in{ assert(mode == focus_mode.select);
-        }out{
-            assert(mode == focus_mode.select);
-            // assert(focus == focus);
-    }body{
+        in{
+        assert(mode == focus_mode.select);
+        }
+        out{
+        assert(mode == focus_mode.select);
+        }
+    body{
             auto adjacent = select.focus; // Cell は struct . focusは変わらない
             move_own(adjacent,dir);
             select.add(adjacent); // 
@@ -92,26 +101,22 @@ class ManipTable{
     }
     void return_to_normal_mode()
         in{
-            assert(mode == focus_mode.select);
-        }out{
-            assert(mode == focus_mode.normal);
-    }body{
+        assert(mode == focus_mode.select);
+        }
+        out{
+        assert(mode == focus_mode.normal);
+        }
+    body{
         select.clear();
         mode = focus_mode.normal;
     }
-    // void add_to_table(CellBOX box){
-    //     foreach(c; select.cells.keys)
-    //         focused_table.add(c,box);
-    // }
     private TextBOX create_text_box(){
-        auto tb = new TextBOX(focused_table,select.cells.keys);
-        // add_to_table(tb);
-        // import std.stdio;
-        // writeln("table.select:",focused_table.cells);
+        auto tb = new TextBOX(focused_table,select.managed_area.keys);
+        focused_table.add_box(tb);
         return tb;
     }
     void start_insert_normal_text(){
-        // select.clear();
+        mode = focus_mode.edit;
         select.add(select.focus);
         auto tb = create_text_box();
         manip_textbox.start_input(tb);

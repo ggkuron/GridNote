@@ -123,7 +123,7 @@ class ControlPanel : Widget {
 
 class PageView : Widget {
     ManipTable manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
-    ContentBOX table;    // 描画すべき対象: 
+    TableBOX table;    // 描画すべき対象: 
     ReferBOX in_view;    // table にattachされた 表示領域
 
     RenderTextBOX render_text ;
@@ -137,7 +137,7 @@ class PageView : Widget {
     Color selected_focus_color = Color(0,255,255,168);
 
     // Cell[] start_offset = [Cell(0,0)];
-    this(Window w,ContentBOX ct,ManipTable uv, Cell start_offset = Cell(0,0))
+    this(Window w,TableBOX table,ManipTable uv, Cell start_offset = Cell(0,0))
         out{
             assert(cr);
             assert(table);
@@ -165,7 +165,7 @@ class PageView : Widget {
 
         super(w,25,0,75,100);
         manip_table = uv;
-        table = ct;
+        this.table = table;
 
         init_selecter();
         init_drwer();
@@ -175,7 +175,7 @@ class PageView : Widget {
         update();
     }
     void set_in_view(){
-        in_view.capture_to(in_view.offset,
+        in_view.capture(in_view.offset,
                 cast(int)(holding_area.w/gridSpace),
                 cast(int)(holding_area.h/gridSpace));
     }
@@ -187,13 +187,10 @@ class PageView : Widget {
     void renderTable(){
         import std.stdio;
         set_in_view();
-        if(!in_view.cells.keys.empty)
-        foreach(box_in_view; in_view.cells)
+        if(!in_view.managed_area.keys.empty)
+        foreach(box_in_view; in_view.table_area)
         {
-            if(auto tb = cast(TextBOX)box_in_view) 
-            { 
-                render_text.render(tb);
-            }
+            render_text.render(cast(TextBOX)box_in_view);
         }
     }
     int grid_length(int depth){ // 階層化に対応してる？？
@@ -244,17 +241,20 @@ class PageView : Widget {
         final switch(manip_table.mode)
         {
             case focus_mode.normal:
-                emphasizeGrid(manip_table.select.focus,normal_focus_color,emphasizedLineWidth); break;
+                emphasizeGrid(manip_table.select.focus,normal_focus_color,emphasizedLineWidth); 
+                break;
             case focus_mode.select:
-                emphasizeGrid(manip_table.select.focus,selected_focus_color,emphasizedLineWidth); break;
+                emphasizeGrid(manip_table.select.focus,selected_focus_color,emphasizedLineWidth); 
+                break;
             case focus_mode.edit:
+                emphasizeGrid(manip_table.select.focus,selected_focus_color,emphasizedLineWidth); 
                 break;
         }
     }
     Rect select;
     RectDrawer select_drwer;
     void renderSelect(){
-        emphasizeGrids(manip_table.select.cells.keys,
+        emphasizeGrids(manip_table.select.managed_area.keys,
                 selected_cell_border_color,selectedLineWidth);
     }
     private void emphasizeGrid(const Cell cell,const Color grid_color,const ubyte grid_width){
@@ -284,8 +284,8 @@ class PageView : Widget {
         LinesDrawer drwer = new LinesDrawer(cr,perimeters);
         drwer.stroke();
     }
-    double get_x(Cell c){ return c.column * gridSpace + holding_area.x; }
-    double get_y(Cell c){ return c.row * gridSpace + holding_area.y; }
+    double get_x(const Cell c)const{ return c.column * gridSpace + holding_area.x; }
+    double get_y(const Cell c)const{ return c.row * gridSpace + holding_area.y; }
     // Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
     private Line CellLine(const Cell cell,const Direct dir,Color color,double w){
         auto startp = new Point();
@@ -330,7 +330,7 @@ class PageView : Widget {
     }
     void update(){
         in_view.clear();
-        in_view.capture_to(in_view.offset,cast(int)(holding_area.w/gridSpace), cast(int)(holding_area.h/gridSpace));
+        in_view.capture(in_view.offset,cast(int)(holding_area.w/gridSpace), cast(int)(holding_area.h/gridSpace));
         set_in_view();
     }
     void table_check(){

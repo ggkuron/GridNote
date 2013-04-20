@@ -3,6 +3,7 @@ module cell.cell;
 import derelict.sdl2.sdl;
 import misc.direct;
 import std.array;
+import std.algorithm;
 import misc.array;
 import std.exception;
 
@@ -68,9 +69,10 @@ bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
 alias int BOX_ID;
 
 class CellBOX{
-    CellBOX attached; // table にアタッチされていない状態(== null)も取りうる
-    Cell[] using_cells;
-    CellBOX[Cell] cells;
+    TableBOX attached; // table にアタッチされていない状態(== null)も取りうる
+
+    // alias table_area.keys managed_area;
+    Cell[Cell] managed_area;
 
     // singletonもどきたちのための
     enum num_of_special_id = 30;  // stored for special BOX like selecter
@@ -80,7 +82,7 @@ class CellBOX{
     enum table_id = 3;
     static BOX_ID _id_counter = num_of_special_id;
     BOX_ID id;
-    this(BOX_ID special_id,CellBOX a)
+    this(BOX_ID special_id,TableBOX a)
         in{
         assert(special_id <  num_of_special_id);
         assert(special_id != empty_cell_id );
@@ -88,9 +90,13 @@ class CellBOX{
          id = special_id; 
          attached = a;
     }
-    this(CellBOX a){
+    this(TableBOX a){
         id = _id_counter++;
         attached = a;
+    }
+    this(TableBOX a,Cell[] area){
+        this(a);
+        add(area);
     }
     bool changed_flg;
     void notify()
@@ -101,25 +107,16 @@ class CellBOX{
     }
     // Manipulations
     final void add(const Cell c){
-        cells[c] = null;
+        managed_area[c] = c;
     }
-    final void add(Cell c,CellBOX box){
-        cells[c] = box;
+    final void add(const Cell[] area){
+        foreach(c; area)
+            add(c);
     }
-    final void remove(Cell target){
-        cells.remove(target);
+    final void remove(const Cell c){
+        managed_area.remove(c);
     }
-    final private void add(CellBOX box){
-        foreach(c; box.cells.keys)
-            cells[c] = box;
-    }
-    final void remove(CellBOX box){
-        foreach(c; box.cells.keys)
-            cells.remove(c);
-    }
-    final void clear(){
-        cells.clear();
-    }
+
     final void hold(int row,int column,int w,int h){
         foreach(r; row .. w)
         foreach(c; column .. h)
@@ -127,13 +124,13 @@ class CellBOX{
             add(Cell(r,c));
         }
     }
-    final void hold(CellBOX b,int row,int column,int w,int h){
-        foreach(r; row .. w)
-        foreach(c; column .. h)
-        {
-            add(Cell(r,c),b);
-        }
-    }
+    // final void hold(CellBOX b,int row,int column,int w,int h){
+    //     foreach(r; row .. w)
+    //     foreach(c; column .. h)
+    //     {
+    //         add(Cell(r,c),b);
+    //     }
+    // }
     final void hold(const Cell c,int w,int h){
         hold(c.row,c.column,w,h);
     }
@@ -153,7 +150,7 @@ class CellBOX{
         int min_column = int.max;
         int min_row = int.max;
         int max_column, max_row;
-        foreach(c; cells.keys)
+        foreach(c; managed_area.keys)
         {
             if(c.row > max_row) max_row = c.row;
             if(c.row < min_row) min_row = c.row;
@@ -177,34 +174,53 @@ class CellBOX{
     }
     final void move(Direct dir){
         // 端点でテーブル自体にオフセットかける？
-        CellBOX[Cell] result;
-        foreach(cell; cells.keys)
+        Cell[Cell] result;
+        foreach(cell; managed_area.keys)
         {   // in this block brought no influence on member or external values
-            auto saved = cell;
-            auto next = if_moved(cell,dir);
-            result[next] = cells[saved];
+            const current = cell;
+            const next = if_moved(cell,dir);
+            result[next] = managed_area[current];
         }
-        cells = result;
+        managed_area = result;
     }
     // Get Info
-    final Cell[] cells_in_row(const int row)const{
+
+    static final Cell[] cells_in_row(const Cell[] ary,const int row){
         Cell[] result;
-        foreach(c; cells.keys)
+        foreach(c; ary)
         {
             if(c.row == row)
                 result ~= c;
         }
         return result;
     }
-    final Cell[] cells_in_column(const int column)const{
+    final static Cell[] cells_in_column(const Cell[] ary,const int column){
         Cell[] result;
-        foreach(c;cells.keys)
+        foreach(c; ary)
         {
             if(c.column == column)
                 result ~= c;
         }
         return result;
     }
+    final Cell[] cells_in_row(const int row)const{
+        return cells_in_row(managed_area.keys,row);
+    }
+    final Cell[] cells_in_column(const int column)const{
+        return cells_in_column(managed_area.keys,column);
+    }
+    // out of date
+//     unittest{
+//         CellBOX box = new CellBOX(null);
+//         foreach(i; 0 .. 3)
+//         {
+//             box.add(Cell(i,5));
+//         }
+//         assert(box.cells_in_column(5) == box.table_area.keys);
+//         assert(box.cells_in_column(5) == [Cell(0,5),Cell(1,5),Cell(2,5)]);
+//         assert(box.cells_in_row(2) == [Cell(2,5)]);
+//         assert(box.upper_left(box.table_area.keys) == Cell(0,5));
+//     }
     static int _recursion;
     final int recursive_depth(){
         _recursion = 0;
@@ -216,33 +232,29 @@ class CellBOX{
             return attached.check_recursion();
         }else return _recursion;
     }
-    @property Cell upper_left()const{
-        return upper_left(cells.keys);
-    }
-    @property Cell upper_left(const Cell[] cells)const
-        in{
-        assert(!cells.empty());
-        }
+    // 求めらなっかたらnull  -> ToDO exception
+    static Cell upper_left(const Cell[] cells)
     body{
         int min_column = int.max;
         int min_row = int.max;
+
         foreach(c; cells)
-            if(c.column <= min_column)  min_column = c.column;
-        Cell[] on_left_edge = cells_in_column(min_column);
-        foreach(c; cells)
+            if(c.column < min_column)  min_column = c.column;
+        Cell[] on_left_edge = cells_in_column(cells,min_column);
+        // assert(!on_left_edge.empty); throw Exception
+        foreach(c; on_left_edge)
             if(c.row <= min_row) min_row = c.row;
-        assert(min_column != int.max && min_row != int.max);
         if(min_column == int.max || min_row == int.max){
             import std.stdio;
-            writeln("!!!! somethingi is wrong with func 'upper_left' !!, but it ");
-            return cast(Cell)null;
+            writeln("!!!! upper_left が求められなかった");
+            assert(0);
         }
         return Cell(min_row,min_column);
     }
 
     int count_linedcells(Cell from,Direct to)const{
         int result;
-        while(is_in(cells.keys, from))
+        while(is_in(managed_area.keys, from))
         {
             from = if_moved(from,to);
             ++result;
@@ -251,95 +263,137 @@ class CellBOX{
     }
 }
 
-
-ContentBOX change_with(TableBOX table,ContentBOX content)
-    in{
-    assert(content.attached is table);
-    }
-    out{
-    assert(is(content == TableBOX));
-    assert(is(table == ContentBOX));
-    }
-body{
-    content.attached = null;
-    content = cast(TableBOX)content;
-    table.attached = content;
-    table.using_cells = content.using_cells;
-    auto result = new ContentBOX(content,content.using_cells);
-    content.using_cells.clear();
-    table.clear();
-    return result;
-    // tableはもう捨てる
-    // 型変更できるならその方がいい
-    // D言語力不足
-}
+// ContentBOX change_with(TableBOX table,ContentBOX content)
+//     in{
+//     assert(content.attached is table);
+//     }
+//     out{
+//     assert(is(content == TableBOX));
+//     assert(is(table == ContentBOX));
+//     }
+// body{
+//     content.attached = null;
+//     auto conv = cast(CellBOX)content;
+//     content = cast(TableBOX)conv;
+//     table.attached = content;
+//     table.using_area = content.using_area;
+//     auto result = new ContentBOX(content,content.using_area);
+//     content.using_area.clear();
+//     table.clear();
+//     return result;
+//     // tableはもう捨てる
+//     // 型変更できるならその方がいい
+//     // 力不足
+// }
 
 class ContentBOX : CellBOX{
-    this(BOX_ID special_id, CellBOX attach, Cell[] area){
+    this(BOX_ID special_id, TableBOX attach, Cell[] area){
         super(special_id,attach);
-        attach_to(area);
     }
-    this(ContentBOX attach, Cell[] area){
+    this(TableBOX attach, Cell[] area){
+        super(attach,area);
+    }
+    this(TableBOX attach){
         super(attach);
-        attach_to(area); 
-    }
-    this(ContentBOX attach){
-        super(attach);
-    }
-    private void attach_to(Cell[] area){
-        using_cells = area;
-        auto offset = upper_left(using_cells);
-        import std.stdio;
-        foreach(a; area)
-        {   // insert into own cells
-            auto insert_cell = a - offset;
-            add(insert_cell);
-
-            // insert into attached using
-            if(a in attached.cells) continue;
-            else attached.cells[a] = this; 
-            // テーブルに空でなければそのCellから参照できない
-            // in case attached table has non empty cell in this key,
-            //  the table couldn't be known 
-        }
     }
 }
-class TableBOX : ContentBOX{
+class TableBOX : CellBOX{
+    CellBOX[Cell] table_area;
+
     this(){
         attached = null;
         super(null);
     }
-    invariant(){
-        assert(attached is null);
+    // invariant(){
+    //     assert(attached is null);
+    // }
+//     final void add_box(const Cell c){
+//         table_area[c] = null;
+//         add(c);
+//     }
+    // final void add_box(CellBOX box){
+    //     table_area[c] = box;
+    //     add(c);
+    // }
+    final void remove(Cell target){
+        table_area.remove(target);
     }
+    final void add_box(CellBOX box){
+        foreach(c; box.managed_area.keys)
+        {
+            table_area[c] = box;
+            add(c);
+        }
+    }
+    final void remove(CellBOX box){
+        foreach(c; box.managed_area.keys)
+        {
+            table_area.remove(c);
+            remove(c);
+        }
+    }
+    final void clear(){
+        table_area.clear();
+    }
+   //  private void attach_to(ContentBOX content){
+   //      import std.stdio;
+   //      foreach(cell; content.managed_area.keys)
+   //      {   // insert into own cells
+   //          writeln("insert:", cell);
+
+   //          // insert into attached using
+   //          if(cell in table_area) continue;
+   //          else  add_box(cell,content);
+   //          // テーブルに空でなければそのCellから参照できない
+   //          // in case attached table has non empty cell in this key,
+   //          //  the table couldn't be known 
+   //      }
+   //  }
+
 }
-class ReferBOX : CellBOX{
+
+class ReferBOX : TableBOX{
     Cell offset;
-    this(ContentBOX attach, Cell ul,int w,int h)
+    this(TableBOX attach, Cell ul,int w,int h)
     body{
-        super(view_id,attach);
-        capture_to(ul,w,h);
+        // super(view_id,attach);
+        attached = attach;
+        capture(ul,w,h);
     }
-    void capture_to(Cell ul,int w,int h){
+//     final private void capture(Cell os,int w,int h){
+//         offset = os;
+//         foreach(ref b,c; attached.table_area)
+//         {
+//             auto insert = c-offset;
+//             if(insert.column >= 0 
+//                     && insert.row >=0);
+//             {
+//                 this.table_area[insert] = b;
+//                 add(insert);
+//             }
+//         }
+//     }
+    void capture(Cell ul,int w,int h){
         offset = ul;
         foreach(r; 0 .. w)
         foreach(c; 0 .. h)
         {
             auto itr = Cell(r,c);
             auto set_cell = itr + offset;
-            if(is_in(attached.cells.keys,itr))
-                add(set_cell, attached.cells[itr]);
-            import std.stdio;
-            writeln("captured ",itr);
+            // if((set_cell.column >= 0 && set_cell.row >= 0)
+            if(is_in(attached.table_area.keys,itr))
+            {
+                this.table_area[set_cell] = attached.table_area[itr];
+                add(itr);
+                import std.stdio;
+                writeln("captured ",itr);
+            }
         }
-    }
-    override @property Cell upper_left(){
-        return offset;
     }
 }
 class SelectBOX : CellBOX{
     Cell focus;
-    this(ContentBOX attach,Cell cursor)
+    this(TableBOX attach,Cell cursor)
     body{
         super(selecter_id,attach);
         this.focus = cursor;

@@ -11,7 +11,7 @@ import shape.shape;
 
 class TextBOX : ContentBOX
 {   // text の行数を Cellの高さに対応させてみる
-    this(ContentBOX parent,Cell[] areas){ 
+    this(TableBOX parent,Cell[] areas){ 
         super(parent,areas);
         text = new Text();
     }
@@ -34,11 +34,9 @@ class TextBOX : ContentBOX
         return text.c_str;
     }
     void insert_char(const dchar c){
-        import std.stdio;
         text.insert(c);
     }
     void insert(dstring s){
-        import std.stdio;
         foreach(c; s)
             text.insert(c);
     }
