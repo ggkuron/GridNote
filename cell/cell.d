@@ -1,401 +1,777 @@
 module cell.cell;
 
-import derelict.sdl2.sdl;
 import misc.direct;
 import std.array;
 import std.algorithm;
 import misc.array;
 import std.exception;
+import std.math;
+
+import std.typecons;
+import std.stdio;
 
 struct Cell
 {
     int row;
     int column;
-    Cell opBinary(string op)(Cell rhs) if(op =="+"){
+    Cell opBinary(string op)(const Cell rhs)const if(op =="+"){
         return  Cell(row + rhs.row, column + rhs.column);
     }
-    Cell opBinary(string op)(Cell rhs) if(op =="-"){
-        auto result = Cell(row - rhs.row, column - rhs.column);
+    Cell opBinary(string op)(const Cell rhs)const if(op =="-"){
+        int minus_to_zero(int x){
+            return x<0?0:x;
+        }
+        auto r = minus_to_zero(row - rhs.row);
+        auto c = minus_to_zero(column - rhs.column);
+        auto result = Cell(r,c);
         enforce(result.row >= 0 && result.column >= 0);
         return result;
     }
+    unittest{
+        Cell a = Cell(5,5);
+        Cell b = Cell(10,10);
+        auto c = a-b;
+        auto d = a+b;
+        assert(c == Cell(0,0));
+        assert(d == Cell(15,15));
+    }
+    invariant(){
+        assert(row >= 0);
+        assert(column >= 0);
+    }
+    int opCmp(const Cell rhs)const{
+        if(row < rhs.row) return -1;
+        else if(row == rhs.row)
+        {
+            if(column < rhs.column) return -1;
+            else if(column == rhs.column) return 0;
+            else return 1;
+        }else return 1;
+    }
+    unittest{
+        Cell c = Cell(3,3);
+        assert(c.opCmp(c) == 0);
+        Cell a = Cell(1,3);
+        Cell b = Cell(3,1);
+        Cell d = Cell(3,4);
+        Cell e = Cell(4,3);
+        assert(a < c);
+        assert(c > a);
+        assert(d > c);
+        assert(c == Cell(3,3));
+    }
 }
 
-Cell move_own(ref Cell cell,Direct dir){
-    // 端点でテーブル自体にオフセットかける？
-    final switch(dir){
+Cell diff(Cell a,Cell b){
+    auto r = a.row - b.row;
+    auto c = a.column - b.column;
+    auto dr = (r<0)?-r:r;
+    auto dc = (c<0)?-c:c;
+    return Cell(dr,dc);
+}
+unittest{
+    Cell a = Cell(5,5);
+    Cell b = Cell(10,10);
+    auto c = diff(a,b);
+    assert(c == Cell(5,5));
+}
+
+
+
+
+
+void move(ref Cell cell,const Direct to){
+    final switch(to){
         case Direct.right: 
             ++cell.column;
             break;
         case Direct.left:
-            --cell.column;
+            if(cell.column != 0)
+                --cell.column;
             break;
         case Direct.up:
-            --cell.row;
+            if(cell.row != 0)
+                --cell.row;
             break;
         case Direct.down:
             ++cell.row;
             break;
     }
-    return cell;
 }
-Cell if_moved(const Cell c,Direct to){
+Cell if_moved(const Cell c,const Direct to){
     Cell result = c;
-    move_own(result,to);
+    result.move(to);
     return result;
 }
 
-bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
-    if(cells.empty) assert(0);
-    bool[Direct] result;
-    foreach(dir; Direct.min .. Direct.max+1){ result[cast(Direct)dir] = false; }
+// test 用
+// CellBOX になれる構造かどうかチェック
+// 四角い要素を持っているかどうか
+bool is_box(const Cell[] box){
+    if(box.length == 1) return true;
+    auto check_box = new CellBOX();
+    check_box.box_change(box,false); // check is false
 
-    foreach(a; cells)
+    foreach(c; box)
     {
-        if(a.column == searching.column)
-        {   // adjacent to up or down
-            if(a.row == searching.row-1)  result[Direct.up] = true;
-            if(a.row == searching.row+1)  result[Direct.down] = true;
-        } 
-        if(a.row == searching.row)
+        auto same_row = check_box.in_row(c.row);
+        int column_length;
+        foreach(r; same_row)
         {
-            if(a.column == searching.column-1) result[Direct.left] = true;
-            if(a.column == searching.column+1) result[Direct.right] = true;
+            auto upper = check_box.count_lined(r,Direct.up);
+            auto downer = check_box.count_lined(r,Direct.down);
+            auto total = upper + downer;
+
+            if(!column_length)
+            {
+                column_length = upper+downer;
+            }
+
+            if(column_length == total) continue;
+            else return false;
         }
+        return true;
     }
-    return result;
+    assert(0); // box is empty or null
+}
+unittest{
+    Cell[] box =[Cell(2,2),Cell(3,3),Cell(2,3),Cell(3,2)];
+    assert(is_box(box));
+    box =[Cell(3,3)];
+    assert(is_box(box));
+    box =[Cell(3,3),Cell(3,4)];
+    assert(is_box(box));
+    box =[Cell(2,3),Cell(3,3)];
+    assert(is_box(box));
 }
 
-alias int BOX_ID;
-
+// 四角い領域を持つこと
+// 領域の管理方法
 class CellBOX{
-    TableBOX attached; // table にアタッチされていない状態(== null)も取りうる
+    Cell upper_left;
+    Cell lower_right;
+    int row_width,
+        col_width;
+    Cell[] box;
 
-    // alias table_area.keys managed_area;
-    Cell[Cell] managed_area;
-
-    // singletonもどきたちのための
-    enum num_of_special_id = 30;  // stored for special BOX like selecter
-    enum empty_cell_id = 0;
-    enum selecter_id = 1; // box user creates
-    enum view_id = 2; // user view of table
-    enum table_id = 3;
-    static BOX_ID _id_counter = num_of_special_id;
-    BOX_ID id;
-    this(BOX_ID special_id,TableBOX a)
-        in{
-        assert(special_id <  num_of_special_id);
-        assert(special_id != empty_cell_id );
-    }body{
-         id = special_id; 
-         attached = a;
+    public bool is_in(const Cell c)const
+    body{
+        return .is_in!(Cell)(box,c);
     }
-    this(TableBOX a){
-        id = _id_counter++;
-        attached = a;
+    unittest{
+        auto cb = new CellBOX();
+        cb.create_in(Cell(3,3));
+        assert(cb.is_in(Cell(3,3)));
+        assert(!cb.is_in(Cell(3,4)));
+        cb.expand(Direct.right);
+        assert(cb.is_in(Cell(3,4)));
     }
-    this(TableBOX a,Cell[] area){
-        this(a);
-        add(area);
+    private void add(const Cell c){
+        box ~= c;
     }
-    bool changed_flg;
-    void notify()
-        in{ // 
-        assert(attached !is null);
-    }body{ // notify need window to redraw 
-        attached.changed_flg= true;
-    }
-    // Manipulations
-    final void add(const Cell c){
-        managed_area[c] = c;
-    }
-    final void add(const Cell[] area){
-        foreach(c; area)
-            add(c);
-    }
-    final void remove(const Cell c){
-        managed_area.remove(c);
-    }
-
-    final void hold(int row,int column,int w,int h){
-        foreach(r; row .. w)
-        foreach(c; column .. h)
-        {
-            add(Cell(r,c));
+    private void remove(const Direct dir){
+        debug(cell) writeln("remove start");
+        Cell[] delete_line;
+        final switch(dir){
+            case Direct.right:
+            case Direct.left:
+                if(row_width <= 1) return;
+                break;
+            case Direct.down:
+            case Direct.up:
+                if(col_width <= 1) return;
+                break;
         }
-    }
-    // final void hold(CellBOX b,int row,int column,int w,int h){
-    //     foreach(r; row .. w)
-    //     foreach(c; column .. h)
-    //     {
-    //         add(Cell(r,c),b);
-    //     }
-    // }
-    final void hold(const Cell c,int w,int h){
-        hold(c.row,c.column,w,h);
-    }
-    bool is_on_edge(Cell c){
-        foreach(each_edged; this.edge_cells)
+        delete_line = edge_cells[dir];
+        foreach(c; delete_line)
         {
-            if(is_in(each_edged,c)) return true;
+           misc.array.remove!(Cell)(box,c);
+           debug(cell) writefln("deleted %s",c);
+        }
+        update_info();
+        debug(cell) writeln("end");
+    }
+    public void clear(){
+        box.clear();
+    }
+    // 破壊的
+    // check == false はis_box でのチェック用
+    public bool box_change(const Cell[] newone,bool check=true){
+        if(check) 
+            if(is_box(newone)) return false;
+        box = newone.dup;
+        return true;
+    }
+    public void take_after(CellBOX oldone){
+        box = oldone.get_box_raw();
+        oldone = null;
+    }
+    unittest{
+        auto cb = new CellBOX(Cell(0,0),5,5);
+        cb.remove(Direct.up);
+        assert(cb.upper_left == Cell(1,0));
+        assert(cb.col_width == 5);
+        assert(cb.row_width == 4);
+        assert(cb.lower_right == Cell(4,4));
+        cb.remove(Direct.right);
+        assert(cb.upper_left == Cell(1,0));
+        assert(cb.col_width == 4);
+        assert(cb.row_width == 4);
+        assert(cb.lower_right == Cell(4,3));
+        cb.remove(Direct.left);
+        assert(cb.upper_left == Cell(1,1));
+        assert(cb.col_width == 3);
+        assert(cb.row_width == 4);
+        assert(cb.lower_right == Cell(4,3));
+        cb.remove(Direct.down);
+        assert(cb.upper_left == Cell(1,1));
+        assert(cb.col_width == 3);
+        assert(cb.row_width == 3);
+        assert(cb.lower_right == Cell(3,3));
+
+    }
+    public const(Cell[]) get_box()const{
+        return box;
+    }
+    public Cell[] get_box_dup()const{
+        return box.dup;
+    }
+    public Cell[] get_box_raw()const{
+        return cast(Cell[])box;
+    }
+
+    this(){}
+    this(Cell ul,int rw,int cw){
+        debug(cell){ 
+            writeln("ctro start");
+            writefln("rw %d cw %d",rw,cw);
+        }
+        hold_ul(ul,rw,cw);
+        debug(cell)writeln("ctor end");
+    }
+    private void update_info()
+    body{
+        debug(cell) writeln("update_info start");
+        if(!box.empty())
+        {
+            upper_left = search_upper_left();
+            auto row_lined = count_lined(upper_left,Direct.down);
+            auto col_lined = count_lined(upper_left,Direct.right);
+            lower_right = Cell(upper_left.row+row_lined,upper_left.column+col_lined);
+            row_width = ++row_lined;
+            col_width = ++col_lined;
+            debug(cell){
+                writefln("upper left %s",upper_left);
+                writeln(row_width," " ,col_width);
+            }
+        }else{
+
+        }
+
+        debug(cell) writeln("end");
+    }
+    unittest{
+        writeln("update_info unittest start");
+        auto cb = new CellBOX();
+        cb.create_in(Cell(5,5));
+        assert(cb.upper_left == Cell(5,5));
+        assert(cb.row_width == 1);
+        assert(cb.col_width == 1);
+
+        // ctor call hold call update_info
+        // and try calling again
+        cb.hold_ul(Cell(0,0),5,5);
+        cb.update_info();
+        // ... may cause nothing
+        assert(cb.upper_left == Cell(0,0));
+        assert(cb.row_width == 5);
+        assert(cb.col_width == 5);
+        assert(cb.lower_right == Cell(4,4));
+        writeln("end");
+    }
+        
+    void move(const Direct dir){
+        expand(dir);
+        remove(dir.reverse);
+        update_info();
+    }
+    void create_in(const Cell c)
+        in{
+        assert(box.empty);
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{ // create initial box
+        add(c);
+        update_info();
+    }
+    void expand(Direct dir)
+        in{
+        assert(is_box(box));
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{
+        debug(cell) writeln("expand start");
+        auto one_edges = edge_cells[dir];
+        foreach(c; one_edges)
+        {
+            c.move(dir);
+            add(c);
+        }
+        update_info();
+        debug(cell) writeln("end");
+    }
+    bool is_on_edge(Cell c)const{
+        foreach(each_edged; edge_cells())
+        {
+            if(each_edged.is_in(c)) return true;
             else continue;
         }
         return false;
     }
-    final bool is_on_edge(const Cell c,Direct on)const{
-        return is_in(edge_cells[on], c);
+    unittest{
+        writeln("is_on_edge unittest start");
+        auto cb = new CellBOX();
+        auto c = Cell(3,3);
+        cb.create_in(c);
+        assert(cb.is_on_edge(c));
+        foreach(idir; Direct.min .. Direct.max+1)
+        {   // 最終的に各方向に1Cell分拡大
+            auto dir = cast(Direct)idir;
+            cb.expand(dir);
+            assert(cb.is_on_edge(cb.get_upper_left));
+            assert(cb.is_on_edge(cb.get_lower_right));
+        }
+        writeln("end");
     }
-    final @property Cell[][Direct] edge_cells()const{
+    bool is_on_edge(const Cell c,Direct on)const{
+        return edge_cells[on].is_in(c);
+    }
+    @property Cell[][Direct] edge_cells()const{
         Cell[][Direct] result;
-        int min_column = int.max;
-        int min_row = int.max;
-        int max_column, max_row;
-        foreach(c; managed_area.keys)
-        {
-            if(c.row > max_row) max_row = c.row;
-            if(c.row < min_row) min_row = c.row;
-            if(c.column > max_column) max_column = c.column;            
-            if(c.column < min_column) min_column = c.column;            
-        }
-        result[Direct.left] = cells_in_column(min_column);
-        result[Direct.right] = cells_in_column(max_column);
-        result[Direct.up] = cells_in_row(min_row);
-        result[Direct.down] = cells_in_row(max_row);
+        int min_column = upper_left.column;
+        int min_row = upper_left.row;
+        int max_column = lower_right.column;
+        int max_row = lower_right.row;
+
+        result[Direct.left] = in_column(min_column);
+        result[Direct.right] = in_column(max_column);
+        result[Direct.up] = in_row(min_row);
+        result[Direct.down] = in_row(max_row);
 
         return result;
     }
-    final void expand(Direct dir){
-        auto one_edges = edge_cells[dir];
-        foreach(c; one_edges)
-        {
-            move_own(c,dir);
-            add(c);
-        }
+    @property public bool empty()const{
+        return box.empty();
     }
-    final void move(Direct dir){
-        // 端点でテーブル自体にオフセットかける？
-        Cell[Cell] result;
-        foreach(cell; managed_area.keys)
-        {   // in this block brought no influence on member or external values
-            const current = cell;
-            const next = if_moved(cell,dir);
-            result[next] = managed_area[current];
-        }
-        managed_area = result;
-    }
-    // Get Info
+    private Cell[] in_column(const int column)const{
+        Cell[] result;
 
-    static final Cell[] cells_in_row(const Cell[] ary,const int row){
-        Cell[] result;
-        foreach(c; ary)
-        {
-            if(c.row == row)
-                result ~= c;
-        }
-        return result;
-    }
-    final static Cell[] cells_in_column(const Cell[] ary,const int column){
-        Cell[] result;
-        foreach(c; ary)
+        foreach(c; box)
         {
             if(c.column == column)
                 result ~= c;
         }
         return result;
     }
-    final Cell[] cells_in_row(const int row)const{
-        return cells_in_row(managed_area.keys,row);
+    private Cell[] in_row(const int row)const{
+        Cell[] result;  // このくらいの冗長さは許されるだろう
+        foreach(c; box)
+        {
+            if(c.row == row)
+                result ~= c;
+        }
+        return result;
     }
-    final Cell[] cells_in_column(const int column)const{
-        return cells_in_column(managed_area.keys,column);
-    }
-    // out of date
-//     unittest{
-//         CellBOX box = new CellBOX(null);
-//         foreach(i; 0 .. 3)
-//         {
-//             box.add(Cell(i,5));
-//         }
-//         assert(box.cells_in_column(5) == box.table_area.keys);
-//         assert(box.cells_in_column(5) == [Cell(0,5),Cell(1,5),Cell(2,5)]);
-//         assert(box.cells_in_row(2) == [Cell(2,5)]);
-//         assert(box.upper_left(box.table_area.keys) == Cell(0,5));
-//     }
-    static int _recursion;
-    final int recursive_depth(){
-        _recursion = 0;
-        return check_recursion();
-    }
-    final int check_recursion(){
-        if(attached)
-        {   ++_recursion;
-            return attached.check_recursion();
-        }else return _recursion;
-    }
-    // 求めらなっかたらnull  -> ToDO exception
-    static Cell upper_left(const Cell[] cells)
+    void hold_ul(const Cell start,int h,int w)
+        in{
+        assert(h >= 0);
+        assert(w >= 0);
+        }
+        out{
+        assert(is_box(box));
+        }
     body{
-        int min_column = int.max;
-        int min_row = int.max;
+        box.clear();
+        create_in(start);
+        if(!w && !h) return;
 
-        foreach(c; cells)
-            if(c.column < min_column)  min_column = c.column;
-        Cell[] on_left_edge = cells_in_column(cells,min_column);
-        // assert(!on_left_edge.empty); throw Exception
-        foreach(c; on_left_edge)
-            if(c.row <= min_row) min_row = c.row;
-        if(min_column == int.max || min_row == int.max){
-            import std.stdio;
-            writeln("!!!! upper_left が求められなかった");
-            assert(0);
-        }
-        return Cell(min_row,min_column);
-    }
-
-    int count_linedcells(Cell from,Direct to)const{
-        int result;
-        while(is_in(managed_area.keys, from))
+        if(w)--w;
+        if(h)--h;
+        while(!(w==0 && h==0))
         {
-            from = if_moved(from,to);
-            ++result;
-        }
-        return result-1; // 自身のセルの分の1
-    }
-}
-
-// ContentBOX change_with(TableBOX table,ContentBOX content)
-//     in{
-//     assert(content.attached is table);
-//     }
-//     out{
-//     assert(is(content == TableBOX));
-//     assert(is(table == ContentBOX));
-//     }
-// body{
-//     content.attached = null;
-//     auto conv = cast(CellBOX)content;
-//     content = cast(TableBOX)conv;
-//     table.attached = content;
-//     table.using_area = content.using_area;
-//     auto result = new ContentBOX(content,content.using_area);
-//     content.using_area.clear();
-//     table.clear();
-//     return result;
-//     // tableはもう捨てる
-//     // 型変更できるならその方がいい
-//     // 力不足
-// }
-
-class ContentBOX : CellBOX{
-    this(BOX_ID special_id, TableBOX attach, Cell[] area){
-        super(special_id,attach);
-    }
-    this(TableBOX attach, Cell[] area){
-        super(attach,area);
-    }
-    this(TableBOX attach){
-        super(attach);
-    }
-}
-class TableBOX : CellBOX{
-    CellBOX[Cell] table_area;
-
-    this(){
-        attached = null;
-        super(null);
-    }
-    // invariant(){
-    //     assert(attached is null);
-    // }
-//     final void add_box(const Cell c){
-//         table_area[c] = null;
-//         add(c);
-//     }
-    // final void add_box(CellBOX box){
-    //     table_area[c] = box;
-    //     add(c);
-    // }
-    final void remove(Cell target){
-        table_area.remove(target);
-    }
-    final void add_box(CellBOX box){
-        foreach(c; box.managed_area.keys)
-        {
-            table_area[c] = box;
-            add(c);
-        }
-    }
-    final void remove(CellBOX box){
-        foreach(c; box.managed_area.keys)
-        {
-            table_area.remove(c);
-            remove(c);
-        }
-    }
-    final void clear(){
-        table_area.clear();
-    }
-   //  private void attach_to(ContentBOX content){
-   //      import std.stdio;
-   //      foreach(cell; content.managed_area.keys)
-   //      {   // insert into own cells
-   //          writeln("insert:", cell);
-
-   //          // insert into attached using
-   //          if(cell in table_area) continue;
-   //          else  add_box(cell,content);
-   //          // テーブルに空でなければそのCellから参照できない
-   //          // in case attached table has non empty cell in this key,
-   //          //  the table couldn't be known 
-   //      }
-   //  }
-
-}
-
-class ReferBOX : TableBOX{
-    Cell offset;
-    this(TableBOX attach, Cell ul,int w,int h)
-    body{
-        // super(view_id,attach);
-        attached = attach;
-        capture(ul,w,h);
-    }
-//     final private void capture(Cell os,int w,int h){
-//         offset = os;
-//         foreach(ref b,c; attached.table_area)
-//         {
-//             auto insert = c-offset;
-//             if(insert.column >= 0 
-//                     && insert.row >=0);
-//             {
-//                 this.table_area[insert] = b;
-//                 add(insert);
-//             }
-//         }
-//     }
-    void capture(Cell ul,int w,int h){
-        offset = ul;
-        foreach(r; 0 .. w)
-        foreach(c; 0 .. h)
-        {
-            auto itr = Cell(r,c);
-            auto set_cell = itr + offset;
-            // if((set_cell.column >= 0 && set_cell.row >= 0)
-            if(is_in(attached.table_area.keys,itr))
+            if(w > 0)
             {
-                this.table_area[set_cell] = attached.table_area[itr];
-                add(itr);
-                import std.stdio;
-                writeln("captured ",itr);
+                expand(Direct.right);
+                --w;
+            }
+            if(h > 0)
+            {
+                expand(Direct.down);
+                --h;
             }
         }
+        update_info();
+    }
+    void hold_lr(const Cell lr,int h,int w)
+        in{
+        assert(h >= 0);
+        assert(w >= 0);
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{
+        auto s_r = lr.row-h+1;
+        if(s_r < 0) s_r = 0;
+        auto s_c = lr.column-w+1;
+        if(s_c < 0) s_c = 0;
+        auto start = Cell(s_r,s_c);
+        hold_ul(start,h,w);
+    }
+    unittest{
+        auto cb = new CellBOX();
+        cb.hold_lr(Cell(5,5),3,3);
+
+        assert(cb.upper_left == Cell(3,3));
+        assert(cb.row_width == 3);
+        assert(cb.col_width == 3);
+    }
+    void hold_ur(const Cell ur,int h,int w)
+        in{
+        assert(h >= 0);
+        assert(w >= 0);
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{
+        auto s_r = ur.row;
+        auto s_c = ur.column-w+1;
+        if(s_c<0){
+            w += s_c;
+            s_c = 0;
+        }
+        auto start = Cell(s_r,s_c);
+        hold_ul(start,h,w);
+    }
+    unittest{
+        auto cb = new CellBOX();
+        cb.hold_ur(Cell(5,5),3,3);
+
+        assert(cb.upper_left == Cell(5,3));
+        assert(cb.row_width == 3);
+        assert(cb.col_width == 3);
+    }
+    void hold_ll(const Cell ll,int h,int w)
+        in{
+        assert(h >= 0);
+        assert(w >= 0);
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{
+        auto s_r = ll.row-h+1;
+        if(s_r < 0) s_r = 0;
+        auto s_c = ll.column;
+        auto start = Cell(s_r,s_c);
+        hold_ul(start,h,w);
+    }
+    unittest{
+        auto cb = new CellBOX();
+        cb.hold_ll(Cell(5,5),3,3);
+
+        assert(cb.upper_left == Cell(3,5));
+        assert(cb.row_width == 3);
+        assert(cb.col_width == 3);
+    }
+    unittest{
+        auto cb = new CellBOX();
+        cb.hold_ul(Cell(3,3),5,5);
+
+        assert(cb.upper_left == Cell(3,3));
+        assert(cb.lower_right == Cell(7,7));
+        cb = new CellBOX();
+        cb.hold_ul(Cell(3,3),0,0);
+        assert(cb.upper_left == Cell(3,3));
+        assert(cb.lower_right == Cell(3,3));
+    }
+    Cell get_upper_left()const{
+        return upper_left;
+    }
+    Cell get_lower_right()const{
+        return lower_right;
+    }
+
+    private Cell search_upper_left(const Cell[] cells)const{
+        Cell result = Cell(int.max,int.max);
+        foreach(c; box)
+            if(c < result) result = c;
+        return result;
+    }
+    private Cell search_upper_left()const{
+        return search_upper_left(box);
+    }
+    private int count_lined(const Cell from,const Direct to)const{
+        debug(cell) writeln("count_lined start");
+        int result;
+        Cell c = from;
+        while(is_in(c))
+        {
+            ++result;
+            if(to == Direct.left && c.column == 0)
+                break;
+            if(to == Direct.up && c.row == 0)
+                break;
+            c.move(to);
+        }
+        debug(cell) writeln("end");
+        return result-1; // if(box is null) return -1;
+    }
+    unittest{
+        auto cb = new CellBOX();
+        cb.create_in(Cell(5,5));
+        cb.expand(Direct.right);
+        cb.expand(Direct.down);
+        assert(cb.count_lined(Cell(5,5),Direct.right) == 1);
+        assert(cb.count_lined(Cell(5,5),Direct.down) == 1);
+    }
+    public const int get_y_width()const{
+        return row_width;
+    }
+    public const int get_x_width()const{
+        return col_width;
     }
 }
-class SelectBOX : CellBOX{
-    Cell focus;
-    this(TableBOX attach,Cell cursor)
+
+abstract class ContentBOX : CellBOX{
+    BoxTable table;
+    this(BoxTable attach, ContentBOX newone)
+        in{
+        assert(attach !is null);
+        assert(newone !is null);
+        }
     body{
-        super(selecter_id,attach);
-        this.focus = cursor;
+        table = attach;
+        box = newone.box;
+    }
+    this(BoxTable attach)
+        in{
+        assert(attach !is null);
+        }
+    body{
+        table = attach;
+    }
+    public BoxTable get_table(){
+        return table;
+    }
+    //  BoxTable 以外から触るべからず
+    private int table_key; // 状態を保存するときには初期化必須
+    public void set_table_key(int a){
+        table_key = a;
+    }
+    public void delete_table_key(){
+        table_key = 0;
+    }
+}
+
+class BoxTable : CellBOX{
+    private int id_counter;
+
+    ContentBOX[int] content_table;
+    string[int] type_table;
+    int[Cell] keys;
+    // ContentBOX[Cell] table;
+
+    this(){}
+
+    public:
+    void add_box(T)(T u)
+        if(cast(ContentBOX)(typeof(T)))
+        in{
+        assert(u.table == this);
+        }
+    body{
+        u.set_table_key(++id_counter); // id == 0 は未初期化値として使う
+        foreach(c; u.get_box())
+            keys[c] = id_cnt;
+        type_table[id_counter] = typeid(typeof(T));
+        content_table[id_counter] = u;
+
+    }
+    void remove(ContentBOX u)
+        in{
+        assert(u.table == this);
+        }
+    body{
+        auto content_cells = u.get_box();
+        foreach(c; content_cells)
+        {
+            keys.remove(c);
+        }
+        content_table.remove(u.table_key);
+        type_table.remove(u.table_key);
+        u.delete_table_key();
+    }
+    public Tuple!(string,ContentBOX) get_content(const Cell c){
+        if(! (c in keys)) writeln("this cell is empty, no content return");
+        auto key = keys[c];
+        return tuple(type_table[key],content_table[key]);
+    }
+    const Cell[] get_used()const{
+        return keys.keys;
+    }
+    final void clear(){
+        keys.clear();
+    }
+}
+
+class ReferTable : BoxTable{
+    BoxTable master; // almost all manipulation acts on this table
+    Cell offset;
+    private int range_of_row,range_of_col;
+
+    this(BoxTable attach, Cell ul,int w,int h)
+        in{
+        assert(attach !is null);
+        }
+    body{
+        master = attach; // manipulating ReferBOX acts on attached Table
+    }
+    public void set_table(Cell ul,int w,int h){
+        offset = ul;
+        range_of_row = h;
+        range_of_col = w;
+    }
+    public:
+    private auto get_content(const Cell c){
+        return super.get_content(c+offset);
+    }
+    auto get_contents(){
+        Tuple!(string,ContentBOX)[ContentBOX] i_have;
+        foreach(c ; 0 .. range_of_col)
+        foreach(r ; 0 .. range_of_row)
+        {
+            auto itr = Cell(r,c);
+            auto item = get_content(itr);
+            i_have[item[1]] = item;
+        }
+        return i_have;
+    }
+    override void add_box(T)(T u)
+        if(cast(ContentBOX)(typeof(T)))
+        in{
+        assert(u.table == this);
+        }
+    body{
+        foreach(c; u.get_box())
+        {
+            table[c+offset] = u;
+        }
+    }
+    public void move_focus(const Direct to){
+        offset.move(to);
+    }
+    Cell get_view_position(const CellBOX b)const{
+        auto tmp = b.get_upper_left();
+        // pos(0,0)で止まる
+        return tmp - offset;
+    }
+    /+ void remove(const ContentBOX) 
+       Cell[] get_struct()
+       ContentBOX get_content(const Cell)
+        +/
+    // you can use super class's difinition 
+}
+
+import cell.textbox;
+class SelectBOX : ContentBOX{
+    Cell focus;
+    Cell pivot;
+    /+ inherited
+       CellBOX box
+       alias box this +/
+    this(BoxTable attach,Cell cursor=Cell(3,3))
+    body{
+        super(attach);
+        focus = cursor;
+    }
+    override void move(const Direct dir){
+        focus.move(dir);
+    }
+    void create_in(){
+        super.create_in(focus);
+        debug(cell)writefln("create in %s",focus);
+    }
+    bool is_on_edge()const{
+        return super.is_on_edge(focus);
+    }
+    bool is_on_edge(Direct dir)const{
+        return super.is_on_edge(focus,dir);
+    }
+    public TextBOX create_TextBOX(){
+        debug(cell) writeln("create_TextBOX start");
+        auto tb = new TextBOX(table);
+        tb.take_after(this);
+        debug(cell) writeln("end");
+        return tb;
+    }
+    private void set_pivot(const Cell p)
+        in{
+        assert(box.empty());
+        }
+    body{
+        debug(cell) writeln("set_pivot start");
+        pivot = p;
+        super.create_in(pivot);
+        debug(cell) writeln("end");
+    }
+    public void set_pivot(){
+        set_pivot(focus);
+    }
+    private void pivot_bound(Cell cl){
+        debug(cell) writeln("privot_bound start");
+        if(pivot == cl)  hold_ul(pivot,1,1);
+        if(pivot < cl) // rowが小さい
+        {
+            auto d = diff(cl,pivot);
+            auto dr = d.row+1;
+            auto dc = d.column+1;
+
+            if(cl.column == pivot.column) // 縦軸下
+                hold_ul(pivot,dr,1);
+            else if(cl.column < pivot.column) // 第3象限
+                hold_ur(pivot,dr,dc);
+            else 
+                hold_ul(pivot,dr,dc); // 第四象限
+        }else{
+            auto d = diff(pivot,cl);
+            auto dr = d.row+1;
+            auto dc = d.column+1;
+            if(cl.column == pivot.column) // 縦軸上
+                hold_lr(pivot,dr,1);
+            else if(cl.column > pivot.column) // 1
+                hold_ur(cl,dr,dc);
+            else // 3象限
+                hold_lr(pivot,dr,dc);
+        }
+        debug(cell) writeln("end");
+    }
+
+    public void expand_to_focus()
+        in{
+        assert(!box.empty());
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{
+        debug(cell) writeln("expand_to_focus start");
+        pivot_bound(focus);
+        debug(cell) writeln("end");
     }
 }

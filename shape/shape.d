@@ -1,10 +1,10 @@
 module shape.shape;
 // cairo wraper
 
-import derelict.sdl2.sdl;
-import deimos.cairo.cairo;
+// import deimos.cairo.cairo;
 import cell.cell;
 import std.string;
+import cairo.ImageSurface;
 
 struct Color{
     double r,g,b,a;
@@ -13,9 +13,9 @@ struct Color{
     this(double rr=255,double gg=0,double bb=0,double aa=255){
         r = rr; g = gg; b = bb; a = aa;
     }
-    this(SDL_Color c){
-        r = c.g; g = c.g; b = c.b;
-    }
+    // this(SDL_Color c){
+    //     r = c.g; g = c.g; b = c.b;
+    // }
 }
 static white = Color(255,255,255,255);
 static black = Color(0,0,0,255);
@@ -25,6 +25,7 @@ class Shape{
     Color color;
     void attach(ContentBOX box){}
     void set_color(Color c= Color(255,255,255,255)){
+        import std.stdio;
         color = c;
     }
     void scale(){}
@@ -87,10 +88,6 @@ class Rect : Shape{
     this(Rect r){
         this = r;
     }
-    static Rect opCall(SDL_Rect r){
-        Rect t = new Rect(r.x, r.y, r.w, r.h);
-        return t;
-    }
 }
         
 class Circle : Shape{
@@ -110,18 +107,18 @@ class Arc : Circle{
     }
 }
 class Image : Shape{
-    cairo_surface_t* image;
+    ImageSurface image;
     Rect frame;
     // double width,height; // if it were int and you want to scale Image, may cause droping 0 problem 
     this(string path,Rect f)
         out{
         assert(image);
-        // assert(width > 0 && height > 0);
         assert(frame);
+        assert(frame.w > 0 && frame.h > 0);
         }
     body{
-        image = cairo_image_surface_create_from_png(path.toStringz);
+        image = ImageSurface.createFromPng(path);
         frame = f;
     }
-    ~this(){ cairo_surface_destroy(image); }
+    //  ~this(){ cairo_surface_destroy(image); }
 }

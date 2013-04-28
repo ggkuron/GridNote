@@ -1,0 +1,29 @@
+
+Licence
+
+ * gtkD is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version, with
+ * some exceptions, please read the COPYING file.
+ *
+ * gtkD is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with gtkD; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
+ 
+
+GTK+ version 2.24.10. GTK+ is a multi-platform toolkit for
+creating graphical user interfaces. Offering a complete set of widgets,
+GTK+ is suitable for projects ranging from small one-off projects to
+complete application suites.
+
+GTK+ is free software and part of the GNU Project. However, the
+licensing terms for GTK+, the GNU LGPL, allow it to be used by all
+developers, including those developing proprietary software, without any
+license fees or royalties.
+

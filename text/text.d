@@ -31,13 +31,13 @@ class Text
     void deleteChar(int pos){
         writing[current_line].remove(pos);
     }
-    @property dstring str(){
+    @property string str(){
         if(!writing.keys.empty())
         if(!writing[current_line].values.empty()){
             dstring s;   // こざかしいこと
             foreach(i; writing[current_line].keys.sort())
                 s ~= writing[current_line][i];
-            return s;
+            return toUTF8(s);
         }else return null;
         return null;
     }   

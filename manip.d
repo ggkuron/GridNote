@@ -1,103 +1,91 @@
 module manip;
 
-import derelict.sdl2.sdl;
-
 import misc.direct;
 import cell.textbox;
 import cell.cell;
 import command.command;
 import gui.gui;
+debug(manip) import std.stdio;
 
 enum focus_mode{ normal,select,edit }
+
+// 全てのCMDに対して
+// 適切に捌く
+// 全てのCMDを実行するためのハブ
+// class Manipulater が存在してもいいかも
+// 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
+// 複合的な操作は現在思いつかないのでこのままにする
+// このコメントを消そうとするときに考えて欲しい
+
+// Table に関する操作
+   // ここからCellBOXに対する操作も行う
+   // その責任は分離すべき
 class ManipTable{
-    SDL_Event* event; 
-    TableBOX focused_table;
+    BoxTable focused_table;
     ContentBOX focused_box;
-    Window window;
-    InputInterpreter key_interpreter;
 
     ManipTextBOX manip_textbox;
 
     focus_mode mode;
     SelectBOX select;
-    this(Window w,TableBOX table,InputInterpreter ki,SDL_Event* ev)
+    this(BoxTable table)
         out{
         assert(focused_table);
-        assert(window);
-        assert(key_interpreter);
         assert(manip_textbox);
         assert(select);
         }
     body{
-        // 最終的にはwindow はもちたくない // 優先順位的怠惰さ // またの名をToDo
         focused_table = table;
-        select = new SelectBOX(focused_table,Cell(3,3));
-        window = w; // 消し去りたい
-        key_interpreter = ki;
-        event = ev;
+        select = new SelectBOX(focused_table);
 
         manip_textbox = new ManipTextBOX(this);
     }
-    this(ManipTable mt){
-        window = mt.window;
-        focused_table = mt.focused_table;
-        select = mt.select;
-    }
-    void redraw(){ // 操作後の書き直し // 消し去りたい
-        window.Redraw(); // 
-        import std.stdio;
-        writeln("redraw");
-    }
-    void delete_from_select(Cell c){
-        select.remove(c);
-    }
-    void delete_focus_from_select(){
-        select.remove(select.focus);
-    }
     void move_focus(Direct dir){
-        move_own(select.focus,dir);
         import std.stdio;
-        writeln("focus: ",select.focus);
+        select.move(dir);
+        debug(manip) writefln("focus: %s",select.focus);
     }
-    // CellBOX fucus_to_box(){
-    //     return focused_table.managed_area[select.focus];
-    // }
-    void start_select(){
+    void start_select()
+        in{
+        assert(mode != focus_mode.select);
+        }
+        out{
+        assert(mode == focus_mode.select);
+        }
+    body{
         mode = focus_mode.select;
-        select.add(select.focus);
+        select.set_pivot();
+    }
+    void select_clear(){
+        select.clear();
     }
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
     final void expand_if_on_edge(Direct dir){
-        if(select.is_on_edge(select.focus,dir))
-            side_expand_select(dir);
+        if(select.is_on_edge(dir))
+        {
+            expand_select(dir);
+        }
         move_focus(dir);
     }
-    void side_expand_select(Direct dir)
+    final void expand_to_focus()
         in{
-        assert(mode == focus_mode.select
-             ||mode == focus_mode.edit);
+        assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
         out{
-        assert(mode == focus_mode.select
-             ||mode == focus_mode.edit);
+        assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
     body{
-            select.expand(dir);
+        select.expand_to_focus();
     }
-    void single_expand_select(Direct dir)
+    void expand_select(Direct dir)
         in{
-        assert(mode == focus_mode.select);
+        assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
         out{
-        assert(mode == focus_mode.select);
+        assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
     body{
-            auto adjacent = select.focus; // Cell は struct . focusは変わらない
-            move_own(adjacent,dir);
-            select.add(adjacent); // 
-    }
-    void delete_from_select(){
-        select.remove(select.focus);
+        select.expand(dir);
     }
     void return_to_normal_mode()
         in{
@@ -110,27 +98,25 @@ class ManipTable{
         select.clear();
         mode = focus_mode.normal;
     }
-    private TextBOX create_text_box(){
-        auto tb = new TextBOX(focused_table,select.managed_area.keys);
-        focused_table.add_box(tb);
-        return tb;
-    }
     void start_insert_normal_text(){
+        debug(manip) writeln("start_insert_normal_text");
         mode = focus_mode.edit;
-        select.add(select.focus);
-        auto tb = create_text_box();
+        auto tb = select.create_TextBOX();
         manip_textbox.start_input(tb);
+        debug(manip) writeln("end");
     }
 }
 
-class ManipCellBOX{
-    void reconcider_my_shape(){
-    }
-}
+import gtk.IMMulticontext;
+import gtk.Menu;
+
 class ManipTextBOX {
     ManipTable manip_table;
+    IMMulticontext imm;
+    Menu menu;
     this(ManipTable mt){
         manip_table = mt;
+        menu = new Menu();
     }
     void move_caret(TextBOX box, Direct dir){
         final switch(dir){
@@ -148,45 +134,6 @@ class ManipTextBOX {
     void start_input(TextBOX box){
         // move the focus on the table 
         //  to acoord with caret positon
-        import std.stdio;
-        // SDL_SetTextInputRect(&tmp);
-        bool done;
-        bool first_flg = true;
-        SDL_Event event;
-        SDL_WaitEvent(&event);
-        SDL_StartTextInput();
 
-        while(!done)
-        {
-            SDL_WaitEvent(&event);
-            switch(event.type)
-            {
-                case SDL_TEXTINPUT: // non IME text-input
-                    if(first_flg){ 
-                    //     // 切り替え入力を食う 
-                        first_flg = false;
-                        box.insert_char(event.text.text);
-                    }else{
-                        box.insert_char(event.text.text);
-                        box.expand(Direct.right);
-                        box.move_caretR();
-                        manip_table.expand_if_on_edge(Direct.right);
-                    }
-                    if(event.text.text[0] == 'q') SDL_Quit();
-                    break;
-                case SDL_TEXTEDITING:   // composition is changed or started
-                    writeln("in editing");
-                    box.composition = event.edit.text;
-                    box.set_caret(event.edit.start);
-                    manip_table.redraw();
-                    // selection_len = event.edit.length;
-                    break;
-                default:
-                    writeln("which i am without concern");
-                    break;
-            }
-            manip_table.redraw();
-        }
-        return;
     }
 }

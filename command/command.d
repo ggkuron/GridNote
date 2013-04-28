@@ -1,125 +1,173 @@
 module command.command;
 
 import std.array;
-import derelict.sdl2.sdl;
 
 import manip;
 import env;
 import misc.direct;
-import slite;
+import gdk.Keysyms; // Keysyms
+import gdk.Event;
+import gtk.Widget;
+import gui.gui;
+import gtkc.gdktypes;  // ModifierType
+import gtk.IMMulticontext;
+debug(cmd) import std.stdio;
 
-class Command{
-    Slite slite;
-    this(Slite s){
-        slite = s;
+// すべての実行可能な操作
+class CMD{
+    ManipTable manip_table;
+    alias manip_table this;
+    PageView view;
+    this(ManipTable m,PageView view){
+        manip_table = m;
+        this.view = view;
     }
     abstract void execute(){}
 }
 
-import command.command_op;
-mixin operations;
+import command.op;
+mixin op_atom; // difinition of CMD instance 
 
-enum InputState{normal,insert};
+enum InputState{normal,insert,select};
 class InputInterpreter{
-    Command CMD_MOVE_BOX_R; 
-    Command CMD_MOVE_BOX_L; 
-    Command CMD_MOVE_BOX_U; 
-    Command CMD_MOVE_BOX_D; 
-    Command CMD_MOVE_FOCUS_L;
-    Command CMD_MOVE_FOCUS_R;
-    Command CMD_MOVE_FOCUS_D;
-    Command CMD_MOVE_FOCUS_U;
-    Command CMD_EXPAND_SELECT_L;
-    Command CMD_EXPAND_SELECT_R;
-    Command CMD_EXPAND_SELECT_D;
-    Command CMD_EXPAND_SELECT_U;
-    Command CMD_MODE_CHANGE;
-    //  Command CMD_INSERT_TEXT;
-    Command CMD_MANIP_MODE_NORMAL;
-    Command CMD_MODE_CHANGE_TO_NORMAL;
-    Command CMD_QUIT;
-    Command CMD_RENDER_WINDOW;
-    Command CMD_START_SELECT_MODE;
-    Command CMD_DELETE_FOCUS_FROM_SELECT;
-    Command CMD_START_INSERT_NORMAL_TEXT; 
 
-    ubyte* keyState;
-    SDL_Keymod ModState;
-    Slite slite;
+     CMD move_box_r; 
+     CMD move_box_l; 
+     CMD move_box_u; 
+     CMD move_box_d; 
+     CMD move_focus_l;
+     CMD move_focus_r;
+     CMD move_focus_d;
+     CMD move_focus_u;
+     CMD expand_select;
+     CMD expand_select_l;
+     CMD expand_select_r;
+     CMD expand_select_d;
+     CMD expand_select_u;
+     CMD mode_change;
+     CMD manip_mode_normal;
+     CMD mode_change_to_normal;
+     CMD quit;
+     CMD render_window;
+     CMD start_select_mode;
+     CMD start_insert_normal_text; 
 
-    this(Slite s){
-        slite = s;
-        CMD_MOVE_BOX_R = new MOVE_BOX_R(slite); 
-        CMD_MOVE_BOX_L = new MOVE_BOX_L(slite); 
-        CMD_MOVE_BOX_U = new MOVE_BOX_U(slite);                   
-        CMD_MOVE_BOX_D = new MOVE_BOX_D(slite); 
-        CMD_MOVE_FOCUS_L = new MOVE_FOCUS_L(slite);
-        CMD_MOVE_FOCUS_R = new MOVE_FOCUS_R(slite);
-        CMD_MOVE_FOCUS_D = new MOVE_FOCUS_D(slite);
-        CMD_MOVE_FOCUS_U = new MOVE_FOCUS_U(slite);
-        CMD_EXPAND_SELECT_L = new EXPAND_SELECT_L(slite);
-        CMD_EXPAND_SELECT_R = new EXPAND_SELECT_R(slite);
-        CMD_EXPAND_SELECT_D = new EXPAND_SELECT_D(slite);
-        CMD_EXPAND_SELECT_U = new EXPAND_SELECT_U(slite);
-        CMD_MODE_CHANGE = new MODE_CHANGE(slite);
-        CMD_MANIP_MODE_NORMAL = new MANIP_MODE_NORMAL(slite);
-        // CMD_INSERT_TEXT = new INSERT_TEXT(slite);
-        CMD_MODE_CHANGE_TO_NORMAL = new MODE_CHANGE_TO_NORMAL(slite);
-        CMD_QUIT = new QUIT(slite);
-        CMD_RENDER_WINDOW = new RENDER_WINDOW(slite);
-        CMD_START_SELECT_MODE = new START_SELECT_MODE(slite);
-        CMD_DELETE_FOCUS_FROM_SELECT = new DELETE_FOCUS_FROM_SELECT(slite);
-        CMD_START_INSERT_NORMAL_TEXT = new START_INSERT_NORMAL_TEXT(slite);
+    ManipTable manip;
+    PageView view;
+    IMMulticontext imm;
+
+    uint[] keyState;
+    uint ModState;
+    bool im_driven;
+
+    this(ManipTable m,PageView pv){
+        manip = m;
+        view = pv;
+        imm = new IMMulticontext();
+        imm.setClientWindow(view.getParentWindow());
+
+        move_box_r = new MOVE_BOX_R(manip,view); 
+        move_box_l = new MOVE_BOX_L(manip,view); 
+        move_box_u = new MOVE_BOX_U(manip,view);                   
+        move_box_d = new MOVE_BOX_D(manip,view); 
+        move_focus_l = new MOVE_FOCUS_L(manip,view);
+        move_focus_r = new MOVE_FOCUS_R(manip,view);
+        move_focus_d = new MOVE_FOCUS_D(manip,view);
+        move_focus_u = new MOVE_FOCUS_U(manip,view);
+        expand_select = new EXPAND_SELECT(manip,view);
+        expand_select_l = new EXPAND_SELECT_L(manip,view);
+        expand_select_r = new EXPAND_SELECT_R(manip,view);
+        expand_select_d = new EXPAND_SELECT_D(manip,view);
+        expand_select_u = new EXPAND_SELECT_U(manip,view);
+        mode_change = new MODE_CHANGE(manip,view);
+        manip_mode_normal = new MANIP_MODE_NORMAL(manip,view);
+        mode_change_to_normal = new MODE_CHANGE_TO_NORMAL(manip,view);
+        quit = new QUIT(manip,view);
+        start_select_mode = new START_SELECT_MODE(manip,view);
+        start_insert_normal_text = new START_INSERT_NORMAL_TEXT(manip,view);
     }
-    void updateKeyState(){
-        keyState = SDL_GetKeyboardState(null);
-        ModState = SDL_GetModState();
+    public bool key_to_cmd(Event event, Widget widget)
+        in{
+        assert(event.key() !is null);
+        }
+    body{
+        imm.focusIn();
+        auto ev = event.key();
+
+        immutable preserve_length = 3;
+        keyState.length = preserve_length;
+        im_driven = cast(bool)imm.filterKeypress(ev);
+        keyState ~= ev.keyval;
+        debug(cmd) writeln("key is ",ev.keyval);
+        debug(cmd) writeln("mod is ",ev.state);
+        debug(cmd) writefln("str is %s",ev.string);
+        ModState = ev.state;
+
+        if(keyState.length > preserve_length)
+            keyState = keyState[$-preserve_length .. $];
+
+        writeln(keyState);
+        interpret();
+        execute();
+        view.queueDraw();
+        return true;
     }
-    Command[] command_queue;
-    void add_to_queue(Command[] cmds ...){
+    CMD[] command_queue;
+    void add_to_queue(CMD[] cmds ...){
         foreach(cmd; cmds)
         {
             command_queue ~= cmd;
         }
     }
-    InputState input_state;
-    private void issue(){
-        if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MODE_CHANGE_TO_NORMAL);
-
+    private void interpret(){
+        import std.stdio;
+        if(keyState[$-1] == GdkKeysyms.GDK_Escape) add_to_queue (mode_change_to_normal);
+ 
         final switch (input_state)
         {
             case InputState.normal:
-                switch (ModState){
-                    case KMOD_LCTRL:
-                        if(keyState[EXIT_KEY]) command_queue ~= CMD_QUIT;
-                        if(slite.manip_table.mode == focus_mode.select)
-                        {
-                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_EXPAND_SELECT_L); }
-                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_EXPAND_SELECT_R); }
-                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_EXPAND_SELECT_U); }
-                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_EXPAND_SELECT_D); }
-                            if(keyState[DELETE_KEY]){ add_to_queue (CMD_DELETE_FOCUS_FROM_SELECT); }
-                            // コマンド生成のキーが入力に混じらないためにDelay
-                            // 優先順位を実装するか　DelayをCMDにするか -- Delay をCMD化したところで旨みはない
-                                        
-                            if(keyState[SDL_SCANCODE_ESCAPE]) add_to_queue (CMD_MANIP_MODE_NORMAL);
-                        }else{
-                            if(keyState[MOVE_L_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_L); }
-                            if(keyState[MOVE_R_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_R); }
-                            if(keyState[MOVE_U_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_U); }
-                            if(keyState[MOVE_D_KEY]){ add_to_queue (CMD_START_SELECT_MODE, CMD_EXPAND_SELECT_D); }
-                        }
-                        return;
-                    default:
-                        if(keyState[MOVE_L_KEY]) add_to_queue (CMD_MOVE_FOCUS_L);
-                        if(keyState[MOVE_R_KEY]) add_to_queue (CMD_MOVE_FOCUS_R);
-                        if(keyState[MOVE_U_KEY]) add_to_queue (CMD_MOVE_FOCUS_U);
-                        if(keyState[MOVE_D_KEY]) add_to_queue (CMD_MOVE_FOCUS_D);
-                        if(keyState[INSERT_KEY]){ SDL_Delay(200); add_to_queue (CMD_MODE_CHANGE,CMD_START_INSERT_NORMAL_TEXT); }
-                        return ;
+                if(ModState == ModifierType.CONTROL_MASK)
+                {
+                    input_state = InputState.select;
+                    if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (start_select_mode, move_focus_l,expand_select/*_l*/); }else
+                    if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (start_select_mode, move_focus_r,expand_select/*_r*/); }else
+                    if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (start_select_mode, move_focus_u,expand_select/*_u*/); }else
+                    if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (start_select_mode, move_focus_d,expand_select/*_d*/); }
                 }
+                else
+                {
+                    if(keyState[$-1] == INSERT_KEY) add_to_queue (start_insert_normal_text); else
+
+                    if(keyState[$-1] == MOVE_L_KEY) add_to_queue (move_focus_l); else
+                    if(keyState[$-1] == MOVE_R_KEY) add_to_queue (move_focus_r); else 
+                    if(keyState[$-1] == MOVE_U_KEY) add_to_queue (move_focus_u); else
+                    if(keyState[$-1] == MOVE_D_KEY) add_to_queue (move_focus_d);
+                }
+                break;
             case InputState.insert:
+                if(im_driven) 
                 return;
+            case InputState.select:
+                // if(keyState[$-1] == EXIT_KEY) command_queue ~= quit;
+                if(manip.mode == focus_mode.select)
+                {
+                    if(ModState == ModifierType.CONTROL_MASK)
+                    {
+                        if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (move_focus_l,expand_select/*_l*/); }else
+                        if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (move_focus_r,expand_select/*_r*/); }else
+                        if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (move_focus_u,expand_select/*_u*/); }else
+                        if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (move_focus_d,expand_select/*_d*/); }
+                    }
+                    else
+                    {
+                        input_state = InputState.normal;
+                        add_to_queue(manip_mode_normal);
+                    }
+                }
+                else
+                {
+                }
+                break;
         }
         return;
     }
@@ -127,34 +175,20 @@ class InputInterpreter{
         in{ assert(input_state != InputState.insert); } 
     body{
         input_state = InputState.insert;
-        SDL_StartTextInput();
+        // SDL_StartTextInput();
     }
     void input_end()
         in{ assert(input_state == InputState.insert); }
     body{
         input_state = InputState.normal;
-        SDL_StopTextInput();
-    }
-    ubyte* get_keys()
-        in{ assert(input_state == InputState.insert); }
-    body{
-        return keyState;
-    }
-    SDL_Keymod get_mod()
-        in{ assert(input_state == InputState.insert); }
-    body{
-        return ModState;
+        // SDL_StopTextInput();
     }
     public:
     void execute(){
-        updateKeyState(); // keyState updated
-        issue();
-        
         if(!command_queue.empty){
             foreach(cmd; command_queue)
                 cmd.execute();
             command_queue.clear();
-            CMD_RENDER_WINDOW.execute();
         }
     }
 }

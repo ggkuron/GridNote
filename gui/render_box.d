@@ -1,47 +1,45 @@
 module gui.render_box;
 
-import derelict.sdl2.sdl;
 import gui.gui;
 import cell.cell;
 import misc.direct;
-import deimos.cairo.cairo;
 import shape.shape;
+import cairo.Context;
 
 class RenderBOX{
-    cairo_t* cr;
+    protected:
     PageView page_view;
-    CellBOX in_view;
+    ReferTable in_view;
     // SDL_Rect[] contents_positions;
+    public:
     this(PageView pv)
         out{
         assert(page_view);
         assert(in_view);
-        assert(cr != null);
         }
     body{
-        cr = pv.cr;
         page_view = pv;
         in_view = pv.in_view;
     }
-    final Rect get_position(CellBOX box){
-        assert(box.managed_area !is null);
-//         ここなおす
-//             概念が不定形
-        auto ul = in_view.upper_left(box.managed_area.keys);
-        auto x = page_view.get_x(ul);
-        auto y = page_view.get_y(ul);
+    final protected Rect get_position(CellBOX b){
+        assert(b.get_box() !is null);
+//         TODO 不安なここなおす
 
-        auto depth = box.recursive_depth();
-        auto grid = page_view.grid_length(depth) ;
+        auto cp = in_view.get_view_position(b);
+        auto x = page_view.get_x(cp);
+        auto y = page_view.get_y(cp);
+
+        // auto depth = box.recursive_depth();
+        // auto grid = page_view.grid_length(depth) ;
+        auto grid = page_view.gridSpace;
         import std.stdio;
-        writeln("ul:",ul);
-        writef("depth:%d grid:%d \n",depth,grid);
-        int w = grid * (box.count_linedcells(ul,Direct.right) + 1);
-        int h = grid * (box.count_linedcells(ul,Direct.down) + 1);
+        writeln("ul:",cp);
+
+        int w = grid * b.get_x_width();
+        int h = grid * b.get_y_width();
 
         auto result =  new Rect(x,y,w,h);
         writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
-        writefln("lu is %d %d ",ul.row,ul.column);
         return result;
     }
 }

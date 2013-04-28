@@ -1,7 +1,5 @@
 module cell.textbox;
 
-import derelict.sdl2.sdl;
-import derelict.sdl2.ttf;
 import cell.cell;
 import text.text;
 import std.string;
@@ -9,29 +7,24 @@ import std.utf;
 import misc.direct;
 import shape.shape;
 
-class TextBOX : ContentBOX
-{   // text の行数を Cellの高さに対応させてみる
-    this(TableBOX parent,Cell[] areas){ 
-        super(parent,areas);
+class TextBOX : ContentBOX{  
+    // text の行数を Cellの高さに対応させてみる
+    this(BoxTable table){ 
+        super(table);
         text = new Text();
     }
-    ~this(){ }
+    ~this(){}
 
     Text text;
-    Cell text_offset;
+    Cell text_offset; // boxのtext が格納されている場所へのoffset
 
-    bool loaded_flg;
     int caret;
-    // int current_line;
     string font_name;
     char[] composition;
     int font_size;
     Color font_color;
-    Text exportText(){
+    Text getText(){
         return text;
-    }
-    @property auto c_str(){
-        return text.c_str;
     }
     void insert_char(const dchar c){
         text.insert(c);
@@ -45,21 +38,23 @@ class TextBOX : ContentBOX
         dstring s = cast(dstring)cs;
         insert_char(s[0]);
     }
-
     void line_feed(){
         expand(Direct.down);
         move_caretD();
     }
-    void move_caretR(){
-        text.move_caret!("caret < right_edge_pos()",
-            "++caret;" )();
+    public:
+    final void move_caretR(){
+        text.move_caret!("caret < right_edge_pos()","++caret;")();
     }
-    alias text.move_caret!("caret != 0",
-            "--caret;" )  move_caretL; 
-    alias text.move_caret!("lines > current_line",
-            "++current_line;" )  move_caretD; 
-    alias text.move_caret!("current_line != 0",
-            "--current_line;" )  move_caretU; 
+    final void move_caretL(){
+        text.move_caret!("caret != 0","--caret;")();
+    }
+    final void move_caretD(){
+        text.move_caret!("lines > current_line","++current_line;")();
+    }
+    final void move_caretU(){
+        text.move_caret!("current_line != 0","--current_line;")();
+    }
     void set_caret()(int pos){
         text.set_caret(pos); // 
     }
