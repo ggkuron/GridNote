@@ -7,15 +7,17 @@ import gui.gui;
 import std.array;
 import std.string;
 
-import derelict.sdl2.sdl;
-import derelict.sdl2.ttf;
-import deimos.cairo.cairo;
+import cairo.Context;
+import cairo.FontOption;
+import cairo.Surface;
+import cairo.ImageSurface;
+
 import std.stdio;
 import shape.shape;
 
 class RenderTextBOX : RenderBOX{
     cairo_text_extents_t extents;
-    const(char)* str;
+    string str;
     ubyte fontsize=40;
     Color fontcolor;
     this(PageView pv)
@@ -26,25 +28,23 @@ class RenderTextBOX : RenderBOX{
     }
     void setBOX(TextBOX box){
         assert(box !is null);
-        box.loaded_flg = true;
     }
-    void render(TextBOX box)
+    void render(Context cr,TextBOX box)
         in{
-        assert(!box.managed_area.keys.empty);
+        assert(!box.empty);
         }
     body{
-        cairo_set_source_rgb(cr,1,1,0);
-        cairo_select_font_face(cr,"cairo:monospace",CairoFontSlant.Normal,CairoFontWeight.Bold);
-        cairo_set_font_size(cr,fontsize);//cr,fontsize);
-        // cairo_text_extents(cr,"hello",&extents);
+        cr.setSourceRgb(1,1,0);
+        cr.selectFontFace("cairo:monospace",cairo_font_slant_t.NORMAL,cairo_font_weight_t.NORMAL);
+        cr.setFontSize(fontsize);//cr,fontsize);
 
         setBOX(box);
         auto pos = get_position(box); // gui.render_box::get_position
-        str = box.c_str;
-        cairo_move_to(cr,pos.x,pos.y+page_view.gridSpace);
+        str = box.getText().str;
+        cr.moveTo(pos.x,pos.y+page_view.get_gridSize());
         // cairo_move_to(cr,0.5-extents.width/2 - extents.x_bearing,
                 //0.5-extents.height/2 - extents.y_bearing);
-        cairo_show_text(cr,str);
+        cr.showText(str);
         writefln("wt %s",str);
     }
     ~this(){}

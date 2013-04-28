@@ -27,7 +27,11 @@ void remove(T)(ref T[] array,int del_num){
         }
     }
 }
-bool is_in(T)(const T[] array,const T b){ // some kind of search
+bool is_in(T)(const T[] array,const T b)
+    in{
+    assert(!array.empty);
+    }
+body{ // some sort of search
     foreach(a; array){
         if(a == b) return true;
         else continue;

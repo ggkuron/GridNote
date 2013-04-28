@@ -1,4 +1,5 @@
-import derelict.sdl2.sdl;
+import gdk.Keysyms;
+
 
 // どっかで管理されるべき値達
 //  を列挙していってる
@@ -12,12 +13,12 @@ int windowHeight = 640;
 immutable int Tipsize = 64;
 immutable ubyte Frames = 60;
 
-SDL_Scancode MOVE_L_KEY = SDL_SCANCODE_H;
-SDL_Scancode MOVE_R_KEY = SDL_SCANCODE_L;
-SDL_Scancode MOVE_U_KEY = SDL_SCANCODE_K;
-SDL_Scancode MOVE_D_KEY = SDL_SCANCODE_J;
-SDL_Scancode EXIT_KEY = SDL_SCANCODE_Q;
-SDL_Scancode DELETE_KEY = SDL_SCANCODE_X;
-SDL_Scancode INSERT_KEY = SDL_SCANCODE_I;
+uint  MOVE_L_KEY = GdkKeysyms.GDK_h;
+uint  MOVE_R_KEY = GdkKeysyms.GDK_l;
+uint  MOVE_U_KEY = GdkKeysyms.GDK_k;
+uint  MOVE_D_KEY = GdkKeysyms.GDK_j;
+uint  EXIT_KEY = GdkKeysyms.GDK_w;
+uint  DELETE_KEY = GdkKeysyms.GDK_x;
+uint  INSERT_KEY = GdkKeysyms.GDK_i;
 
 string control_deco = "decoration/decoE.png";

@@ -1,179 +1,170 @@
-module command.command_op;
+module command.op;
 
-import derelict.sdl2.sdl;
 import env;
+import manip;
+import command.command;
+import TextView;
+import gui.gui;
 
-mixin template super_ctor(){
-    this(Slite s){ super(s); }
+import std.stdio;
+
+private import stdlib = core.stdc.stdlib : exit;
+
+mixin template ctor(){
+    this(ManipTable t,PageView view){ super(t,view); }
 }
 
-mixin template operations()
+mixin template op_atom()
 {
-    class MOVE_BOX_R : Command
+    InputState input_state = InputState.normal;
+    class MOVE_BOX_R : CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.focused_box.move(Direct.right);
+            manip_table.focused_box.move(Direct.right);
         }
     }
-    class MOVE_BOX_L : Command
+    class MOVE_BOX_L : CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.focused_box.move(Direct.left);
+            manip_table.focused_box.move(Direct.left);
         }
     }
-    class MOVE_BOX_U : Command
+    class MOVE_BOX_U : CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.focused_box.move(Direct.up);
+            manip_table.focused_box.move(Direct.up);
         }
     }
-    class MOVE_BOX_D : Command
+    class MOVE_BOX_D : CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.focused_box.move(Direct.down);
+            manip_table.focused_box.move(Direct.down);
         }
     }
     // text box
-    class START_INSERT_NORMAL_TEXT : Command
+    class START_INSERT_NORMAL_TEXT : CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            // slite.manip_table.(); // CREATE_TEXTBOX
-            slite.manip_table.start_insert_normal_text();
+            manip_table.start_insert_normal_text();
         }
     }
-    class MODE_CHANGE :Command
+    class MODE_CHANGE :CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            if(slite.interpreter.input_state == InputState.normal)
-                slite.interpreter.input_state = InputState.insert;
-            else slite.interpreter.input_state = InputState.normal;
+            if(input_state == InputState.normal)
+                input_state = InputState.insert;
+            else input_state = InputState.normal;
         }
     }
-    class MODE_CHANGE_TO_NORMAL :Command
+    class MODE_CHANGE_TO_NORMAL :CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.interpreter.input_state = InputState.normal;
+            input_state = InputState.normal;
         }
     }
-    class MOVE_FOCUS_L:Command
+    class MOVE_FOCUS_L:CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.move_focus(Direct.left);
-            SDL_Delay(210);
+            manip_table.move_focus(Direct.left);
         }
     }
-    class MOVE_FOCUS_R:Command
+    class MOVE_FOCUS_R:CMD
     { 
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.move_focus(Direct.right);
-            SDL_Delay(210);
+            manip_table.move_focus(Direct.right);
         }
     }
-    class MOVE_FOCUS_U:Command
+    class MOVE_FOCUS_U:CMD
     {   
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.move_focus(Direct.up);
-            SDL_Delay(210);
+            manip_table.move_focus(Direct.up);
         }
     }
-    class MOVE_FOCUS_D:Command
+    class MOVE_FOCUS_D:CMD
     {   
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.move_focus(Direct.down);
-            SDL_Delay(210);
+            manip_table.move_focus(Direct.down);
         }
     }
-    class START_SELECT_MODE:Command
+    class START_SELECT_MODE:CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.start_select();
+            manip_table.start_select();
         }
     }
-    class EXPAND_SELECT_D:Command
-    {   
-        mixin super_ctor;
-        void execute(){
-            slite.manip_table.expand_if_on_edge(Direct.down);
-            SDL_Delay(210);
-        }
-    }
-    class EXPAND_SELECT_L:Command
-    {   
-        mixin super_ctor;
-        void execute(){
-            slite.manip_table.expand_if_on_edge(Direct.left);
-            SDL_Delay(210);
-        }
-    }
-    class EXPAND_SELECT_R:Command
-    {   
-        mixin super_ctor;
-        void execute(){
-            slite.manip_table.expand_if_on_edge(Direct.right);
-            SDL_Delay(210);
-        }
-    }
-    class EXPAND_SELECT_U:Command
-    {   
-        mixin super_ctor;
-        void execute(){
-            slite.manip_table.expand_if_on_edge(Direct.up);
-            SDL_Delay(210);
-        }
-    }
-    class DELETE_FOCUS_FROM_SELECT:Command
+    class EXPAND_SELECT:CMD
     {
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-            slite.manip_table.delete_focus_from_select();
+            manip_table.expand_to_focus();
         }
     }
-    class QUIT:Command
+    class EXPAND_SELECT_D:CMD
     {   
-        mixin super_ctor;
+        mixin ctor;
         void execute(){
-                import init;
-            Quit();
+            manip_table.expand_if_on_edge(Direct.down);
         }
     }
-    class ZOOM_IN_GRID:Command
-    {
-        mixin super_ctor;
+    class EXPAND_SELECT_L:CMD
+    {   
+        mixin ctor;
         void execute(){
-            ++(slite.page_view.gridSpace);
+            manip_table.expand_if_on_edge(Direct.left);
         }
     }
-    class ZOOM_OUT_GRID:Command
-    {
-        mixin super_ctor;
+    class EXPAND_SELECT_R:CMD
+    {   
+        mixin ctor;
         void execute(){
-            --(slite.page_view.gridSpace);
+            manip_table.expand_if_on_edge(Direct.right);
         }
     }
-    class RENDER_WINDOW:Command
-    {
-        mixin super_ctor;
+    class EXPAND_SELECT_U:CMD
+    {   
+        mixin ctor;
         void execute(){
-            slite.mainWindow.Redraw();
+            manip_table.expand_if_on_edge(Direct.up);
         }
     }
-    class MANIP_MODE_NORMAL:Command
-    {
-        mixin super_ctor;
+    class QUIT:CMD
+    {   
+        mixin ctor;
         void execute(){
-            slite.manip_table.return_to_normal_mode();
+            stdlib.exit(0);
+        }
+    }
+    class ZOOM_IN_GRID:CMD
+    {
+        mixin ctor;
+        void execute(){
+            ++(view.gridSpace);
+        }
+    }
+    class ZOOM_OUT_GRID:CMD
+    {
+        mixin ctor;
+        void execute(){
+            --(view.gridSpace);
+        }
+    }
+    class MANIP_MODE_NORMAL:CMD
+    {
+        mixin ctor;
+        void execute(){
+            manip_table.return_to_normal_mode();
         }
     }
 }

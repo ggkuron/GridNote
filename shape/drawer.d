@@ -1,52 +1,53 @@
 module shape.drawer;
 
 import std.math;
-import deimos.cairo.cairo;
-import derelict.sdl2.sdl;
+// import deimos.cairo.cairo;
+// import derelict.sdl2.sdl;
 import shape.shape;
 
+import cairo.Context;
+import cairo.Surface;
+import cairo.ImageSurface;
+
 class Drawer{
-    cairo_t* cr;
-    abstract void set();
-    abstract void set_color();
-    abstract void fill();
-    abstract void fill_p();
-    abstract void stroke();
-    abstract void stroke_p();
-    abstract void clip();
+    abstract void set(Context);
+    abstract void set_color(Context);
+    abstract void fill(Context);
+    abstract void fill_p(Context);
+    abstract void stroke(Context);
+    abstract void stroke_p(Context);
+    abstract void clip(Context);
     void init(){}; // ctr uses for each shape
-    void set_width(){} // indicate to format with default value, shape.width
+    void set_width(Context){} // indicate to format with default value, shape.width
                        // but not all shapes have width so keep it blank
     void set_width(double w){}
     private:
-    final add(Point p){
-        cairo_move_to(cr,p.x,p.y);
+    final move(Context cr, Point p){
+        cr.moveTo(p.x,p.y);
     }
-    final line_to(Point p){
-        cairo_line_to(cr,p.x,p.y);
+    final line_to(Context cr, Point p){
+        cr.lineTo(p.x,p.y);
     }
 }
 mixin template drw_imp(T){
     static if(is(T == Point))
     {
         Circle shape;
-        this(cairo_t* c,T p){
-            cr = c;
+        this(T p){
             shape = new Circle(p,2);
         }
     }else
     {
         T shape;
-        this(cairo_t* c, T s){
-            cr = c;
+        this(T s){
             shape = s;
             init();
         }
     }
     static if(is(T == Image)){
-        void set_color(){}
+        void set_color(Context cr){}
     }else{
-        void set_color()
+        void set_color(Context cr)
         {
             auto c = shape.color;
             assert(c.r != double.nan);
@@ -54,89 +55,88 @@ mixin template drw_imp(T){
             assert(c.b != double.nan);
             assert(c.a != double.nan);
 
-            cairo_set_source_rgba(cr,c.r/255,c.g/255,c.b/255,c.a/255);
+            cr.setSourceRgba(c.r/255,c.g/255,c.b/255,c.a/255);
             import std.stdio;
         }
     }
 
-    void fill(){
-        set_color();
-        set_width();
-        set();
-        cairo_fill(cr);
+    void fill(Context cr){
+        set_color(cr);
+        set_width(cr);
+        set(cr);
+        cr.fill();
     }
-    void fill_p(){
-        set_color();
-        set();
-        cairo_fill_preserve(cr);
+    void fill_p(Context cr){
+        set_color(cr);
+        set(cr);
+        cr.fillPreserve();
     }
-    void stroke(){
-        set_color();
-        set_width();
-        set();
-        cairo_stroke(cr);
+    void stroke(Context cr){
+        set_color(cr);
+        set_width(cr);
+        set(cr);
+        cr.stroke();
     }
-    void stroke_p(){
-        set_color();
-        set_width();
-        set();
-        cairo_stroke_preserve(cr);
+    void stroke_p(Context cr){
+        set_color(cr);
+        set_width(cr);
+        set(cr);
+        cr.strokePreserve();
     }
-    void clip(){
-        set_color();
-        set();
-        cairo_clip(cr);
-        cairo_new_path(cr);
+    void clip(Context cr){
+        set_color(cr);
+        set(cr);
+        cr.clip();
+        cr.newPath();
     }
 }
 class PointDrawer : Drawer{
-    void set(){}
+    void set(Context cr){}
     mixin drw_imp!(Point);
 }
 
 class CircleDrawer : Drawer{
-    void set(){
-        auto c = cast(Circle)shape;
-        cairo_arc(cr,c.p.x, c.p.y, c.radius, 0, 2 * PI);
+    void set(Context cr){
+        // auto c = cast(Circle)shape;
+        cr.arc(shape.p.x, shape.p.y, shape.radius, 0, 2 * PI);
     }
     mixin drw_imp!(Circle);
 }
 
 class LineDrawer : Drawer{
     this(){} // need to implicit super() call from LinesDrawer
-    void set(){
-        add(shape.start);
-        line_to(shape.end);
+    void set(Context cr){
+        move(cr,shape.start);
+        line_to(cr,shape.end);
     }
-    void set_width(){
-        cairo_set_line_width(cr,shape.width);
+    void set_width(Context cr){
+        cr.setLineWidth(shape.width);
     }
     mixin drw_imp!(Line);
 }
 class LinesDrawer : LineDrawer{
-    void set(){
+    void set(Context cr){
         foreach(l; shape.lines)
         {
-            add(l.start);
-            line_to(l.end);
+            move(cr,l.start);
+            line_to(cr,l.end);
         }
     }
-    void set_width(){
+    void set_width(Context cr){
         foreach(l; shape.lines)
-            cairo_set_line_width(cr,shape.width);
+            cr.setLineWidth(shape.width);
     }
     mixin drw_imp!(Lines);
 }
 class RectDrawer : Drawer{
-    void set(){
-        cairo_rectangle(cr,shape.x,shape.y,shape.w,shape.h);
-        import std.stdio;
+    void set(Context cr){
+        cr.rectangle(shape.x,shape.y,shape.w,shape.h);
         // writefln("r:%f g:%f b:%f",shape.color.r,shape.color.g,shape.color.b);
     }
     mixin drw_imp!(Rect);
 }
 class ImageDrawer : Drawer{
-    void set()
+    void set(Context cr)
         in{
         assert(sx != 0 && sx != double.nan);
         assert(sy != 0 && sy != double.nan);
@@ -145,29 +145,23 @@ class ImageDrawer : Drawer{
         assert(shape.image);
         }
     body{
-        cairo_set_source_surface(cr,shape.image,0,0);
-        cairo_paint(cr);
+        cr.setSourceSurface(shape.image,0,0);
+        cr.paint();
     }
-    override void init(){
-        scale_to(shape.frame);
+    void draw(Context cr){
+        set(cr);
     }
-    void draw(){
-        set();
-    }
-    private void scale_to(Rect r)
+    private void scale_to(Context cr,Rect r)
         in{
-            assert(r.w != 0 && r.w != double.nan);
-            assert(r.h != 0 && r.h != double.nan);
+        assert(r.w != 0 && r.w != double.nan);
+        assert(r.h != 0 && r.h != double.nan);
             // assert(shape.width > 0 && shape.width != double.nan);
             // assert(shape.height > 0 && shape.width != double.nan);
         }
     body{
-        auto w = cairo_image_surface_get_width(shape.image);
-        auto h = cairo_image_surface_get_height(shape.image);
-        cairo_scale(cr,r.w/w,r.h/h);
-    }
-    ~this(){
-        //cairo_surface_destroy(shape.image);
+        auto w = shape.image.getWidth();
+        auto h = shape.image.getHeight();
+        cr.scale(r.w/w,r.h/h);
     }
     mixin drw_imp!(Image);
 }
