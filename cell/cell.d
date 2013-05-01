@@ -18,13 +18,12 @@ struct Cell
         return  Cell(row + rhs.row, column + rhs.column);
     }
     Cell opBinary(string op)(const Cell rhs)const if(op =="-"){
-        int minus_to_zero(int x){
+        int minus_tobe_zero(int x){
             return x<0?0:x;
         }
-        auto r = minus_to_zero(row - rhs.row);
-        auto c = minus_to_zero(column - rhs.column);
+        auto r = minus_tobe_zero(row - rhs.row);
+        auto c = minus_tobe_zero(column - rhs.column);
         auto result = Cell(r,c);
-        enforce(result.row >= 0 && result.column >= 0);
         return result;
     }
     unittest{

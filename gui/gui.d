@@ -1,6 +1,6 @@
 module gui.gui;
 
-import std.stdio;
+debug(gui) import std.stdio;
 import std.string;
 import std.array;
 import env;
@@ -20,11 +20,11 @@ import gtk.Box;
 import gtkc.gdktypes;
 import gtk.MainWindow;
 import gtk.Widget;
-import TextView;
 import gtk.VBox;
 import gdk.Event;
 
 import gtk.DrawingArea;
+import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
 
@@ -58,6 +58,7 @@ class PageView : DrawingArea{
     ManipTable manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
     BoxTable table;    // 描画すべき対象: 
     ReferTable in_view;    // table にattachされた 表示領域
+    Menu menu;
 
     InputInterpreter interpreter;
     RenderTextBOX render_text ;
@@ -95,6 +96,7 @@ class PageView : DrawingArea{
             // TODO: set start_offset 
         }
 
+        menu = new Menu();
         table = new BoxTable();
         setProperty("can-focus",1);
         holding_area = new Rect(0,0,2000,2000);
@@ -109,7 +111,9 @@ class PageView : DrawingArea{
         in_view = new ReferTable(table,start_offset,num_of_gird_x,num_of_grid_y);
 
         addOnKeyPress(&interpreter.key_to_cmd);
-        writefln("holding %f %f",holding_area.w,holding_area.h);
+        addOnFocusIn(&focus_in);
+        addOnFocusOut(&focus_out);
+        debug(gui) writefln("holding %f %f",holding_area.w,holding_area.h);
 
         init_selecter();
         init_drwer();
@@ -117,6 +121,13 @@ class PageView : DrawingArea{
         render_text =  new RenderTextBOX(this);
 
         addOnDraw(&draw_callback);
+    }
+    bool focus_in(Event ev,Widget w){
+        grabFocus();
+        return interpreter.focus_in(ev,w);
+    }
+    bool focus_out(Event ev,Widget w){
+        return interpreter.focus_out(ev,w);
     }
     void set_holding_area()
         in{

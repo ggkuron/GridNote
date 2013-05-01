@@ -108,15 +108,12 @@ class ManipTable{
 }
 
 import gtk.IMMulticontext;
-import gtk.Menu;
 
 class ManipTextBOX {
     ManipTable manip_table;
     IMMulticontext imm;
-    Menu menu;
     this(ManipTable mt){
         manip_table = mt;
-        menu = new Menu();
     }
     void move_caret(TextBOX box, Direct dir){
         final switch(dir){
