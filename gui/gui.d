@@ -157,6 +157,8 @@ class PageView : DrawingArea{
     void render(Context cr,TextBOX b){
         render_text.render(cr,b);
     }
+    // 階層化構造 has gone
+    // Cell.Cellの構造が歪まない方法思いつくまで封印
     // int grid_length(int depth){ // 階層化に対応してる？？
     //     auto result = gridSpace;
     //     auto view_depth = in_view.recursive_depth();
@@ -170,6 +172,13 @@ class PageView : DrawingArea{
     ubyte grid_width = 1;
     public int get_gridSize()const{
         return gridSpace;
+    }
+    void zoom_in(){
+        ++gridSpace;
+    }
+    void zoom_out(){
+        if(!gridSpace) return;
+        --gridSpace;
     }
 
     private void setGrid(){
