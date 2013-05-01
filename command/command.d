@@ -24,15 +24,17 @@ COMMAND cmd_template(alias func_content)(InputInterpreter i,ManipTable m,PageVie
     return new CMD!(func_content)(i,m,p);
 }
 class CMD(alias func_content) : COMMAND{
+    private:
     ManipTable manip_table;
     PageView view;
     InputInterpreter interpreter;
+    public:
     this(InputInterpreter i,ManipTable m,PageView p){
         interpreter = i;
         manip_table = m;
         view = p;
     }
-    void execute(){
+    final void execute(){
         mixin (func_content);
     }
 }
@@ -96,21 +98,33 @@ class InputInterpreter{
         start_select_mode = cmd_template!("manip_table.start_select();")(this,manip,view);
 
     }
-    public bool key_to_cmd(Event event, Widget widget)
+    public bool focus_in(Event ev,Widget w){
+        imm.focusIn();
+        return false;
+    }
+    public bool focus_out(Event ev,Widget w){
+        imm.focusOut();
+        return false;
+    }
+
+    public bool key_to_cmd(Event event, Widget w)
         in{
         assert(event.key() !is null);
         }
     body{
-        imm.focusIn();
+    immutable preserve_length = 3;
         auto ev = event.key();
-
-        immutable preserve_length = 3;
-        keyState.length = preserve_length;
-        im_driven = cast(bool)imm.filterKeypress(ev);
-        keyState ~= ev.keyval;
+        // keyState.length = preserve_length;
+        debug(cmd) writeln("im_driven: ",im_driven);
         debug(cmd) writeln("key is ",ev.keyval);
         debug(cmd) writeln("mod is ",ev.state);
-        debug(cmd) writefln("str is %s",ev.string);
+        debug(cmd) writefln("str is %s",*(ev.string));
+        debug(cmd) writeln(imm.getContextId());
+
+        im_driven = cast(bool)imm.filterKeypress(ev);
+        if(im_driven) return true;
+
+        keyState ~= ev.keyval;
         ModState = ev.state;
 
         if(keyState.length > preserve_length)
@@ -155,7 +169,10 @@ class InputInterpreter{
                 }
                 break;
             case InputState.insert:
-                if(im_driven) 
+                if(im_driven) {
+                }
+                    else{
+                    }
                 return;
             case InputState.select:
                 // if(keyState[$-1] == EXIT_KEY) command_queue ~= quit;
@@ -182,13 +199,17 @@ class InputInterpreter{
         return;
     }
     void input_start()
-        in{ assert(input_state != InputState.insert); } 
+        in{
+        assert(input_state != InputState.insert); 
+        }
     body{
         input_state = InputState.insert;
         // SDL_StartTextInput();
     }
     void input_end()
-        in{ assert(input_state == InputState.insert); }
+        in{
+        assert(input_state == InputState.insert); 
+        }
     body{
         input_state = InputState.normal;
         // SDL_StopTextInput();
