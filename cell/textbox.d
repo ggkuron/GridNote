@@ -30,7 +30,7 @@ class TextBOX : ContentBOX{
         text.insert(c);
     }
     void insert(string s){
-        foreach(c; s)
+        foreach(dchar c; s)
             text.insert(c);
     }
     void insert_char(char[32LU] cs){
