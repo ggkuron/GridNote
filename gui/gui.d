@@ -210,9 +210,10 @@ class PageView : DrawingArea{
         holding_area.h = getHeight();
     }
     void set_in_view(){
-        in_view.set_table(in_view.offset,
+        in_view.set_table_size(in_view.offset,
                 cast(int)(holding_area.w/gridSpace),
                 cast(int)(holding_area.h/gridSpace));
+        in_view.data_sync();
     }
     void move_view(Direct dir){
         in_view.offset.move(dir);

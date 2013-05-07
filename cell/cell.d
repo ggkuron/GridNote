@@ -160,10 +160,10 @@ class CellBOX{
         cb.expand(Direct.right);
         assert(cb.is_in(Cell(3,4)));
     }
-    private void add(const Cell c){
+    protected void add(const Cell c){
         box ~= c;
     }
-    private void remove(const Direct dir){
+    protected void remove(const Direct dir){
         debug(cell) writeln("remove start");
         Cell[] delete_line;
         final switch(dir){
@@ -197,9 +197,18 @@ class CellBOX{
         box = newone.dup;
         return true;
     }
-    protected void take_after(CellBOX oldone){
+    protected void take_after(CellBOX oldone)
+        in{
+        assert(!oldone.get_box_raw().empty);
+        }
+        out{
+        assert(!box.empty);
+        }
+    body{
+        debug(cell) writeln("take after start");
         box = oldone.get_box_raw();
         oldone = null;
+        debug(cell) writeln("end");
     }
     public const(Cell[]) get_box()const{
         return box;
@@ -207,8 +216,8 @@ class CellBOX{
     public Cell[] get_box_dup()const{
         return box.dup;
     }
-    public Cell[] get_box_raw()const{
-        return cast(Cell[])box;
+    public Cell[] get_box_raw(){
+        return box;
     }
 
     this(){}
@@ -569,17 +578,26 @@ class BoxTable : CellBOX{
 
     this(){}
 
+    invariant(){
+    }
     public:
     void add_box(T)(T u)
         in{
         assert(u.table == this);
         }
+        out{
+        assert(keys.keys == box);
+        }
     body{
         debug(cell) writeln("add_box start");
         assert(cast(ContentBOX)u !is null);
         u.set_table_key(++id_counter); // id == 0 は未初期化値として使う
+        assert(!u.get_box().empty);
         foreach(c; u.get_box())
+        {
             keys[c] = id_counter;
+            add(c);
+        }
         type_table[id_counter] = u.toString;
         content_table[id_counter] = u;
         debug(cell){
@@ -591,6 +609,9 @@ class BoxTable : CellBOX{
     void remove(ContentBOX u)
         in{
         assert(u.table == this);
+        }
+        out{
+        assert(keys.keys == box);
         }
     body{
         auto content_cells = u.get_box();
@@ -649,18 +670,29 @@ class ReferTable : BoxTable{
         }
     body{
         master = attach; // manipulating ReferBOX acts on attached Table
-        offset = ul;
-        range_of_row = h;
-        range_of_col = w;
+        set_table_size(ul,h,w);
+        data_sync();
     }
-    public void set_table(Cell ul,int h,int w){
+    public void set_table_size(Cell ul,int h,int w){
         offset = ul;
         range_of_row = offset.row + h;
         range_of_col = offset.column + w;
+        writefln("range_r %d range_c %d",range_of_row,range_of_col);
+    }
+    public void data_sync(){
+        auto masterbox = master.get_box;
+        box.clear();
+        foreach(c; 0 .. range_of_col)
+        foreach(r; 0 .. range_of_row)
+        {
+            auto itr = Cell(r,c)+offset;
+            if(itr in master.keys)
+                box ~= itr;
+        }
     }
     public:
     private auto get_content(const Cell c){
-        super.get_content(c+offset);
+        master.get_content(c);
         if(!(c in master.keys)) writeln("this cell is empty, no content return");
         auto key = master.keys[c];
         return tuple(master.type_table[key],master.content_table[key]);
@@ -668,11 +700,10 @@ class ReferTable : BoxTable{
     auto get_contents(){
         Tuple!(string,ContentBOX)[ContentBOX] i_have;
 
-        foreach(c; 0 .. range_of_col)
-        foreach(r; 0 .. range_of_row)
+        foreach(c; box)
         {
-            auto itr = Cell(r,c);
-            auto item = get_content(itr);
+            writeln("get_contents works");
+            auto item = get_content(c);
             i_have[item[1]] = item;
         }
         return i_have;
@@ -681,15 +712,19 @@ class ReferTable : BoxTable{
     // 
     override void add_box(T)(T u)
         in{
-        assert(u.table == this);
+        assert(u.table == master);
         }
     body{
         assert(cast(ContentBOX)u !is null);
+        debug(cell) writeln("add_box :",u.get_box());
         foreach(c; u.get_box())
         {
-            table[c+offset] = u;
+            master.table[c+offset] = u;
+            add(c);
         }
     }
+    // master のtableのなかでview に含まれるもの
+    // get_box()
     public void move_focus(const Direct to){
         offset.move(to);
     }
@@ -733,6 +768,7 @@ class SelectBOX : ContentBOX{
     }
     public TextBOX create_TextBOX(){
         debug(cell) writeln("create_TextBOX start");
+        create_in();
         auto tb = new TextBOX(table);
         tb.take_after(this);
         debug(cell) writeln("end");
