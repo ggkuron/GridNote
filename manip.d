@@ -15,14 +15,17 @@ enum focus_mode{ normal,select,edit }
 // class Manipulater が存在してもいいかも
 // 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
 // 複合的な操作は現在思いつかないのでこのままにする
-// このコメントを消そうとするときに考えて欲しい
+// このコメントを消そうとするときに考える
+// どうしたかはcommit messageに書くべき
+
 
 // Table に関する操作
    // ここからCellBOXに対する操作も行う
    // その責任は分離すべき
 class ManipTable{
     BoxTable focused_table;
-    ContentBOX focused_box;
+    ContentBOX manipulating_box;
+    string box_type;
 
     ManipTextBOX manip_textbox;
 
@@ -102,12 +105,39 @@ class ManipTable{
         debug(manip) writeln("start_insert_normal_text");
         mode = focus_mode.edit;
         auto tb = select.create_TextBOX();
-        manip_textbox.start_input(tb);
+
+        manipulating_box = tb;
+        focused_table.add_box!(TextBOX)(tb);
+        writeln("type in: ",tb.toString());
+        box_type = tb.toString();
+
         debug(manip) writeln("end");
+    }
+    void im_commit_str_send_to_box(string str){
+        debug(manip) writeln("send to box start with :",str);
+        switch(box_type){
+            case "cell.textbox.TextBOX":
+                manip_textbox.with_commit(str,cast(TextBOX)manipulating_box);
+                return;
+            default:
+                break;
+        }
+    }
+    void backspace(){
+        debug(manip) writeln("back space start");
+        switch(box_type){
+            case "cell.textbox.TextBOX":
+                manip_textbox.backapce(cast(TextBOX)manipulating_box);
+                return;
+            default:
+                break;
+        }
+
     }
 }
 
 import gtk.IMMulticontext;
+import gtk.IMContext;
 
 class ManipTextBOX {
     ManipTable manip_table;
@@ -119,18 +149,33 @@ class ManipTextBOX {
         final switch(dir){
             case Direct.right:
                 box.move_caretR(); return;
+                break;
             case Direct.left:
                 box.move_caretL(); return;
+                break;
             case Direct.up:
                 box.move_caretU(); return;
+                break;
             case Direct.down:
                 box.move_caretD(); return;
+                break;
         }
         assert(0);
     }
-    void start_input(TextBOX box){
-        // move the focus on the table 
-        //  to acoord with caret positon
-
+    void insert(TextBOX box,string str){
+        debug(manip) writeln("text insert strat");
+        box.insert(str);
+        move_caret(box,Direct.right);
+        // should move the focus on the table 
+        //  acoording with caret positon
+        debug(manip) writeln("end");
     }
+    void with_commit(string str,TextBOX box){
+        debug(manip) writeln("with commit text");
+        insert(box,str);
+    }
+    void backapce(TextBOX box){
+        box.backapce();
+    }
+
 }
