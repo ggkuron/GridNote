@@ -1,6 +1,7 @@
 module gui.gui;
 
 debug(gui) import std.stdio;
+debug(cmd) import std.stdio;
 import std.string;
 import std.array;
 import env;
@@ -20,13 +21,22 @@ import gtk.Box;
 import gtkc.gdktypes;
 import gtk.MainWindow;
 import gtk.Widget;
-import gtk.VBox;
+import gtk.IMContext;
+
+import gtk.EventBox;
+import gtk.ImageMenuItem;
+import gtk.AccelGroup;
+import gtk.IMMulticontext;
+
 import gdk.Event;
 
 import gtk.DrawingArea;
 import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
+
+
+import gtkc.gobject;
 
 immutable int start_size_w = 960;
 immutable int start_size_h = 640;
@@ -62,6 +72,7 @@ class PageView : DrawingArea{
 
     InputInterpreter interpreter;
     RenderTextBOX render_text ;
+    IMMulticontext imm;
 
     ubyte emphasizedLineWidth = 2;
     ubyte selectedLineWidth = 2;
@@ -96,15 +107,21 @@ class PageView : DrawingArea{
             // TODO: set start_offset 
         }
 
+        imm = new IMMulticontext();
         menu = new Menu();
         table = new BoxTable();
         setProperty("can-focus",1);
         holding_area = new Rect(0,0,2000,2000);
+        auto setting = getSettings();
+        // setting.installProperty(P)
+        // これをgtkDで書きたい
+        // System(IBus)にしたいための試行錯誤として
+
         // resetStyle();
         // set_holding_area();
 
         manip_table = new ManipTable(table);
-        interpreter = new InputInterpreter(manip_table,this);
+        interpreter = new InputInterpreter(manip_table,this,imm);
 
         int num_of_gird_x = cast(int)(holding_area.w/gridSpace);
         int num_of_grid_y = cast(int)(holding_area.h/gridSpace);
@@ -113,6 +130,8 @@ class PageView : DrawingArea{
         addOnKeyPress(&interpreter.key_to_cmd);
         addOnFocusIn(&focus_in);
         addOnFocusOut(&focus_out);
+        addOnRealize(&realize);
+        addOnUnrealize(&unrealize);
         debug(gui) writefln("holding %f %f",holding_area.w,holding_area.h);
 
         init_selecter();
@@ -121,6 +140,49 @@ class PageView : DrawingArea{
         render_text =  new RenderTextBOX(this);
 
         addOnDraw(&draw_callback);
+        addOnButtonPress(&onButtonPress);
+        imm.addOnCommit(&commit);
+
+        menu = new Menu();
+        menu.append( new ImageMenuItem(StockID.CUT, cast(AccelGroup)null) );
+        menu.append( new ImageMenuItem(StockID.COPY, cast(AccelGroup)null) );
+        menu.append( new ImageMenuItem(StockID.PASTE, cast(AccelGroup)null) );
+        menu.append( new ImageMenuItem(StockID.DELETE, cast(AccelGroup)null) );
+        imm.appendMenuitems(menu);
+
+        menu.attachToWidget(this, null);
+
+        showAll();
+    }
+    private bool on_key_press(Event ev,Widget w){
+        return interpreter.key_to_cmd(ev,w);
+    }
+    private bool on_key_release(Event ev,Widget w){
+
+        return cast(bool)imm.filterKeypress(ev.key());
+    }
+    public bool onButtonPress(Event event, Widget widget)
+    {
+        if ( event.type == EventType.BUTTON_PRESS )
+        {
+            GdkEventButton* buttonEvent = event.button;
+
+            if ( buttonEvent.button == 3)
+            {
+                menu.showAll();
+                menu.popup(buttonEvent.button, buttonEvent.time);
+                return true;
+            }
+        }
+        return false;
+    }
+    private 
+    void commit(string str,IMContext imc){
+        if(interpreter.input_state == InputState.edit)
+        {
+            manip_table.im_commit_str_send_to_box(str);
+            queueDraw();
+        }
     }
     bool focus_in(Event ev,Widget w){
         grabFocus();
@@ -128,6 +190,12 @@ class PageView : DrawingArea{
     }
     bool focus_out(Event ev,Widget w){
         return interpreter.focus_out(ev,w);
+    }
+    void realize(Widget w){
+        imm.setClientWindow(getParentWindow());
+    }
+    void unrealize(Widget w){
+        imm.setClientWindow(null);
     }
     void set_holding_area()
         in{
@@ -146,24 +214,33 @@ class PageView : DrawingArea{
                 cast(int)(holding_area.w/gridSpace),
                 cast(int)(holding_area.h/gridSpace));
     }
+    void move_view(Direct dir){
+        in_view.offset.move(dir);
+    }
     Rect back;
     RectDrawer backdrw;
     void backDesign(Context cr){
         backdrw.clip(cr);
     }
     void renderTable(Context cr){
+        debug(gui) writeln("render table start");
         set_in_view();
-        if(!in_view.get_box().empty)
+        if(in_view.get_box().empty) return;
+
         foreach(content_in_view; in_view.get_contents())
         {
             switch(content_in_view[0])
             {
-                case "TextBOX":
+                case "cell.textbox.TextBOX":
+                    debug(gui) writeln("render textbox");
                     render(cr,cast(TextBOX)content_in_view[1]);
+                    break;
                 default:
+                    debug(gui) writeln("something wrong");
                     break;
             }
         }
+        debug(gui) writeln("end");
     }
     void render(Context cr,TextBOX b){
         render_text.render(cr,b);
@@ -221,6 +298,7 @@ class PageView : DrawingArea{
         renderSelect(cr);
         renderFocus(cr);
         cr.resetClip(); // end of rendering
+        debug(gui) writeln("end");
         return true;
     }
     void renderFocus(Context cr){
@@ -283,10 +361,11 @@ class PageView : DrawingArea{
         foreach(c; cells)
         {
             const auto ad_info = adjacent_info(cells,c);
-            foreach(dir; Direct.min .. Direct.max+1 )
+            foreach(n; Direct.min .. Direct.max+1 )
             {
-                if(!ad_info[cast(Direct)dir]){ // 隣接してない方向の境界を書く
-                    perimeters.add_line(CellLine(c,cast(Direct)dir,selected_cell_border_color,grid_width));
+                auto dir = cast(Direct)n;
+                if(!ad_info[dir]){ // 隣接してない方向の境界を書く
+                    perimeters.add_line(CellLine(c,dir,selected_cell_border_color,grid_width));
                 }
             }
         }

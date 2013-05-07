@@ -19,7 +19,7 @@ class TextBOX : ContentBOX{
     Cell text_offset; // boxのtext が格納されている場所へのoffset
 
     int caret;
-    string font_name;
+    string font_name = "Sans Bold";
     char[] composition;
     int font_size;
     Color font_color;
@@ -29,7 +29,7 @@ class TextBOX : ContentBOX{
     void insert_char(const dchar c){
         text.insert(c);
     }
-    void insert(dstring s){
+    void insert(string s){
         foreach(c; s)
             text.insert(c);
     }

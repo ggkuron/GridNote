@@ -20,10 +20,10 @@ interface COMMAND{
 }
 private import stdlib = core.stdc.stdlib : exit;
 
-COMMAND cmd_template(alias func_content)(InputInterpreter i,ManipTable m,PageView p){
-    return new CMD!(func_content)(i,m,p);
+COMMAND cmd_template(alias func_body)(InputInterpreter i,ManipTable m,PageView p){
+    return new CMD!(func_body)(i,m,p);
 }
-class CMD(alias func_content) : COMMAND{
+class CMD(alias func_body) : COMMAND{
     private:
     ManipTable manip_table;
     PageView view;
@@ -35,11 +35,11 @@ class CMD(alias func_content) : COMMAND{
         view = p;
     }
     final void execute(){
-        mixin (func_content);
+        mixin (func_body);
     }
 }
 
-enum InputState{normal,insert,select};
+enum InputState{normal,edit,select};
 class InputInterpreter{
 
     ManipTable manip;
@@ -71,16 +71,15 @@ class InputInterpreter{
     COMMAND start_select_mode;
 
     InputState input_state = InputState.normal;
-    this(ManipTable m,PageView pv){
+    this(ManipTable m,PageView pv,IMMulticontext im){
         manip = m;
+        imm = im;
         view = pv;
-        imm = new IMMulticontext();
-        imm.setClientWindow(view.getParentWindow());
 
-        move_box_r = cmd_template!("manip_table.focused_box.move(Direct.right);")(this,manip,view);
-        move_box_l = cmd_template!("manip_table.focused_box.move(Direct.left);")(this,manip,view);
-        move_box_u = cmd_template!("manip_table.focused_box.move(Direct.up);")(this,manip,view);
-        move_box_d = cmd_template!("manip_table.focused_box.move(Direct.down);")(this,manip,view);
+        move_box_r = cmd_template!("manip_table.manipulating_box.move(Direct.right);")(this,manip,view);
+        move_box_l = cmd_template!("manip_table.manipulating_box.move(Direct.left);")(this,manip,view);
+        move_box_u = cmd_template!("manip_table.manipulating_box.move(Direct.up);")(this,manip,view);
+        move_box_d = cmd_template!("manip_table.manipulating_box.move(Direct.down);")(this,manip,view);
         move_focus_l = cmd_template!("manip_table.move_focus(Direct.left);")(this,manip,view);
         move_focus_r = cmd_template!("manip_table.move_focus(Direct.right);")(this,manip,view);
 
@@ -106,35 +105,48 @@ class InputInterpreter{
         imm.focusOut();
         return false;
     }
-
     public bool key_to_cmd(Event event, Widget w)
         in{
         assert(event.key() !is null);
         }
     body{
-    immutable preserve_length = 3;
         auto ev = event.key();
-        // keyState.length = preserve_length;
         debug(cmd) writeln("im_driven: ",im_driven);
         debug(cmd) writeln("key is ",ev.keyval);
         debug(cmd) writeln("mod is ",ev.state);
         debug(cmd) writefln("str is %s",*(ev.string));
         debug(cmd) writeln(imm.getContextId());
 
-        im_driven = cast(bool)imm.filterKeypress(ev);
-        if(im_driven) return true;
+        debug(cmd) writeln("commit start");
+        debug(cmd) writeln("input state ",input_state);
+        // alias interpreter.input_state input_state;
+        final switch(input_state){
+            case InputState.edit:
+                im_driven = cast(bool)imm.filterKeypress(ev);
+                writeln(im_driven);
+                if(im_driven) return true;
+                // else fall through
+            case InputState.normal:
+            case InputState.select:
+                immutable preserve_length = 3;
+                keyState ~= ev.keyval;
+                ModState = ev.state;
+                if(keyState.length > preserve_length)
+                    keyState = keyState[$-preserve_length .. $];
+                control_input();
+                break;
+        }
+        // 今、すべてSimpleがもっていってしまうのでとりあえず
 
-        keyState ~= ev.keyval;
-        ModState = ev.state;
+        debug(cmd) writeln(keyState);
+        return true;
+    }
+    void control_input(){
 
-        if(keyState.length > preserve_length)
-            keyState = keyState[$-preserve_length .. $];
-
-        writeln(keyState);
+        debug(cmd) writeln(keyState);
         interpret();
         execute();
         view.queueDraw();
-        return true;
     }
     COMMAND[] command_queue;
     void add_to_queue(COMMAND[] cmds ...){
@@ -145,12 +157,14 @@ class InputInterpreter{
     }
     private void interpret(){
         import std.stdio;
+        debug(cmd) writeln("input mode ",input_state);
+        debug(cmd) writefln("%d",ModifierType.CONTROL_MASK);
         if(keyState[$-1] == GdkKeysyms.GDK_Escape) add_to_queue (mode_change_to_normal);
  
         final switch (input_state)
         {
             case InputState.normal:
-                if(ModState == ModifierType.CONTROL_MASK)
+                if(ModState & ModifierType.CONTROL_MASK)
                 {
                     input_state = InputState.select;
                     if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (start_select_mode, move_focus_l,expand_select/*_l*/); }else
@@ -160,7 +174,11 @@ class InputInterpreter{
                 }
                 else
                 {
-                    if(keyState[$-1] == INSERT_KEY) add_to_queue (start_insert_normal_text); else
+                    if(keyState[$-1] == INSERT_KEY)
+                    {
+                        add_to_queue (start_insert_normal_text);
+                        input_state = InputState.edit;
+                    }else
 
                     if(keyState[$-1] == MOVE_L_KEY) add_to_queue (move_focus_l); else
                     if(keyState[$-1] == MOVE_R_KEY) add_to_queue (move_focus_r); else 
@@ -168,17 +186,17 @@ class InputInterpreter{
                     if(keyState[$-1] == MOVE_D_KEY) add_to_queue (move_focus_d);
                 }
                 break;
-            case InputState.insert:
+            case InputState.edit:
                 if(im_driven) {
                 }
-                    else{
-                    }
+                else{
+                }
                 return;
             case InputState.select:
                 // if(keyState[$-1] == EXIT_KEY) command_queue ~= quit;
                 if(manip.mode == focus_mode.select)
                 {
-                    if(ModState == ModifierType.CONTROL_MASK)
+                    if(ModState & ModifierType.CONTROL_MASK)
                     {
                         if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (move_focus_l,expand_select/*_l*/); }else
                         if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (move_focus_r,expand_select/*_r*/); }else
@@ -200,15 +218,15 @@ class InputInterpreter{
     }
     void input_start()
         in{
-        assert(input_state != InputState.insert); 
+        assert(input_state != InputState.edit); 
         }
     body{
-        input_state = InputState.insert;
+        input_state = InputState.edit;
         // SDL_StartTextInput();
     }
     void input_end()
         in{
-        assert(input_state == InputState.insert); 
+        assert(input_state == InputState.edit); 
         }
     body{
         input_state = InputState.normal;

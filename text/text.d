@@ -6,12 +6,12 @@ import std.string;
 import std.algorithm;
 import std.utf;
 
-import std.stdio; // printf dbg
+debug(text) import std.stdio; // printf dbg
 class Text
 {   // あらゆるところで触られるよ 変えたらだめだよ
     this(){
         static int cnt;
-        writefln("i am created for %d times",cnt++);
+        debug(text) writefln("Text created up %d times",cnt++);
     }
     int lines = 1;
     int caret;
@@ -22,7 +22,7 @@ class Text
     int position;
     ulong insert(dchar c){
         writing[current_line][position++] = c;
-        writef("insert : %s\n",writing[current_line]);
+        debug(text) writef("insert : %s\n",writing[current_line]);
         return writing[current_line].length;
     }
     @property bool empty(){
@@ -45,8 +45,10 @@ class Text
         string s;
         s = toUTF8(str);
         import std.stdio;
-        writeln("the text is ", s);
-        writeln("to_string ", s.toStringz);
+        debug(text){
+            writeln("the text is ", s);
+            writeln("to_string ", s.toStringz);
+        }
         return s.toStringz;
     }
     void line_feed(){
@@ -55,7 +57,7 @@ class Text
     }
     int right_edge_pos(){
         auto linepos = writing[current_line].keys.sort();
-        writefln("type:%s",typeid(linepos));
+        debug(text) writefln("type:%s",typeid(linepos));
         return linepos[$-1];
     }
     void move_caret(alias pred, alias manip_caret)(){

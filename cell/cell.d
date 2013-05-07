@@ -8,7 +8,7 @@ import std.exception;
 import std.math;
 
 import std.typecons;
-import std.stdio;
+debug(cell) import std.stdio;
 
 struct Cell
 {
@@ -61,7 +61,7 @@ struct Cell
     }
 }
 
-Cell diff(Cell a,Cell b){
+Cell diff(in Cell a,in Cell b){
     auto r = a.row - b.row;
     auto c = a.column - b.column;
     auto dr = (r<0)?-r:r;
@@ -74,11 +74,6 @@ unittest{
     auto c = diff(a,b);
     assert(c == Cell(5,5));
 }
-
-
-
-
-
 void move(ref Cell cell,const Direct to){
     final switch(to){
         case Direct.right: 
@@ -108,7 +103,7 @@ Cell if_moved(const Cell c,const Direct to){
 // 四角い要素を持っているかどうか
 bool is_box(const Cell[] box){
     if(box.length == 1) return true;
-    auto check_box = new CellBOX();
+    auto check_box = new CellBOX(); // この判定方法だとpureになれない
     check_box.box_change(box,false); // check is false
 
     foreach(c; box)
@@ -155,7 +150,7 @@ class CellBOX{
 
     public bool is_in(const Cell c)const
     body{
-        return .is_in!(Cell)(box,c);
+        return .is_in(box,c);
     }
     unittest{
         auto cb = new CellBOX();
@@ -193,41 +188,18 @@ class CellBOX{
     public void clear(){
         box.clear();
     }
-    // 破壊的
+    // 破壊的にboxの中身を入れ替える
     // check == false はis_box でのチェック用
+    // is_box でのチェックを行わない
     public bool box_change(const Cell[] newone,bool check=true){
         if(check) 
             if(is_box(newone)) return false;
         box = newone.dup;
         return true;
     }
-    public void take_after(CellBOX oldone){
+    protected void take_after(CellBOX oldone){
         box = oldone.get_box_raw();
         oldone = null;
-    }
-    unittest{
-        auto cb = new CellBOX(Cell(0,0),5,5);
-        cb.remove(Direct.up);
-        assert(cb.upper_left == Cell(1,0));
-        assert(cb.col_width == 5);
-        assert(cb.row_width == 4);
-        assert(cb.lower_right == Cell(4,4));
-        cb.remove(Direct.right);
-        assert(cb.upper_left == Cell(1,0));
-        assert(cb.col_width == 4);
-        assert(cb.row_width == 4);
-        assert(cb.lower_right == Cell(4,3));
-        cb.remove(Direct.left);
-        assert(cb.upper_left == Cell(1,1));
-        assert(cb.col_width == 3);
-        assert(cb.row_width == 4);
-        assert(cb.lower_right == Cell(4,3));
-        cb.remove(Direct.down);
-        assert(cb.upper_left == Cell(1,1));
-        assert(cb.col_width == 3);
-        assert(cb.row_width == 3);
-        assert(cb.lower_right == Cell(3,3));
-
     }
     public const(Cell[]) get_box()const{
         return box;
@@ -368,7 +340,6 @@ class CellBOX{
     }
     private Cell[] in_column(const int column)const{
         Cell[] result;
-
         foreach(c; box)
         {
             if(c.column == column)
@@ -549,14 +520,14 @@ class CellBOX{
 
 abstract class ContentBOX : CellBOX{
     BoxTable table;
-    this(BoxTable attach, ContentBOX newone)
+    this(BoxTable attach, ContentBOX taken)
         in{
         assert(attach !is null);
-        assert(newone !is null);
+        assert(taken !is null);
         }
     body{
         table = attach;
-        box = newone.box;
+        box = taken.box;
     }
     this(BoxTable attach)
         in{
@@ -568,7 +539,9 @@ abstract class ContentBOX : CellBOX{
     public BoxTable get_table(){
         return table;
     }
-    //  BoxTable 以外から触るべからず
+    // BoxTable 以外から触るべからず
+    // Tableが識別に使うためのid
+    // Appが生きてる間は一貫してるかもしれない
     private int table_key; // 状態を保存するときには初期化必須
     public void set_table_key(int a){
         table_key = a;
@@ -578,29 +551,42 @@ abstract class ContentBOX : CellBOX{
     }
 }
 
+class MiniTable : ContentBOX{
+    BoxTable inner_table;
+    alias inner_table this;
+    this(BoxTable table,ContentBOX area){
+        super(table,area);
+        inner_table = new BoxTable;
+    }
+}
+
 class BoxTable : CellBOX{
     private int id_counter;
 
     ContentBOX[int] content_table;
     string[int] type_table;
     int[Cell] keys;
-    // ContentBOX[Cell] table;
 
     this(){}
 
     public:
     void add_box(T)(T u)
-        if(cast(ContentBOX)(typeof(T)))
         in{
         assert(u.table == this);
         }
     body{
+        debug(cell) writeln("add_box start");
+        assert(cast(ContentBOX)u !is null);
         u.set_table_key(++id_counter); // id == 0 は未初期化値として使う
         foreach(c; u.get_box())
-            keys[c] = id_cnt;
-        type_table[id_counter] = typeid(typeof(T));
+            keys[c] = id_counter;
+        type_table[id_counter] = u.toString;
         content_table[id_counter] = u;
-
+        debug(cell){
+            writeln("type: ",u.toString);
+            writeln("table key: ",id_counter);
+            writeln("end");
+        }
     }
     void remove(ContentBOX u)
         in{
@@ -616,8 +602,31 @@ class BoxTable : CellBOX{
         type_table.remove(u.table_key);
         u.delete_table_key();
     }
+    unittest{
+        auto cb = new CellBOX(Cell(0,0),5,5);
+        cb.remove(Direct.up);
+        assert(cb.upper_left == Cell(1,0));
+        assert(cb.col_width == 5);
+        assert(cb.row_width == 4);
+        assert(cb.lower_right == Cell(4,4));
+        cb.remove(Direct.right);
+        assert(cb.upper_left == Cell(1,0));
+        assert(cb.col_width == 4);
+        assert(cb.row_width == 4);
+        assert(cb.lower_right == Cell(4,3));
+        cb.remove(Direct.left);
+        assert(cb.upper_left == Cell(1,1));
+        assert(cb.col_width == 3);
+        assert(cb.row_width == 4);
+        assert(cb.lower_right == Cell(4,3));
+        cb.remove(Direct.down);
+        assert(cb.upper_left == Cell(1,1));
+        assert(cb.col_width == 3);
+        assert(cb.row_width == 3);
+        assert(cb.lower_right == Cell(3,3));
+    }
     public Tuple!(string,ContentBOX) get_content(const Cell c){
-        if(! (c in keys)) writeln("this cell is empty, no content return");
+        if(!(c in keys)) writeln("this cell is empty, no content return");
         auto key = keys[c];
         return tuple(type_table[key],content_table[key]);
     }
@@ -640,20 +649,27 @@ class ReferTable : BoxTable{
         }
     body{
         master = attach; // manipulating ReferBOX acts on attached Table
-    }
-    public void set_table(Cell ul,int w,int h){
         offset = ul;
         range_of_row = h;
         range_of_col = w;
     }
+    public void set_table(Cell ul,int h,int w){
+        offset = ul;
+        range_of_row = offset.row + h;
+        range_of_col = offset.column + w;
+    }
     public:
     private auto get_content(const Cell c){
-        return super.get_content(c+offset);
+        super.get_content(c+offset);
+        if(!(c in master.keys)) writeln("this cell is empty, no content return");
+        auto key = master.keys[c];
+        return tuple(master.type_table[key],master.content_table[key]);
     }
     auto get_contents(){
         Tuple!(string,ContentBOX)[ContentBOX] i_have;
-        foreach(c ; 0 .. range_of_col)
-        foreach(r ; 0 .. range_of_row)
+
+        foreach(c; 0 .. range_of_col)
+        foreach(r; 0 .. range_of_row)
         {
             auto itr = Cell(r,c);
             auto item = get_content(itr);
@@ -661,12 +677,14 @@ class ReferTable : BoxTable{
         }
         return i_have;
     }
+    // add_box は直接table番地に反映させる
+    // 
     override void add_box(T)(T u)
-        if(cast(ContentBOX)(typeof(T)))
         in{
         assert(u.table == this);
         }
     body{
+        assert(cast(ContentBOX)u !is null);
         foreach(c; u.get_box())
         {
             table[c+offset] = u;
@@ -688,6 +706,7 @@ class ReferTable : BoxTable{
 }
 
 import cell.textbox;
+
 class SelectBOX : ContentBOX{
     Cell focus;
     Cell pivot;
@@ -734,8 +753,8 @@ class SelectBOX : ContentBOX{
     }
     private void pivot_bound(Cell cl){
         debug(cell) writeln("privot_bound start");
-        if(pivot == cl)  hold_ul(pivot,1,1);
-        if(pivot < cl) // rowが小さい
+        if(pivot == cl)  hold_ul(pivot,1,1); else
+        if(pivot < cl) // pivot.rowの方が小さいブロック
         {
             auto d = diff(cl,pivot);
             auto dr = d.row+1;
@@ -747,7 +766,7 @@ class SelectBOX : ContentBOX{
                 hold_ur(pivot,dr,dc);
             else 
                 hold_ul(pivot,dr,dc); // 第四象限
-        }else{
+        }else{ // if(pivot > cl) pivot.rowが大きい
             auto d = diff(pivot,cl);
             auto dr = d.row+1;
             auto dc = d.column+1;
