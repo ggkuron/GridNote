@@ -47,7 +47,8 @@ class RenderTextBOX : RenderBOX{
         auto pos = get_position(box); // gui.render_box::get_position
         layout.setFontDescription(desc);
         desc.free();
-        cr.moveTo(pos.x,pos.y+page_view.get_gridSize());
+        debug(gui) writeln("write position: ",pos.x,pos.y);
+        cr.moveTo(pos.x,pos.y);
         cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
         // cairo_move_to(cr,0.5-extents.width/2 - extents.x_bearing,
                 //0.5-extents.height/2 - extents.y_bearing);

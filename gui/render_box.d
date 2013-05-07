@@ -5,6 +5,7 @@ import cell.cell;
 import misc.direct;
 import shape.shape;
 import cairo.Context;
+debug(gui) import std.stdio;
 
 class RenderBOX{
     protected:
@@ -26,6 +27,7 @@ class RenderBOX{
 //         TODO 不安なここなおす
 
         auto cp = in_view.get_view_position(b);
+        debug(gui) writefln("cp : %s",cp);
         auto x = page_view.get_x(cp);
         auto y = page_view.get_y(cp);
 

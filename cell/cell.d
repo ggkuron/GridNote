@@ -160,10 +160,10 @@ class CellBOX{
         cb.expand(Direct.right);
         assert(cb.is_in(Cell(3,4)));
     }
-    protected void add(const Cell c){
+    private void add(const Cell c){
         box ~= c;
     }
-    protected void remove(const Direct dir){
+    private void remove(const Direct dir){
         debug(cell) writeln("remove start");
         Cell[] delete_line;
         final switch(dir){
@@ -195,6 +195,7 @@ class CellBOX{
         if(check) 
             if(is_box(newone)) return false;
         box = newone.dup;
+        update_info();
         return true;
     }
     protected void take_after(CellBOX oldone)
@@ -207,6 +208,8 @@ class CellBOX{
     body{
         debug(cell) writeln("take after start");
         box = oldone.get_box_raw();
+        update_info();
+
         oldone = null;
         debug(cell) writeln("end");
     }
@@ -730,6 +733,8 @@ class ReferTable : BoxTable{
     }
     Cell get_view_position(const CellBOX b)const{
         auto tmp = b.get_upper_left();
+        writeln("tmp : ",tmp);
+        writeln("box : ",b.box);
         // pos(0,0)で止まる
         return tmp - offset;
     }
