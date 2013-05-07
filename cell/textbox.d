@@ -38,6 +38,9 @@ class TextBOX : ContentBOX{
         dstring s = cast(dstring)cs;
         insert_char(s[0]);
     }
+    void backapce(){
+        text.backapce();
+    }
     void line_feed(){
         expand(Direct.down);
         move_caretD();

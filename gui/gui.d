@@ -257,7 +257,7 @@ class PageView : DrawingArea{
     // }
     Lines grid;
     LinesDrawer drw_grid;
-    int gridSpace =40; // □の1辺長
+    int gridSpace =32; // □の1辺長
     ubyte grid_width = 1;
     public int get_gridSize()const{
         return gridSpace;

@@ -589,7 +589,8 @@ class BoxTable : CellBOX{
         assert(u.table == this);
         }
         out{
-        assert(keys.keys == box);
+            // keys.keysはこのbox以外も含む
+        // assert(keys.keys == box);
         }
     body{
         debug(cell) writeln("add_box start");
@@ -776,6 +777,7 @@ class SelectBOX : ContentBOX{
         create_in();
         auto tb = new TextBOX(table);
         tb.take_after(this);
+        box.clear();
         debug(cell) writeln("end");
         return tb;
     }

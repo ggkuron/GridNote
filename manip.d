@@ -15,7 +15,9 @@ enum focus_mode{ normal,select,edit }
 // class Manipulater が存在してもいいかも
 // 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
 // 複合的な操作は現在思いつかないのでこのままにする
-// このコメントを消そうとするときに考えて欲しい
+// このコメントを消そうとするときに考える
+// どうしたかはcommit messageに書くべき
+
 
 // Table に関する操作
    // ここからCellBOXに対する操作も行う
@@ -121,6 +123,17 @@ class ManipTable{
                 break;
         }
     }
+    void backspace(){
+        debug(manip) writeln("back space start");
+        switch(box_type){
+            case "cell.textbox.TextBOX":
+                manip_textbox.backapce(cast(TextBOX)manipulating_box);
+                return;
+            default:
+                break;
+        }
+
+    }
 }
 
 import gtk.IMMulticontext;
@@ -161,4 +174,8 @@ class ManipTextBOX {
         debug(manip) writeln("with commit text");
         insert(box,str);
     }
+    void backapce(TextBOX box){
+        box.backapce();
+    }
+
 }

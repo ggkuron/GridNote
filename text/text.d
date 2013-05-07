@@ -8,7 +8,7 @@ import std.utf;
 
 debug(text) import std.stdio; // printf dbg
 class Text
-{   // あらゆるところで触られるよ 変えたらだめだよ
+{   // TextBOX itemBOX その他で使われる文字列表現TextBuffer相当
     this(){
         static int cnt;
         debug(text) writefln("Text created up %d times",cnt++);
@@ -30,6 +30,10 @@ class Text
     }
     void deleteChar(int pos){
         writing[current_line].remove(pos);
+    }
+    void backapce(){
+        if(position)
+            deleteChar(--position);
     }
     @property string str(){
         if(!writing.keys.empty())

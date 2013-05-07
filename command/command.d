@@ -69,6 +69,7 @@ class InputInterpreter{
     COMMAND quit;
     COMMAND start_insert_normal_text;
     COMMAND start_select_mode;
+    COMMAND text_backspace;
 
     InputState input_state = InputState.normal;
     this(ManipTable m,PageView pv,IMMulticontext im){
@@ -95,6 +96,7 @@ class InputInterpreter{
         quit = cmd_template!("stdlib.exit(0);")(this,manip,view);
         start_insert_normal_text = cmd_template!("manip_table.start_insert_normal_text();")(this,manip,view);
         start_select_mode = cmd_template!("manip_table.start_select();")(this,manip,view);
+        text_backspace = cmd_template!("manip_table.backspace();")(this,manip,view);
 
     }
     public bool focus_in(Event ev,Widget w){
@@ -159,7 +161,6 @@ class InputInterpreter{
         import std.stdio;
         debug(cmd) writeln("input mode ",input_state);
         debug(cmd) writefln("%d",ModifierType.CONTROL_MASK);
-        if(keyState[$-1] == GdkKeysyms.GDK_Escape) add_to_queue (mode_change_to_normal);
  
         final switch (input_state)
         {
@@ -187,12 +188,17 @@ class InputInterpreter{
                 }
                 break;
             case InputState.edit:
+                if(keyState[$-1] == GdkKeysyms.GDK_Escape) 
+                    add_to_queue (mode_change_to_normal);
+                if(keyState[$-1] == GdkKeysyms.GDK_BackSpace)
+                    add_to_queue (text_backspace);
                 if(im_driven) {
                 }
                 else{
                 }
                 return;
             case InputState.select:
+                if(keyState[$-1] == GdkKeysyms.GDK_Escape) add_to_queue (mode_change_to_normal);
                 // if(keyState[$-1] == EXIT_KEY) command_queue ~= quit;
                 if(manip.mode == focus_mode.select)
                 {

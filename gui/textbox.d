@@ -24,9 +24,12 @@ class RenderTextBOX : RenderBOX{
     PgLayout layout;
     PgFontDescription desc;
     string str;
-    ubyte fontsize=40;
+    ubyte fontsize;
     Color fontcolor;
     this(PageView pv)
+        out{
+        assert(fontsize != 0);
+        }
     body{
         super(pv);
         fontsize = cast(ubyte)pv.gridSpace;
@@ -48,7 +51,7 @@ class RenderTextBOX : RenderBOX{
         layout.setFontDescription(desc);
         desc.free();
         debug(gui) writeln("write position: ",pos.x,pos.y);
-        cr.moveTo(pos.x,pos.y);
+        cr.moveTo(pos.x,pos.y+page_view.gridSpace/2);
         cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
         // cairo_move_to(cr,0.5-extents.width/2 - extents.x_bearing,
                 //0.5-extents.height/2 - extents.y_bearing);
