@@ -32,7 +32,7 @@ class RenderTextBOX : BoxRenderer{
         }
     body{
         super(pv);
-        fontsize = cast(ubyte)pv.gridSpace;
+        fontsize = cast(ubyte)pv.get_gridSize;
         fontcolor = black;
     }
     void setBOX(TextBOX box){
@@ -51,11 +51,9 @@ class RenderTextBOX : BoxRenderer{
         layout.setFontDescription(desc);
         desc.free();
         debug(gui) writeln("write position: ",pos.x,pos.y);
-        cr.moveTo(pos.x,pos.y+page_view.gridSpace/2);
+        cr.moveTo(pos.x,pos.y+page_view.get_gridSize()/2);
         cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
-        // cairo_move_to(cr,0.5-extents.width/2 - extents.x_bearing,
-                //0.5-extents.height/2 - extents.y_bearing);
-        // layout.getSize(
+
         str = box.getText().str;
         layout.setText(str);
         PgCairo.updateLayout(cr,layout);

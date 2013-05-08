@@ -114,11 +114,6 @@ class PageView : DrawingArea{
         setProperty("can-focus",1);
         holding_area = new Rect(0,0,2000,2000);
         auto setting = getSettings();
-        // setting.installProperty(P)
-        // これをgtkDで書きたい
-        // System(IBus)にしたいための試行錯誤として
-
-        // resetStyle();
         // set_holding_area();
 
         manip_table = new ManipTable(table);
@@ -216,7 +211,6 @@ class PageView : DrawingArea{
         in_view.data_sync();
     }
     private final void move_view(Direct dir){
-    // SDL_Rect[] contents_positions;
         in_view.offset.move(dir);
     }
     Rect back;
@@ -246,16 +240,10 @@ class PageView : DrawingArea{
     }
     final private void render(Context cr,TextBOX b){
         render_text.render(cr,b);
+        render_text.render_fill(cr,b,Color(orenge,24));
     }
-    // 階層化構造 has gone
-    // Cell.Cellの構造が歪まない方法思いつくまで封印
-    // int grid_length(int depth){ // 階層化に対応してる？？
-    //     auto result = gridSpace;
-    //     auto view_depth = in_view.recursive_depth();
-    //     foreach(i;view_depth+1 .. depth)
-    //         result /= 2;
-    //     return result;
-    // }
+    private:
+    bool grid_show_flg = true;
     Lines grid;
     LinesDrawer drw_grid;
     int gridSpace =32; // □の1辺長
@@ -269,7 +257,9 @@ class PageView : DrawingArea{
     void zoom_out(){
         if(gridSpace)  --gridSpace;
     }
-
+    public void switch_grid_show(){
+        grid_show_flg = !grid_show_flg;
+    }
     private void setGrid(){
         grid = new Lines();
         grid.set_color(grid_color);
@@ -294,7 +284,7 @@ class PageView : DrawingArea{
     private final bool draw_callback(Context cr,Widget widget){
         debug(gui) writeln("draw callback");
         backDesign(cr);
-        renderGrid(cr);
+        if(grid_show_flg) renderGrid(cr);
         renderTable(cr);
         renderSelect(cr);
         renderFocus(cr);

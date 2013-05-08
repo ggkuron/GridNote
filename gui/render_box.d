@@ -31,9 +31,7 @@ class BoxRenderer{
         auto x = page_view.get_x(cp);
         auto y = page_view.get_y(cp);
 
-        // auto depth = box.recursive_depth();
-        // auto grid = page_view.grid_length(depth) ;
-        auto grid = page_view.gridSpace;
+        auto grid = page_view.get_gridSize;
         import std.stdio;
         writeln("ul:",cp);
 
@@ -44,10 +42,10 @@ class BoxRenderer{
         writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
-    final public void render_box_grid(Context cr,CellBOX b,const Color color,const ubyte width){
+    final public void render_grid(Context cr,CellBOX b,const Color color,const ubyte width){
         page_view.renderGrids(cr,b.get_box(),color,width);
     }
-    final public void render_box_fill(Context cr,CellBOX b,const Color color){
+    final public void render_fill(Context cr,CellBOX b,const Color color){
         page_view.renderFillGrids(cr,b.get_box(),color);
     }
 

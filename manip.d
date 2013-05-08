@@ -136,7 +136,6 @@ class ManipTable{
             default:
                 break;
         }
-
     }
 }
 
