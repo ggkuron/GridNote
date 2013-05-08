@@ -61,7 +61,7 @@ struct Cell
     }
 }
 
-Cell diff(in Cell a,in Cell b){
+pure Cell diff(in Cell a,in Cell b){
     auto r = a.row - b.row;
     auto c = a.column - b.column;
     auto dr = (r<0)?-r:r;

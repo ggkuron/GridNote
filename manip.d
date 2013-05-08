@@ -47,7 +47,7 @@ class ManipTable{
         select.move(dir);
         debug(manip) writefln("focus: %s",select.focus);
     }
-    final ContentBOX get_manipulating(){
+    final ContentBOX get_target(){
         return manipulating_box;
     }
     final void start_select()

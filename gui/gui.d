@@ -238,11 +238,14 @@ class PageView : DrawingArea{
                     break;
             }
         }
+
+        // render_text 全くふさわしくないけど、これ以外今ないし、まったく問題ない
+        render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
+
         debug(gui) writeln("end");
     }
     final private void render(Context cr,TextBOX b){
         render_text.render(cr,b);
-        render_text.render_grid(cr,b,manip_box_color,manipLineWidth);
     }
     private:
     bool grid_show_flg = true;
