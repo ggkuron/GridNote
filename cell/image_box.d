@@ -36,4 +36,8 @@ class ImageBOX : ContentBOX{
     body{
         image = new Image(filename,frame);
     }
+    override bool is_to_spoil(){
+        return false;
+        // tobe implement
+    }
 }

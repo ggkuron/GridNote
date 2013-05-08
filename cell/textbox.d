@@ -58,6 +58,10 @@ class TextBOX : ContentBOX{
     void set_caret()(int pos){
         text.set_caret(pos); // 
     }
+    // 操作が終わった時にばらすべきか
+    public final bool is_to_spoil(){
+        return text.empty();
+    }
     // アクセサ
     public:
     string get_fontname(){

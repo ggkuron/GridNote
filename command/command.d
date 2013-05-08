@@ -194,7 +194,7 @@ class InputInterpreter{
                 break;
             case InputState.edit:
                 if(keyState[$-1] == GdkKeysyms.GDK_Escape) 
-                    add_to_queue (mode_change_to_normal);
+                    add_to_queue (mode_change_to_normal,manip_mode_normal);
                 if(keyState[$-1] == GdkKeysyms.GDK_BackSpace)
                     add_to_queue (text_backspace);
                 if(im_driven) {

@@ -160,7 +160,7 @@ class CellBOX{
         cb.expand(Direct.right);
         assert(cb.is_in(Cell(3,4)));
     }
-    private void add(const Cell c){
+    private final void add(const Cell c){
         box ~= c;
     }
     public void remove(const Direct dir){
@@ -207,13 +207,13 @@ class CellBOX{
         oldone = null;
         debug(cell) writeln("end");
     }
-    public const(Cell[]) get_box()const{
+    public final const(Cell[]) get_box()const{
         return box;
     }
-    public Cell[] get_box_dup()const{
+    public final Cell[] get_box_dup()const{
         return box.dup;
     }
-    public Cell[] get_box_raw(){
+    public final Cell[] get_box_raw(){
         return box;
     }
 
@@ -545,6 +545,7 @@ abstract class ContentBOX : CellBOX{
     public BoxTable get_table(){
         return table;
     }
+    public bool is_to_spoil();
     // BoxTable 以外から触るべからず
     // Tableが識別に使うためのid
     // Appが生きてる間は一貫してるかもしれない
@@ -556,14 +557,18 @@ abstract class ContentBOX : CellBOX{
     public void delete_table_key(){
         table_key = 0;
     }
+    // 削除対象かいなか
 }
 
-class MiniTable : ContentBOX{
+class Holder : ContentBOX{
     BoxTable inner_table;
     alias inner_table this;
     this(BoxTable table,ContentBOX area){
         super(table,area);
         inner_table = new BoxTable;
+    }
+    override bool is_to_spoil(){
+        return false;
     }
 }
 
@@ -610,7 +615,7 @@ class BoxTable : CellBOX{
         assert(u.table == this);
         }
         out{
-        assert(keys.keys == box);
+        // assert(keys.keys == box);
         }
     body{
         auto content_cells = u.get_box();
@@ -829,5 +834,8 @@ class SelectBOX : ContentBOX{
         debug(cell) writeln("expand_to_focus start");
         pivot_bound(focus);
         debug(cell) writeln("end");
+    }
+    override bool is_to_spoil(){
+        return false;
     }
 }

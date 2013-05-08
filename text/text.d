@@ -26,7 +26,8 @@ class Text
         return writing[current_line].length;
     }
     @property bool empty(){
-        return writing.keys.empty();
+        return (writing.keys.empty())
+        || (writing.length == 1 && writing[0].keys.empty());
     }
     void deleteChar(int pos){
         writing[current_line].remove(pos);

@@ -10,13 +10,11 @@ debug(manip) import std.stdio;
 enum focus_mode{ normal,select,edit }
 
 // 全てのCMDに対して
-// 適切に捌く
 // 全てのCMDを実行するためのハブ
-// class Manipulater が存在してもいいかも
 // 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
 // 複合的な操作は現在思いつかないのでこのままにする
 // このコメントを消そうとするときに考える
-// どうしたかはcommit messageに書くべき
+// どうしたかはcommit messageに書くべきだと思われる
 
 
 // Table に関する操作
@@ -66,6 +64,15 @@ class ManipTable{
     final void select_clear(){
         select.clear();
     }
+    auto get_typebox(){
+        switch(box_type){
+            case "cell.textbox.TextBOX":
+                return cast(TextBOX)manipulating_box;
+            default:
+                assert(0);
+        }
+    }
+
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
     final void expand_if_on_edge(Direct dir){
         if(select.is_on_edge(dir))
@@ -96,14 +103,21 @@ class ManipTable{
     }
     final void return_to_normal_mode()
         in{
-        assert(mode == focus_mode.select);
+        assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
         out{
         assert(mode == focus_mode.normal);
         }
     body{
+        debug(manip) writeln("return to normal start");
         select.clear();
         mode = focus_mode.normal;
+        if(manipulating_box.is_to_spoil)
+        {
+            focused_table.remove(manipulating_box);
+            debug(manip) writeln("REMOVED empty box from table");
+        }
+        debug(manip) writeln("returned");
     }
     final void start_insert_normal_text(){
         debug(manip) writeln("start_insert_normal_text");
@@ -119,13 +133,8 @@ class ManipTable{
     }
     final void im_commit_str_send_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
-        switch(box_type){
-            case "cell.textbox.TextBOX":
-                manip_textbox.with_commit(str,cast(TextBOX)manipulating_box);
-                return;
-            default:
-                break;
-        }
+        auto typedbox = get_typebox();
+        manip_textbox.with_commit(str,typedbox);
     }
     final void backspace(){
         debug(manip) writeln("back space start");
