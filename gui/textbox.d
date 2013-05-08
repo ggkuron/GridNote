@@ -1,9 +1,11 @@
 module gui.textbox;
+
+import gui.gui;
 import gui.render_box;
-import text.text;
 import cell.textbox;
 import cell.cell;
-import gui.gui;
+import text.text;
+import misc.direct;
 import std.array;
 import std.string;
 
@@ -20,12 +22,15 @@ import std.stdio;
 import shape.shape;
 
 class RenderTextBOX : BoxRenderer{
+    private:
     cairo_text_extents_t extents;
     PgLayout layout;
     PgFontDescription desc;
     string str;
     ubyte fontsize;
+    int width,height;
     Color fontcolor;
+    public:
     this(PageView pv)
         out{
         assert(fontsize != 0);
@@ -35,11 +40,11 @@ class RenderTextBOX : BoxRenderer{
         fontsize = cast(ubyte)pv.get_gridSize;
         fontcolor = black;
     }
-    void setBOX(TextBOX box){
+    private void setBOX(TextBOX box){
         assert(box !is null);
-        desc = PgFontDescription.fromString(box.font_name~fontsize);
+        desc = PgFontDescription.fromString(box.get_fontname~fontsize);
     }
-    void render(Context cr,TextBOX box)
+    public void render(Context cr,TextBOX box)
         in{
         assert(!box.empty);
         }
@@ -58,10 +63,26 @@ class RenderTextBOX : BoxRenderer{
         layout.setText(str);
         PgCairo.updateLayout(cr,layout);
         PgCairo.showLayout(cr,layout);
+
+        modify_boxsize(box);
         writefln("wt %s",str);
+
         debug(gui) writeln("text render end");
     }
-    ~this(){}
-    private:
+    private void  modify_boxsize(TextBOX box){
+        layout.getPixelSize(width,height);
+        auto box_width = page_view.get_gridSize() * box.col_num;
+        debug(gui) writefln("layout width %d",width);
+        debug(gui) writefln("box width %d",box_width);
+
+        if(width > box_width)
+            box.expand(Direct.right); else
+        if(width < box_width - page_view.get_gridSize())
+        {
+            box.remove(Direct.right);
+            writeln("DELETED!!!!");
+        }
+    }
+
 }
  

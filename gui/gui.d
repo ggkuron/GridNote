@@ -77,10 +77,12 @@ class PageView : DrawingArea{
 
     ubyte renderdLineWidth = 2;
     ubyte selectedLineWidth = 2;
+    ubyte manipLineWidth = 2;
     Color grid_color = Color(48,48,48,96);
     Color selected_cell_border_color = Color("#00e4e4",128);
     Color normal_focus_color = Color(cyan,128);
     Color selected_focus_color = Color(cyan,168);
+    Color manip_box_color = Color(darkorenge,128);
 
     public:
     this(Cell start_offset = Cell(0,0))
@@ -240,7 +242,7 @@ class PageView : DrawingArea{
     }
     final private void render(Context cr,TextBOX b){
         render_text.render(cr,b);
-        render_text.render_fill(cr,b,Color(orenge,24));
+        render_text.render_grid(cr,b,manip_box_color,manipLineWidth);
     }
     private:
     bool grid_show_flg = true;

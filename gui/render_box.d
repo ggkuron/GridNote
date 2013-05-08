@@ -35,8 +35,8 @@ class BoxRenderer{
         import std.stdio;
         writeln("ul:",cp);
 
-        int w = grid * b.get_x_width();
-        int h = grid * b.get_y_width();
+        int w = grid * b.get_numof_hcell();
+        int h = grid * b.get_numof_vcell();
 
         auto result =  new Rect(x,y,w,h);
         writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);

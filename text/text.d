@@ -31,7 +31,7 @@ class Text
     void deleteChar(int pos){
         writing[current_line].remove(pos);
     }
-    void backapce(){
+    void backspace(){
         if(position)
             deleteChar(--position);
     }

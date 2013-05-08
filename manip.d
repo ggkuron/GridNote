@@ -131,7 +131,7 @@ class ManipTable{
         debug(manip) writeln("back space start");
         switch(box_type){
             case "cell.textbox.TextBOX":
-                manip_textbox.backapce(cast(TextBOX)manipulating_box);
+                manip_textbox.backspace(cast(TextBOX)manipulating_box);
                 return;
             default:
                 break;
@@ -177,8 +177,8 @@ class ManipTextBOX {
         debug(manip) writeln("with commit text");
         insert(box,str);
     }
-    void backapce(TextBOX box){
-        box.backapce();
+    void backspace(TextBOX box){
+        box.backspace();
     }
 
 }

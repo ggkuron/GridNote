@@ -1,7 +1,7 @@
 module misc.direct;
 
 enum Direct{ left,right,up,down };
-Direct reverse(const Direct dir){
+pure Direct reverse(const Direct dir){
     final switch(dir){
         case Direct.left: return Direct.right;
         case Direct.right: return Direct.left;
@@ -11,3 +11,9 @@ Direct reverse(const Direct dir){
     assert(0);
 }
 
+pure bool is_horizontal(const Direct dir){
+    return dir == Direct.right || dir == Direct.left;
+}
+pure bool is_vertical(const Direct dir){
+    return dir == Direct.up || dir == Direct.down;
+}

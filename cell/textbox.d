@@ -8,13 +8,13 @@ import misc.direct;
 import shape.shape;
 
 class TextBOX : ContentBOX{  
-    // text の行数を Cellの高さに対応させてみる
     this(BoxTable table){ 
         super(table);
         text = new Text();
     }
     ~this(){}
 
+    private:
     Text text;
     Cell text_offset; // boxのtext が格納されている場所へのoffset
 
@@ -23,25 +23,22 @@ class TextBOX : ContentBOX{
     char[] composition;
     int font_size;
     Color font_color;
-    Text getText(){
-        return text;
-    }
-    void insert_char(const dchar c){
+    private final void insert_char(const dchar c){
         text.insert(c);
     }
-    void insert(string s){
+    public final void insert(string s){
         foreach(dchar c; s)
             text.insert(c);
     }
-    void insert_char(char[32LU] cs){
+    public final void insert_char(char[32LU] cs){
         import std.stdio;
         dstring s = cast(dstring)cs;
         insert_char(s[0]);
     }
-    void backapce(){
-        text.backapce();
+    public final void backspace(){
+        text.backspace();
     }
-    void line_feed(){
+    public final void line_feed(){
         expand(Direct.down);
         move_caretD();
     }
@@ -61,4 +58,13 @@ class TextBOX : ContentBOX{
     void set_caret()(int pos){
         text.set_caret(pos); // 
     }
+    // アクセサ
+    public:
+    string get_fontname(){
+        return font_name;
+    }
+    Text getText(){
+        return text;
+    }
+
 }
