@@ -1,30 +1,14 @@
 module shape.shape;
-// cairo wraper
 
-// import deimos.cairo.cairo;
 import cell.cell;
 import std.string;
 import cairo.ImageSurface;
+public import misc.color;
 
-struct Color{
-    double r,g,b,a;
-    // 初期値赤 初期化されてない色が存在しないように
-    // 色という要素が存在するのなら初期化されない == 画面に出てはいけない
-    this(double rr=255,double gg=0,double bb=0,double aa=255){
-        r = rr; g = gg; b = bb; a = aa;
-    }
-    // this(SDL_Color c){
-    //     r = c.g; g = c.g; b = c.b;
-    // }
-}
-static white = Color(255,255,255,255);
-static black = Color(0,0,0,255);
-static red = Color(255,0,0,255);
-    
 class Shape{
     Color color;
     void attach(ContentBOX box){}
-    void set_color(Color c= Color(255,255,255,255)){
+    void set_color(Color c){
         import std.stdio;
         color = c;
     }

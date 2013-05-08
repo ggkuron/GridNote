@@ -8,7 +8,7 @@ import gui.gui;
 import cell.image_box;
 import cairo.Context;
 
-class RenderImage : RenderBOX{
+class RenderImage : BoxRenderer{
     ImageDrawer drawer;
     this(PageView pv){
         super(pv);

@@ -31,6 +31,7 @@ class ManipTable{
 
     focus_mode mode;
     SelectBOX select;
+    public:
     this(BoxTable table)
         out{
         assert(focused_table);
@@ -43,12 +44,15 @@ class ManipTable{
 
         manip_textbox = new ManipTextBOX(this);
     }
-    void move_focus(Direct dir){
+    final void move_focus(Direct dir){
         import std.stdio;
         select.move(dir);
         debug(manip) writefln("focus: %s",select.focus);
     }
-    void start_select()
+    final ContentBOX get_manipulating(){
+        return manipulating_box;
+    }
+    final void start_select()
         in{
         assert(mode != focus_mode.select);
         }
@@ -59,7 +63,7 @@ class ManipTable{
         mode = focus_mode.select;
         select.set_pivot();
     }
-    void select_clear(){
+    final void select_clear(){
         select.clear();
     }
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
@@ -90,7 +94,7 @@ class ManipTable{
     body{
         select.expand(dir);
     }
-    void return_to_normal_mode()
+    final void return_to_normal_mode()
         in{
         assert(mode == focus_mode.select);
         }
@@ -101,7 +105,7 @@ class ManipTable{
         select.clear();
         mode = focus_mode.normal;
     }
-    void start_insert_normal_text(){
+    final void start_insert_normal_text(){
         debug(manip) writeln("start_insert_normal_text");
         mode = focus_mode.edit;
         auto tb = select.create_TextBOX();
@@ -113,7 +117,7 @@ class ManipTable{
 
         debug(manip) writeln("end");
     }
-    void im_commit_str_send_to_box(string str){
+    final void im_commit_str_send_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
         switch(box_type){
             case "cell.textbox.TextBOX":
@@ -123,7 +127,7 @@ class ManipTable{
                 break;
         }
     }
-    void backspace(){
+    final void backspace(){
         debug(manip) writeln("back space start");
         switch(box_type){
             case "cell.textbox.TextBOX":

@@ -19,7 +19,7 @@ import pango.PgFontDescription;
 import std.stdio;
 import shape.shape;
 
-class RenderTextBOX : RenderBOX{
+class RenderTextBOX : BoxRenderer{
     cairo_text_extents_t extents;
     PgLayout layout;
     PgFontDescription desc;

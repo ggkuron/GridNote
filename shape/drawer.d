@@ -50,12 +50,10 @@ mixin template drw_imp(T){
         void set_color(Context cr)
         {
             auto c = shape.color;
-            assert(c.r != double.nan);
-            assert(c.g != double.nan);
-            assert(c.b != double.nan);
-            assert(c.a != double.nan);
-
-            cr.setSourceRgba(c.r/255,c.g/255,c.b/255,c.a/255);
+            cr.setSourceRgba(cast(double)c.r/255,
+                             cast(double)c.g/255,
+                             cast(double)c.b/255,
+                             cast(double)c.a/255);
             import std.stdio;
         }
     }

@@ -7,11 +7,11 @@ import shape.shape;
 import cairo.Context;
 debug(gui) import std.stdio;
 
-class RenderBOX{
+class BoxRenderer{
     protected:
     PageView page_view;
     ReferTable in_view;
-    // SDL_Rect[] contents_positions;
+
     public:
     this(PageView pv)
         out{
@@ -20,7 +20,7 @@ class RenderBOX{
         }
     body{
         page_view = pv;
-        in_view = pv.in_view;
+        in_view = pv.get_view();
     }
     final protected Rect get_position(CellBOX b){
         assert(b.get_box() !is null);
@@ -44,4 +44,11 @@ class RenderBOX{
         writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
+    final public void render_box_grid(Context cr,CellBOX b,const Color color,const ubyte width){
+        page_view.renderGrids(cr,b.get_box(),color,width);
+    }
+    final public void render_box_fill(Context cr,CellBOX b,const Color color){
+        page_view.renderFillGrids(cr,b.get_box(),color);
+    }
+
 }
