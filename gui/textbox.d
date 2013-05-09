@@ -34,7 +34,7 @@ class RenderTextBOX : BoxRenderer{
     PgLayout[int] layout;
     PgFontDescription desc;
     PgAttributeList attrlist;
-    PangoRectangle cursor_strong;
+    PangoRectangle preedit_line_rect;
     int cursor_pos;
     string[int] strings;
     string preedit;
@@ -103,7 +103,7 @@ class RenderTextBOX : BoxRenderer{
                 width[currentline] = 0;
             debug(gui) writeln("1"); layout[currentline].setAttributes(attrlist);
             debug(gui) writeln("2"); layout[currentline].setText(preedit);
-            debug(gui) writeln("3"); cr.moveTo(box_pos.x+width[currentline],box_pos.y);
+            debug(gui) writeln("3"); cr.moveTo(box_pos.x+width[currentline],box_pos.y+currentline*gridSize);
             debug(gui) writeln("4"); PgCairo.updateLayout(cr,layout[currentline]);
             debug(gui) writeln("5"); PgCairo.showLayout(cr,layout[currentline]);
 
@@ -113,7 +113,7 @@ class RenderTextBOX : BoxRenderer{
 
         setBOX(box);
         strings = box.getText().strings;
-        debug(text) writeln("str is ",strings);
+        debug(text) writeln("strings are ",strings);
 
         foreach(line,one_line; strings)
         {
