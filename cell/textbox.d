@@ -6,8 +6,10 @@ import std.string;
 import std.utf;
 import misc.direct;
 import shape.shape;
+debug(cell) import std.stdio;
 
-class TextBOX : ContentBOX{  
+// Text自体をTableに取り付けるためにBOX領域を管理する
+final class TextBOX : ContentBOX{  
     this(BoxTable table){ 
         super(table);
         text = new Text();
@@ -16,50 +18,50 @@ class TextBOX : ContentBOX{
 
     private:
     Text text;
-    Cell text_offset; // boxのtext が格納されている場所へのoffset
 
     int caret;
     string font_name = "Sans Bold";
     char[] composition;
     int font_size;
     Color font_color;
-    private final void insert_char(const dchar c){
+    private void insert_char(const dchar c){
         text.insert(c);
     }
-    public final void insert(string s){
+    public void insert(string s){
         foreach(dchar c; s)
             text.insert(c);
     }
-    public final void insert_char(char[32LU] cs){
-        import std.stdio;
-        dstring s = cast(dstring)cs;
-        insert_char(s[0]);
-    }
-    public final void backspace(){
+    // public void insert_char(char[32LU] cs){
+    //     import std.stdio;
+    //     dstring s = cast(dstring)cs;
+    //     insert_char(s[0]);
+    // }
+    public void backspace(){
         text.backspace();
     }
-    public final void line_feed(){
-        expand(Direct.down);
-        move_caretD();
-    }
     public:
-    final void move_caretR(){
-        text.move_caret!("caret < right_edge_pos()","++caret;")();
+    // userの意思でcaretを動かすとき
+    void move_caretR(){
+        text.move_caretR();
     }
-    final void move_caretL(){
-        text.move_caret!("caret != 0","--caret;")();
+    void move_caretL(){
+        text.move_caretL();
     }
-    final void move_caretD(){
-        text.move_caret!("lines > current_line","++current_line;")();
+    void move_caretD(){
+        if(text.move_caretD())
+        {
+            expand(Direct.down);
+            debug(cell) writeln("expanded");
+        }
     }
-    final void move_caretU(){
-        text.move_caret!("current_line != 0","--current_line;")();
+    void move_caretU(){
+        text.move_caretU();
     }
     void set_caret()(int pos){
         text.set_caret(pos); // 
     }
-    // 操作が終わった時にばらすべきか
-    public final bool is_to_spoil(){
+    // 操作が終わった時にTableから取り除くべきか
+    override bool is_to_spoil(){
         return text.empty();
     }
     // アクセサ
@@ -70,5 +72,4 @@ class TextBOX : ContentBOX{
     Text getText(){
         return text;
     }
-
 }

@@ -3,6 +3,7 @@ module shape.shape;
 import cell.cell;
 import std.string;
 import cairo.ImageSurface;
+import gtkc.gdktypes;
 public import misc.color;
 
 class Shape{
@@ -72,6 +73,20 @@ class Rect : Shape{
     this(Rect r){
         this = r;
     }
+    T get_rect(T)(){
+        return T(cast(int)x,
+                 cast(int)y,
+                 cast(int)w,
+                 cast(int)h);
+    }
+    // Rectangle get_cairo_rect(){
+    //     return Rectangle(cast(int)x,
+    //                      cast(int)y,
+    //                      cast(int)w,
+    //                      cast(int)h);
+    // }
+    // PangoRectangle get_pango_rect(){
+
 }
         
 class Circle : Shape{

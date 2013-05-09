@@ -24,7 +24,6 @@ class BoxRenderer{
     }
     final protected Rect get_position(CellBOX b){
         assert(b.get_box() !is null);
-//         TODO 不安なここなおす
 
         auto cp = in_view.get_view_position(b);
         debug(gui) writefln("cp : %s",cp);
@@ -32,14 +31,12 @@ class BoxRenderer{
         auto y = page_view.get_y(cp);
 
         auto grid = page_view.get_gridSize;
-        import std.stdio;
-        writeln("ul:",cp);
 
-        int w = grid * b.get_numof_hcell();
-        int h = grid * b.get_numof_vcell();
+        int w = grid * b.numof_hcell();
+        int h = grid * b.numof_vcell();
 
         auto result =  new Rect(x,y,w,h);
-        writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
+        debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
     final public void render_grid(Context cr,CellBOX b,const Color color,const ubyte width){

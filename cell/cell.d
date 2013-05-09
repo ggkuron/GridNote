@@ -142,10 +142,10 @@ unittest{
 // 四角い領域を持つこと
 // 領域の管理方法
 class CellBOX{
-    Cell upper_left;
-    Cell lower_right;
-    int row_num,
-        col_num;
+    Cell top_left;
+    Cell bottom_right;
+    int numof_row,
+        numof_col;
     Cell[] box;
 
     public bool is_in(const Cell c)const
@@ -167,8 +167,8 @@ class CellBOX{
         debug(cell) writeln("remove start");
         Cell[] delete_line;
 
-        if(dir.is_horizontal && col_num <= 1
-        || dir.is_vertical && row_num <= 1 )
+        if(dir.is_horizontal && numof_col <= 1
+        || dir.is_vertical && numof_row <= 1 )
             return;
         delete_line = edge_cells[dir];
         foreach(c; delete_line)
@@ -223,7 +223,7 @@ class CellBOX{
             writeln("ctro start");
             writefln("rw %d cw %d",rw,cw);
         }
-        hold_ul(ul,rw,cw);
+        hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
     private void update_info()
@@ -231,40 +231,42 @@ class CellBOX{
         debug(cell) writeln("update_info start");
         if(!box.empty())
         {
-            upper_left = search_upper_left();
-            auto row_lined = count_lined(upper_left,Direct.down);
-            auto col_lined = count_lined(upper_left,Direct.right);
-            lower_right = Cell(upper_left.row+row_lined,upper_left.column+col_lined);
-            row_num = ++row_lined;
-            col_num = ++col_lined;
+            top_left = search_top_left();
+            auto row_lined = count_lined(top_left,Direct.down);
+            auto col_lined = count_lined(top_left,Direct.right);
+            bottom_right = Cell(top_left.row+row_lined,top_left.column+col_lined);
+            numof_row = ++row_lined;
+            numof_col = ++col_lined;
             debug(cell){
-                writefln("upper left %s",upper_left);
-                writeln(row_num," " ,col_num);
+                writefln("upper left %s",top_left);
+                writeln(numof_row," " ,numof_col);
             }
-        }else{
+        }
+        else
+        {
 
         }
 
         debug(cell) writeln("end");
     }
     unittest{
-        writeln("update_info unittest start");
+        debug(cell) writeln("update_info unittest start");
         auto cb = new CellBOX();
         cb.create_in(Cell(5,5));
-        assert(cb.upper_left == Cell(5,5));
-        assert(cb.row_num == 1);
-        assert(cb.col_num == 1);
+        assert(cb.top_left == Cell(5,5));
+        assert(cb.numof_row == 1);
+        assert(cb.numof_col == 1);
 
         // ctor call hold call update_info
         // and try calling again
-        cb.hold_ul(Cell(0,0),5,5);
+        cb.hold_tl(Cell(0,0),5,5);
         cb.update_info();
         // ... may cause nothing
-        assert(cb.upper_left == Cell(0,0));
-        assert(cb.row_num == 5);
-        assert(cb.col_num == 5);
-        assert(cb.lower_right == Cell(4,4));
-        writeln("end");
+        assert(cb.top_left == Cell(0,0));
+        assert(cb.numof_row == 5);
+        assert(cb.numof_col == 5);
+        assert(cb.bottom_right == Cell(4,4));
+        debug(cell) writeln("end");
     }
         
     void move(const Direct dir){
@@ -310,7 +312,7 @@ class CellBOX{
         return false;
     }
     unittest{
-        writeln("is_on_edge unittest start");
+        debug(cell) writeln("is_on_edge unittest start");
         auto cb = new CellBOX();
         auto c = Cell(3,3);
         cb.create_in(c);
@@ -319,20 +321,20 @@ class CellBOX{
         {   // 最終的に各方向に1Cell分拡大
             auto dir = cast(Direct)idir;
             cb.expand(dir);
-            assert(cb.is_on_edge(cb.get_upper_left));
-            assert(cb.is_on_edge(cb.get_lower_right));
+            assert(cb.is_on_edge(cb.get_top_left));
+            assert(cb.is_on_edge(cb.get_bottom_right));
         }
-        writeln("end");
+        debug(cell) writeln("end");
     }
     bool is_on_edge(const Cell c,Direct on)const{
         return edge_cells[on].is_in(c);
     }
     @property Cell[][Direct] edge_cells()const{
         Cell[][Direct] result;
-        int min_column = upper_left.column;
-        int min_row = upper_left.row;
-        int max_column = lower_right.column;
-        int max_row = lower_right.row;
+        int min_column = top_left.column;
+        int min_row = top_left.row;
+        int max_column = bottom_right.column;
+        int max_row = bottom_right.row;
 
         result[Direct.left] = in_column(min_column);
         result[Direct.right] = in_column(max_column);
@@ -362,7 +364,7 @@ class CellBOX{
         }
         return result;
     }
-    void hold_ul(const Cell start,int h,int w)
+    void hold_tl(const Cell start,int h,int w)
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -392,7 +394,7 @@ class CellBOX{
         }
         update_info();
     }
-    void hold_lr(const Cell lr,int h,int w)
+    void hold_br(const Cell lr,int h,int w)
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -406,17 +408,17 @@ class CellBOX{
         auto s_c = lr.column-w+1;
         if(s_c < 0) s_c = 0;
         auto start = Cell(s_r,s_c);
-        hold_ul(start,h,w);
+        hold_tl(start,h,w);
     }
     unittest{
         auto cb = new CellBOX();
-        cb.hold_lr(Cell(5,5),3,3);
+        cb.hold_br(Cell(5,5),3,3);
 
-        assert(cb.upper_left == Cell(3,3));
-        assert(cb.row_num == 3);
-        assert(cb.col_num == 3);
+        assert(cb.top_left == Cell(3,3));
+        assert(cb.numof_row == 3);
+        assert(cb.numof_col == 3);
     }
-    void hold_ur(const Cell ur,int h,int w)
+    void hold_tr(const Cell ur,int h,int w)
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -432,17 +434,17 @@ class CellBOX{
             s_c = 0;
         }
         auto start = Cell(s_r,s_c);
-        hold_ul(start,h,w);
+        hold_tl(start,h,w);
     }
     unittest{
         auto cb = new CellBOX();
-        cb.hold_ur(Cell(5,5),3,3);
+        cb.hold_tr(Cell(5,5),3,3);
 
-        assert(cb.upper_left == Cell(5,3));
-        assert(cb.row_num == 3);
-        assert(cb.col_num == 3);
+        assert(cb.top_left == Cell(5,3));
+        assert(cb.numof_row == 3);
+        assert(cb.numof_col == 3);
     }
-    void hold_ll(const Cell ll,int h,int w)
+    void hold_bl(const Cell ll,int h,int w)
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -455,42 +457,42 @@ class CellBOX{
         if(s_r < 0) s_r = 0;
         auto s_c = ll.column;
         auto start = Cell(s_r,s_c);
-        hold_ul(start,h,w);
+        hold_tl(start,h,w);
     }
     unittest{
         auto cb = new CellBOX();
-        cb.hold_ll(Cell(5,5),3,3);
+        cb.hold_bl(Cell(5,5),3,3);
 
-        assert(cb.upper_left == Cell(3,5));
-        assert(cb.row_num == 3);
-        assert(cb.col_num == 3);
+        assert(cb.top_left == Cell(3,5));
+        assert(cb.numof_row == 3);
+        assert(cb.numof_col == 3);
     }
     unittest{
         auto cb = new CellBOX();
-        cb.hold_ul(Cell(3,3),5,5);
+        cb.hold_tl(Cell(3,3),5,5);
 
-        assert(cb.upper_left == Cell(3,3));
-        assert(cb.lower_right == Cell(7,7));
+        assert(cb.top_left == Cell(3,3));
+        assert(cb.bottom_right == Cell(7,7));
         cb = new CellBOX();
-        cb.hold_ul(Cell(3,3),0,0);
-        assert(cb.upper_left == Cell(3,3));
-        assert(cb.lower_right == Cell(3,3));
+        cb.hold_tl(Cell(3,3),0,0);
+        assert(cb.top_left == Cell(3,3));
+        assert(cb.bottom_right == Cell(3,3));
     }
-    Cell get_upper_left()const{
-        return upper_left;
+    Cell get_top_left()const{
+        return top_left;
     }
-    Cell get_lower_right()const{
-        return lower_right;
+    Cell get_bottom_right()const{
+        return bottom_right;
     }
 
-    private Cell search_upper_left(const Cell[] cells)const{
+    private Cell search_top_left(const Cell[] cells)const{
         Cell result = Cell(int.max,int.max);
         foreach(c; box)
             if(c < result) result = c;
         return result;
     }
-    private Cell search_upper_left()const{
-        return search_upper_left(box);
+    private Cell search_top_left()const{
+        return search_top_left(box);
     }
     private int count_lined(const Cell from,const Direct to)const{
         debug(cell) writeln("count_lined start");
@@ -516,11 +518,13 @@ class CellBOX{
         assert(cb.count_lined(Cell(5,5),Direct.right) == 1);
         assert(cb.count_lined(Cell(5,5),Direct.down) == 1);
     }
-    public const int get_numof_vcell()const{
-        return row_num;
+    public:
+    // getter:
+    const int numof_vcell()const{
+        return numof_row;
     }
-    public const int get_numof_hcell()const{
-        return col_num;
+    const int numof_hcell()const{
+        return numof_col;
     }
 }
 
@@ -630,28 +634,28 @@ class BoxTable : CellBOX{
     unittest{
         auto cb = new CellBOX(Cell(0,0),5,5);
         cb.remove(Direct.up);
-        assert(cb.upper_left == Cell(1,0));
-        assert(cb.col_num == 5);
-        assert(cb.row_num == 4);
-        assert(cb.lower_right == Cell(4,4));
+        assert(cb.top_left == Cell(1,0));
+        assert(cb.numof_col == 5);
+        assert(cb.numof_row == 4);
+        assert(cb.bottom_right == Cell(4,4));
         cb.remove(Direct.right);
-        assert(cb.upper_left == Cell(1,0));
-        assert(cb.col_num == 4);
-        assert(cb.row_num == 4);
-        assert(cb.lower_right == Cell(4,3));
+        assert(cb.top_left == Cell(1,0));
+        assert(cb.numof_col == 4);
+        assert(cb.numof_row == 4);
+        assert(cb.bottom_right == Cell(4,3));
         cb.remove(Direct.left);
-        assert(cb.upper_left == Cell(1,1));
-        assert(cb.col_num == 3);
-        assert(cb.row_num == 4);
-        assert(cb.lower_right == Cell(4,3));
+        assert(cb.top_left == Cell(1,1));
+        assert(cb.numof_col == 3);
+        assert(cb.numof_row == 4);
+        assert(cb.bottom_right == Cell(4,3));
         cb.remove(Direct.down);
-        assert(cb.upper_left == Cell(1,1));
-        assert(cb.col_num == 3);
-        assert(cb.row_num == 3);
-        assert(cb.lower_right == Cell(3,3));
+        assert(cb.top_left == Cell(1,1));
+        assert(cb.numof_col == 3);
+        assert(cb.numof_row == 3);
+        assert(cb.bottom_right == Cell(3,3));
     }
     public Tuple!(string,ContentBOX) get_content(const Cell c){
-        if(!(c in keys)) writeln("this cell is empty, no content return");
+        debug(cell) if(!(c in keys)) writeln("this cell is empty, no content return");
         auto key = keys[c];
         return tuple(type_table[key],content_table[key]);
     }
@@ -681,7 +685,7 @@ class ReferTable : BoxTable{
         offset = ul;
         range_of_row = offset.row + h;
         range_of_col = offset.column + w;
-        writefln("range_r %d range_c %d",range_of_row,range_of_col);
+        debug(cell) writefln("range_r %d range_c %d",range_of_row,range_of_col);
     }
     public void data_sync(){
         auto masterbox = master.get_box;
@@ -697,7 +701,7 @@ class ReferTable : BoxTable{
     public:
     private auto get_content(const Cell c){
         master.get_content(c);
-        if(!(c in master.keys)) writeln("this cell is empty, no content return");
+        debug(cell) if(!(c in master.keys)) writeln("this cell is empty, no content return");
         auto key = master.keys[c];
         return tuple(master.type_table[key],master.content_table[key]);
     }
@@ -706,7 +710,7 @@ class ReferTable : BoxTable{
 
         foreach(c; box)
         {
-            writeln("get_contents works");
+            debug(cell) writeln("get_contents works");
             auto item = get_content(c);
             i_have[item[1]] = item;
         }
@@ -733,11 +737,13 @@ class ReferTable : BoxTable{
         offset.move(to);
     }
     Cell get_view_position(const CellBOX b)const{
-        auto tmp = b.get_upper_left();
-        writeln("tmp : ",tmp);
-        writeln("box : ",b.box);
+        debug(cell) writeln("get_view_position start");
+        auto tmp = b.get_top_left();
+        debug(cell) writeln("top left : ",tmp);
+        debug(cell) writeln("box : ",b.box);
         // pos(0,0)で止まる
         return tmp - offset;
+        debug(cell) writeln("end");
     }
     /+ void remove(const ContentBOX) 
        Cell[] get_struct()
@@ -796,7 +802,7 @@ class SelectBOX : ContentBOX{
     }
     private void pivot_bound(Cell cl){
         debug(cell) writeln("privot_bound start");
-        if(pivot == cl)  hold_ul(pivot,1,1); else
+        if(pivot == cl)  hold_tl(pivot,1,1); else
         if(pivot < cl) // pivot.rowの方が小さいブロック
         {
             auto d = diff(cl,pivot);
@@ -804,21 +810,21 @@ class SelectBOX : ContentBOX{
             auto dc = d.column+1;
 
             if(cl.column == pivot.column) // 縦軸下
-                hold_ul(pivot,dr,1);
+                hold_tl(pivot,dr,1);
             else if(cl.column < pivot.column) // 第3象限
-                hold_ur(pivot,dr,dc);
+                hold_tr(pivot,dr,dc);
             else 
-                hold_ul(pivot,dr,dc); // 第四象限
+                hold_tl(pivot,dr,dc); // 第四象限
         }else{ // if(pivot > cl) pivot.rowが大きい
             auto d = diff(pivot,cl);
             auto dr = d.row+1;
             auto dc = d.column+1;
             if(cl.column == pivot.column) // 縦軸上
-                hold_lr(pivot,dr,1);
+                hold_br(pivot,dr,1);
             else if(cl.column > pivot.column) // 1
-                hold_ur(cl,dr,dc);
+                hold_tr(cl,dr,dc);
             else // 3象限
-                hold_lr(pivot,dr,dc);
+                hold_br(pivot,dr,dc);
         }
         debug(cell) writeln("end");
     }

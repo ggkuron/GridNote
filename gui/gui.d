@@ -35,7 +35,6 @@ import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
 
-
 import gtkc.gobject;
 
 immutable int start_size_w = 960;
@@ -63,7 +62,8 @@ class Window : MainWindow{
     }
 }
 
-class PageView : DrawingArea{
+// 主要なGrid領域
+final class PageView : DrawingArea{
     private:
     Rect holding_area;
     ManipTable manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
@@ -140,6 +140,9 @@ class PageView : DrawingArea{
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
         imm.addOnCommit(&commit);
+        imm.addOnPreeditChanged(&preedit_changed);
+        imm.addOnPreeditEnd(&preedit_end);
+        // imm.addOnRetrieveSurrounding(&retrieve_surrounding);
 
         menu = new Menu();
         menu.append( new ImageMenuItem(StockID.CUT, cast(AccelGroup)null) );
@@ -174,27 +177,48 @@ class PageView : DrawingArea{
         }
         return false;
     }
-    private final void commit(string str,IMContext imc){
+    private void commit(string str,IMContext imc){
         if(interpreter.input_state == InputState.edit)
         {
-            manip_table.im_commit_str_send_to_box(str);
+            manip_table.im_commit_to_box(str);
             queueDraw();
         }
     }
-    private final bool focus_in(Event ev,Widget w){
+    private void preedit_changed(IMContext imc){
+        if(interpreter.input_state == InputState.edit)
+        {
+            render_text.prepare_preedit(imm);
+            // レイアウトのことは投げる
+            // IMContextごと
+            queueDraw();
+        }
+    }
+    private void preedit_end(IMContext imc){
+        if(interpreter.input_state == InputState.edit)
+        {
+            imc.reset();
+        }
+    }
+
+    // private bool retrieve_surrounding(IMContext imc){
+    //     auto surround = render_text.get_surrounding();
+    //     imc.setSurrounding(surround[0],surround[1]);
+    //     return true;
+    // }
+    private bool focus_in(Event ev,Widget w){
         grabFocus();
         return interpreter.focus_in(ev,w);
     }
-    private final bool focus_out(Event ev,Widget w){
+    private bool focus_out(Event ev,Widget w){
         return interpreter.focus_out(ev,w);
     }
-    private final void realize(Widget w){
+    private void realize(Widget w){
         imm.setClientWindow(getParentWindow());
     }
-    private final void unrealize(Widget w){
+    private void unrealize(Widget w){
         imm.setClientWindow(null);
     }
-    void set_holding_area()
+    private void set_holding_area()
         in{
         assert(holding_area);
         }
@@ -206,13 +230,13 @@ class PageView : DrawingArea{
         holding_area.w = getWidth();
         holding_area.h = getHeight();
     }
-    private final void set_in_view(){
+    private void set_in_view(){
         in_view.set_table_size(in_view.offset,
                 cast(int)(holding_area.w/gridSpace),
                 cast(int)(holding_area.h/gridSpace));
         in_view.data_sync();
     }
-    private final void move_view(Direct dir){
+    private void move_view(Direct dir){
         in_view.offset.move(dir);
     }
     Rect back;
@@ -220,7 +244,7 @@ class PageView : DrawingArea{
     void backDesign(Context cr){
         backdrw.clip(cr);
     }
-    private final void renderTable(Context cr){
+    private void renderTable(Context cr){
         debug(gui) writeln("render table start");
         set_in_view();
         if(in_view.get_box().empty) return;
@@ -238,13 +262,12 @@ class PageView : DrawingArea{
                     break;
             }
         }
-
-        // render_text 全くふさわしくないけど、これ以外今ないし、まったく問題ない
+        // render_text 全くふさわしくないけど、これ以外今ない、またまったく問題もない
         render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
 
         debug(gui) writeln("end");
     }
-    final private void render(Context cr,TextBOX b){
+    private void render(Context cr,TextBOX b){
         render_text.render(cr,b);
     }
     private:
@@ -253,7 +276,7 @@ class PageView : DrawingArea{
     LinesDrawer drw_grid;
     int gridSpace =32; // □の1辺長
     ubyte grid_width = 1;
-    final public int get_gridSize()const{
+    public int get_gridSize()const{
         return gridSpace;
     }
     void zoom_in(){
@@ -283,10 +306,10 @@ class PageView : DrawingArea{
         }
         drw_grid = new LinesDrawer(grid);
     }
-    private final void renderGrid(Context cr){
+    private void renderGrid(Context cr){
         drw_grid.stroke(cr);
     }
-    private final bool draw_callback(Context cr,Widget widget){
+    private bool draw_callback(Context cr,Widget widget){
         debug(gui) writeln("draw callback");
         backDesign(cr);
         if(grid_show_flg) renderGrid(cr);
@@ -297,7 +320,7 @@ class PageView : DrawingArea{
         debug(gui) writeln("end");
         return true;
     }
-    private final void renderFocus(Context cr){
+    private void renderFocus(Context cr){
         // 現在は境界色を変えてるだけだけど
         // 考えられる他の可能性のために
         // e.g. cell内部色を変えるとか（透過させるとか
@@ -310,30 +333,31 @@ class PageView : DrawingArea{
                 renderFillCell(cr,manip_table.select.focus,selected_focus_color); 
                 break;
             case focus_mode.edit:
-                renderFillCell(cr,manip_table.select.focus,selected_focus_color); 
+                // renderFillCell(cr,manip_table.select.focus,selected_focus_color); 
+                // Text編集中,IMに任せるため
                 break;
         }
     }
     Rect select;
     RectDrawer select_drwer;
-    private final void renderSelect(Context cr){
+    private void renderSelect(Context cr){
         renderGrids(cr,manip_table.select.get_box(),
                 selected_cell_border_color,selectedLineWidth);
     }
-    private final void renderFillCell(Context cr,const Cell cell,const Color grid_color){
+    private void renderFillCell(Context cr,const Cell cell,const Color grid_color){
         Rect grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
         auto grid_drwer = new RectDrawer(grid_rect);
 
         grid_rect.set_color(grid_color);
         grid_drwer.fill(cr);
     }
-    public final void renderFillGrids(Context cr,const Cell[] cells,const Color color){
+    public void renderFillGrids(Context cr,const Cell[] cells,const Color color){
         foreach(c; cells)
         {
             renderFillCell(cr,c,color);
         }
     }
-    public final void renderGrids(Context cr,const Cell[] cells,const Color color,const ubyte grid_width){
+    public void renderGrids(Context cr,const Cell[] cells,const Color color,const ubyte grid_width){
         bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
             if(cells.empty) assert(0);
             bool[Direct] result;
@@ -374,9 +398,9 @@ class PageView : DrawingArea{
         LinesDrawer drwer = new LinesDrawer(perimeters);
         drwer.stroke(cr);
     }
-    public final double get_x(const Cell c)const{ return c.column * gridSpace + holding_area.x; }
-    public final double get_y(const Cell c)const{ return c.row * gridSpace + holding_area.y; }
-    public final Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
+    public double get_x(const Cell c)const{ return c.column * gridSpace + holding_area.x; }
+    public double get_y(const Cell c)const{ return c.row * gridSpace + holding_area.y; }
+    public Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
 
     private Line CellLine(const Cell cell,const Direct dir,Color color,double w){
         auto startp = new Point();

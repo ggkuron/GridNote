@@ -8,27 +8,38 @@ import text.text;
 import misc.direct;
 import std.array;
 import std.string;
+import std.typecons;
+
+import gtk.IMContext;
 
 import cairo.Context;
 import cairo.FontOption;
 import cairo.Surface;
 import cairo.ImageSurface;
 
+import gtkc.pangotypes;
 import pango.PgCairo;
 import pango.PgLayout;
 import pango.PgFontDescription;
+import pango.PgAttributeList;
 
 import std.stdio;
 import shape.shape;
 
 class RenderTextBOX : BoxRenderer{
     private:
+    TextBOX render_target;
+    Rect box_pos;
     cairo_text_extents_t extents;
-    PgLayout layout;
+    PgLayout[int] layout;
     PgFontDescription desc;
-    string str;
+    PgAttributeList attrlist;
+    PangoRectangle cursor_strong;
+    int cursor_pos;
+    string[int] strings;
+    string preedit;
     ubyte fontsize;
-    int width,height;
+    int[int] width,height;
     Color fontcolor;
     public:
     this(PageView pv)
@@ -43,46 +54,114 @@ class RenderTextBOX : BoxRenderer{
     private void setBOX(TextBOX box){
         assert(box !is null);
         desc = PgFontDescription.fromString(box.get_fontname~fontsize);
+        render_target = box;
     }
     public void render(Context cr,TextBOX box)
         in{
         assert(!box.empty);
         }
     body{
-        debug(gui) writeln("textbox render start");
-        layout = PgCairo.createLayout(cr);
+        debug(gui) writeln("render textbox start");
+        // 
+        auto gridSize = page_view.get_gridSize();
+        box_pos = get_position(box); // gui.render_box::get_position
+        box_pos.y += gridSize/3;
+        auto numof_lines = box.getText().numof_lines();
+        auto currentline = box.getText().currentline();
+            
+        void  modify_boxsize()
+        {   // 入力に合わせて自動でBOXを変形させる挙動
+            // 何通りかの挙動が考えられる
+            //    1行目の横幅で自動改行
+            //    入力停止
+            //    自動expnad <= 下の実装
+            //    横に圧縮
+            //    Cellごと縮小
+                
+            auto box_width = page_view.get_gridSize() * box.numof_hcell();
+            debug(gui) writefln("box width %d",box_width);
+
+            auto sorted_width = width.values.sort;
+            auto max_width = sorted_width[$-1];
+            // auto min_width = sorted_width[0];
+
+            // 浮動小数点的に動きまわる時があるので余裕を少々
+            if(max_width > box_width+gridSize/2)
+                box.expand(Direct.right); 
+            else
+            if(max_width < box_width-gridSize/2)
+            {
+                box.remove(Direct.right);
+            }
+        }
+        void render_preedit()
+        {
+            debug(gui) writeln("render preedit start");
+            if(currentline !in layout) 
+                layout[currentline] = PgCairo.createLayout(cr); // 
+            if(currentline !in width)   // この2つのifまとめられそうだけど精神的衛生上
+                width[currentline] = 0;
+            debug(gui) writeln("1"); layout[currentline].setAttributes(attrlist);
+            debug(gui) writeln("2"); layout[currentline].setText(preedit);
+            debug(gui) writeln("3"); cr.moveTo(box_pos.x+width[currentline],box_pos.y);
+            debug(gui) writeln("4"); PgCairo.updateLayout(cr,layout[currentline]);
+            debug(gui) writeln("5"); PgCairo.showLayout(cr,layout[currentline]);
+
+            debug(gui) writeln("6"); set_preeditting(false);
+            debug(gui) writeln("end");
+        }
+
         setBOX(box);
-        auto pos = get_position(box); // gui.render_box::get_position
-        layout.setFontDescription(desc);
+        strings = box.getText().strings;
+        debug(text) writeln("str is ",strings);
+
+        foreach(line,one_line; strings)
+        {
+            if(one_line.empty) break;
+            layout[line] = PgCairo.createLayout(cr);
+            layout[line].setFontDescription(desc);
+            debug(gui) writeln("write position: ",box_pos.x," ",box_pos.y);
+            cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
+
+
+            auto lines_y = box_pos.y + gridSize * line;
+            cr.moveTo(box_pos.x,lines_y);
+            layout[line].setText(one_line);
+            PgCairo.updateLayout(cr,layout[line]);
+            PgCairo.showLayout(cr,layout[line]);
+
+            // get real using width and height
+            // render_preedit より前に取得する必要がある
+            layout[line].getPixelSize(width[line],height[line]);
+            debug(gui) writefln("layout width %d",width[line]);
+
+            debug(gui) writefln("wt %s",one_line);
+
+        }
+
+        if(is_preediting()) render_preedit();
         desc.free();
-        debug(gui) writeln("write position: ",pos.x,pos.y);
-        cr.moveTo(pos.x,pos.y+page_view.get_gridSize()/2);
-        cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
-
-        str = box.getText().str;
-        layout.setText(str);
-        PgCairo.updateLayout(cr,layout);
-        PgCairo.showLayout(cr,layout);
-
-        modify_boxsize(box);
-        writefln("wt %s",str);
-
+        if(!strings.keys.empty) modify_boxsize();
         debug(gui) writeln("text render end");
     }
-    private void  modify_boxsize(TextBOX box){
-        layout.getPixelSize(width,height);
-        auto box_width = page_view.get_gridSize() * box.col_num;
-        debug(gui) writefln("layout width %d",width);
-        debug(gui) writefln("box width %d",box_width);
-
-        if(width > box_width)
-            box.expand(Direct.right); else
-        if(width < box_width - page_view.get_gridSize())
-        {
-            box.remove(Direct.right);
-            writeln("DELETED!!!!");
-        }
+    public void prepare_preedit(IMContext imc){
+        imc.getPreeditString(preedit,attrlist,cursor_pos);
+        set_preeditting(true);
+    }
+    public void retrieve_surrouding(IMContext imc){
+    }
+    private bool preeditting;
+    private bool is_preediting(){
+        return preeditting;
+    }
+    private void set_preeditting(bool b){
+        preeditting = b;
     }
 
+    public auto get_surrounding(){
+        cursor_pos = render_target.getText.caret.column;
+        writeln("cursor_pos: ",cursor_pos); 
+        return tuple(strings,cursor_pos);
+    }
 }
  
