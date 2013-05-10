@@ -15,32 +15,27 @@ final class TextBOX : ContentBOX{
         text = new Text();
     }
 
-    private:
+private:
     Text text;
 
     public int cursor_pos; // 描画側（IM)が教えるために使う
                            // こいつに関してはTextBOXは面倒見ない 
-    string font_name = "Sans Bold";
-    char[] composition;
     public int font_size = 32;
     public Color font_color;
-    private void insert_char(const dchar c){
+
+    string font_name = "Sans Bold";
+    char[] composition;
+    void insert_char(const dchar c){
         text.insert(c);
     }
-    public void insert(string s){
+public:
+    void insert(string s){
         foreach(dchar c; s)
             text.insert(c);
     }
-    // SDLのために作ったけどもう使わないはず
-    // public void insert_char(char[32LU] cs){
-    //     dstring s = cast(dstring)cs;
-    //     insert_char(s[0]);
-    // }
-
-    public void backspace(){
+    void backspace(){
         text.backspace();
     }
-    public:
     // userの意思でcaretを動かすとき
     void move_caretR(){
         text.move_caretR();
@@ -66,7 +61,7 @@ final class TextBOX : ContentBOX{
         return text.empty();
     }
     // アクセサ
-    public:
+public:
     string get_fontname(){
         return font_name;
     }
