@@ -150,7 +150,6 @@ final class ManipTable{
         if(box_type == "cell.textbox.TextBOX")
         manip_textbox.feed(cast(TextBOX)maniped_box);
     }
-    
 }
 
 import gtk.IMMulticontext;

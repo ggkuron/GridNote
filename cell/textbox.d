@@ -14,16 +14,16 @@ final class TextBOX : ContentBOX{
         super(table);
         text = new Text();
     }
-    ~this(){}
 
     private:
     Text text;
 
-    int caret;
+    public int cursor_pos; // 描画側（IM)が教えるために使う
+                           // こいつに関してはTextBOXは面倒見ない 
     string font_name = "Sans Bold";
     char[] composition;
-    int font_size;
-    Color font_color;
+    public int font_size = 32;
+    public Color font_color;
     private void insert_char(const dchar c){
         text.insert(c);
     }

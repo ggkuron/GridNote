@@ -313,12 +313,22 @@ public:
         oldone = null;
         debug(cell) writeln("end");
     }
-    this(){}
+
+
+    private static int id_counter;
+    private int box_id; // 0: invalid id
+    private void set_id(){
+        box_id = id_counter++;
+    }
+    this(){
+        set_id();
+    }
     this(Cell ul,int rw,int cw){
         debug(cell){ 
             writeln("ctro start");
             writefln("rw %d cw %d",rw,cw);
         }
+        set_id();
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
@@ -569,17 +579,7 @@ abstract class ContentBOX : CellBOX{
         return table;
     }
     public bool is_to_spoil();
-    // BoxTable 以外から触るべからず
-    // Tableが識別に使うためのid
-    // Appが生きてる間は一貫してるかもしれない
-    private int table_key; // 状態を保存するときには初期化必須
-    final:
-    public void set_table_key(int a){
-        table_key = a;
-    }
-    public void delete_table_key(){
-        table_key = 0;
-    }
+    public int get_id()const{ return box_id; }
     // 削除対象かいなか
 }
 
@@ -596,8 +596,6 @@ class Holder : ContentBOX{
 }
 
 class BoxTable : CellBOX{
-    private int id_counter;
-
     ContentBOX[int] content_table;
     string[int] type_table;
     int[Cell] keys;
@@ -618,18 +616,19 @@ class BoxTable : CellBOX{
     body{
         debug(cell) writeln("add_box start");
         assert(cast(ContentBOX)u !is null);
-        u.set_table_key(++id_counter); // id == 0 は未初期化値として使う
         assert(!u.get_box().empty);
+
+        auto box_id = u.get_id();
         foreach(c; u.get_box())
         {
-            keys[c] = id_counter;
+            keys[c] = box_id;
             add(c);
         }
-        type_table[id_counter] = u.toString;
-        content_table[id_counter] = u;
+        type_table[box_id] = u.toString;
+        content_table[box_id] = u;
         debug(cell){
             writeln("type: ",u.toString);
-            writeln("table key: ",id_counter);
+            writeln("table key(box_id): ",box_id);
             writeln("end");
         }
     }
@@ -642,13 +641,13 @@ class BoxTable : CellBOX{
         }
     body{
         auto content_cells = u.get_box();
+        auto box_id = u.get_id();
         foreach(c; content_cells)
         {
             keys.remove(c);
         }
-        content_table.remove(u.table_key);
-        type_table.remove(u.table_key);
-        u.delete_table_key();
+        content_table.remove(box_id);
+        type_table.remove(box_id);
     }
     unittest{
         auto cb = new CellBOX(Cell(0,0),5,5);

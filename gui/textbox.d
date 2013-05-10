@@ -27,49 +27,34 @@ import std.stdio;
 import shape.shape;
 
 class RenderTextBOX : BoxRenderer{
-    private:
-    TextBOX render_target;
-    Rect box_pos;
-    cairo_text_extents_t extents;
-    PgLayout[int] layout;
-    PgFontDescription desc;
-    PgAttributeList attrlist;
-    PangoRectangle preedit_line_rect;
-    int cursor_pos;
-    string[int] strings;
-    int currentline;
+private:
+    alias int BoxId;
+    alias int Line;
+    TextBOX render_target; // renderが呼ばれるごとに切り替わる
+    TextBOX im_target; // IM使ってであろうBOX
+    int im_target_id;
+
+    // stored info to show table
+    Rect[BoxId] box_pos;
+    PgLayout[Line][BoxId] layout;
+    PgFontDescription[BoxId] desc;
+    PgAttributeList[BoxId] attrlist;
+
+    string[Line][BoxId] strings;
+
+    int currentline; // preedit のために保持
     string preedit;
-    ubyte fontsize;
-    int[int] width,height;
-    Color fontcolor;
-    public:
+
+    ubyte[BoxId] fontsize;
+    int[int][BoxId] width,height;
+    Color[BoxId] fontcolor;
+    int gridSize;
+public:
     this(PageView pv)
-        out{
-        assert(fontsize != 0);
-        }
     body{
         super(pv);
-        fontsize = cast(ubyte)pv.get_gridSize;
-        fontcolor = black;
     }
-    private void checkBOX(TextBOX box){
-        assert(box !is null);
-        if(render_target != box){
-            if(render_target) desc.free();
-            strings.clear();
-            currentline = 0;
-            preedit.clear();
-            layout.clear();
-            fontsize = 0;
-            width.clear();
-            height.clear();
-            desc = PgFontDescription.fromString(box.get_fontname~fontsize);
-            render_target = box;
-        }
-        else
-        {
-        }
-    }
+    
     public void render(Context cr,TextBOX box)
         in{
         assert(!box.empty);
@@ -77,9 +62,12 @@ class RenderTextBOX : BoxRenderer{
     body{
         debug(gui) writeln("render textbox start");
         // 
-        auto gridSize = page_view.get_gridSize();
-        box_pos = get_position(box); // gui.render_box::get_position
-        box_pos.y += gridSize/3;
+        auto box_id = box.get_id();
+        gridSize = page_view.get_gridSize();
+        box_pos[box_id] = get_position(box); // gui.render_box::get_position
+        box_pos[box_id].y += gridSize/3;
+        fontsize[box_id] = cast(ubyte)box.font_size;    //  !!TextBOXで変更できるように 
+        fontcolor[box_id] = box.font_color;  //  !!なったら変更 
         auto numof_lines = box.getText().numof_lines();
         currentline = box.getText().currentline();
             
@@ -91,11 +79,12 @@ class RenderTextBOX : BoxRenderer{
             //    自動expnad <= 下の実装
             //    横に圧縮
             //    Cellごと縮小
-                
+            if(box_id !in width) return;
+
             auto box_width = page_view.get_gridSize() * box.numof_hcell();
             debug(gui) writefln("box width %d",box_width);
 
-            auto sorted_width = width.values.sort;
+            auto sorted_width = width[box_id].values.sort;
             auto max_width = sorted_width[$-1];
             // auto min_width = sorted_width[0];
 
@@ -113,58 +102,87 @@ class RenderTextBOX : BoxRenderer{
             debug(gui) writeln("render preedit start");
             // if(currentline !in layout)  <- 改行後現れなくなる
             {
-                layout[currentline] = PgCairo.createLayout(cr); // 
-                layout[currentline].setFontDescription(desc);
+            layout[im_target_id][currentline] = PgCairo.createLayout(cr); // 
+            layout[im_target_id][currentline].setFontDescription(desc[im_target_id]);
             }
-            if(currentline !in width)   // この2つのifまとめられそうだけど精神的衛生上
-                width[currentline] = 0;
+            if( im_target_id !in width || currentline !in width[im_target_id])   // この2つのifまとめられそうだけど精神的衛生上
+                width[im_target_id][currentline] = 0;
 
-            layout[currentline].setAttributes(attrlist);
-            layout[currentline].setText(preedit);
-            cr.moveTo(box_pos.x+width[currentline],box_pos.y+currentline*gridSize);
-            PgCairo.updateLayout(cr,layout[currentline]);
-            PgCairo.showLayout(cr,layout[currentline]);
+            layout[im_target_id][currentline].setAttributes(attrlist[im_target_id]);
+            layout[im_target_id][currentline].setText(preedit);
+            cr.moveTo(box_pos[im_target_id].x+width[im_target_id][currentline],box_pos[im_target_id].y+currentline*gridSize);
+            PgCairo.updateLayout(cr,layout[im_target_id][currentline]);
+            PgCairo.showLayout(cr,layout[im_target_id][currentline]);
 
             set_preeditting(false);
+            debug(gui) writeln("end");
         }
+        void checkBOX(TextBOX box)
+            in{
+            assert(box !is null);
+            }
+        body{
+            debug(gui) writeln("checkBOX start");
+            if(render_target != box){
+                debug(id) writeln("box_id :",box_id);
 
+                desc[box_id] = PgFontDescription.fromString(box.get_fontname~fontsize[box_id]);
+                render_target = box;
+
+                layout[box_id][0] = PgCairo.createLayout(cr);
+                layout[box_id][0].setFontDescription(desc[box_id]);
+
+                // debug(gui) writeln("write position: ",box_pos[box_id].x," ",box_pos[box_id].y);
+                auto fc = fontcolor[box_id];
+                cr.setSourceRgb(fc.r,fc.g,fc.b);
+
+                // fontsize = 0;
+            }
+            debug(gui) writeln("end");
+        }
+        
         checkBOX(box);
-        strings = box.getText().strings;
-        debug(text) writeln("strings are ",strings);
+        strings[box_id] = box.getText().strings;
+        debug(text) writeln("strings are ",strings[box_id]);
 
-        foreach(line,one_line; strings)
+        foreach(line,one_line; strings[box_id])
         {
             if(one_line.empty) break;
             // if(line !in layout) <- IMのpreedit位置が最初の位置にも反映されてしまう
-            {
-                layout[line] = PgCairo.createLayout(cr);
-                layout[line].setFontDescription(desc);
-            }
-            debug(gui) writeln("write position: ",box_pos.x," ",box_pos.y);
-            cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
+            layout[box_id][line] = PgCairo.createLayout(cr);
+            layout[box_id][line].setFontDescription(desc[box_id]);
 
+            debug(gui) writeln("write position: ",box_pos[box_id].x," ",box_pos[box_id].y);
+            auto fc = fontcolor[box_id];
+            cr.setSourceRgb(fc.r,fc.g,fc.b);
 
-            auto lines_y = box_pos.y + gridSize * line;
-            cr.moveTo(box_pos.x,lines_y);
-            layout[line].setText(one_line);
-            PgCairo.updateLayout(cr,layout[line]);
-            PgCairo.showLayout(cr,layout[line]);
+            auto lines_y = box_pos[box_id].y + gridSize * line;
+            cr.moveTo(box_pos[box_id].x,lines_y);
+            layout[box_id][line].setText(one_line);
+            PgCairo.updateLayout(cr,layout[box_id][line]);
+            PgCairo.showLayout(cr,layout[box_id][line]);
 
             // get real using width and height
             // render_preedit より前に取得する必要がある
-            layout[line].getPixelSize(width[line],height[line]);
-            debug(gui) writefln("layout width %d",width[line]);
+            layout[box_id][line].getPixelSize(width[box_id][line],height[box_id][line]);
+            debug(gui) writefln("layout width %d",width[box_id][line]);
 
             debug(gui) writefln("wt %s",one_line);
         }
 
-        if(is_preediting()) render_preedit();
-        if(!strings.keys.empty) modify_boxsize();
+        if(is_preediting() && im_target_id == box_id)
+            render_preedit();
+        if(!strings[box_id].keys.empty) modify_boxsize();
         debug(gui) writeln("text render end");
     }
-    public void prepare_preedit(IMContext imc){
-        imc.getPreeditString(preedit,attrlist,cursor_pos);
+    public void prepare_preedit(IMContext imc,ContentBOX inputted_box){
+        debug(text) writeln("prepare_preedit start");
+        im_target = cast(TextBOX)inputted_box;
+        assert(im_target !is null);
+        im_target_id = inputted_box.get_id();
+        imc.getPreeditString(preedit,attrlist[im_target_id],render_target.cursor_pos);
         set_preeditting(true);
+        debug(text) writeln("end");
     }
     public void retrieve_surrouding(IMContext imc){
     }
@@ -176,9 +194,11 @@ class RenderTextBOX : BoxRenderer{
         preeditting = b;
     }
     public auto get_surrounding(){
-        cursor_pos = render_target.getText.get_caret().column;
-        writeln("cursor_pos: ",cursor_pos); 
-        return tuple(strings[currentline],cursor_pos);
+        debug(gui) writeln("get surrounding start");
+        im_target.cursor_pos = im_target.getText.get_caret().column;
+        writeln("cursor_pos: ",im_target.cursor_pos); 
+        return tuple(strings[im_target_id][currentline],im_target.cursor_pos);
+        debug(gui) writeln("end");
     }
 }
  

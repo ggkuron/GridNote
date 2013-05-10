@@ -141,6 +141,7 @@ final class PageView : DrawingArea{
         addOnButtonPress(&onButtonPress);
         imm.addOnCommit(&commit);
         imm.addOnPreeditChanged(&preedit_changed);
+        imm.addOnPreeditStart(&preedit_start);
         imm.addOnPreeditEnd(&preedit_end);
         imm.addOnRetrieveSurrounding(&retrieve_surrounding);
 
@@ -187,22 +188,27 @@ final class PageView : DrawingArea{
     private void preedit_changed(IMContext imc){
         if(interpreter.input_state == InputState.edit)
         {
-            render_text.prepare_preedit(imm);
+            auto inputted_box = manip_table.get_target();
+            render_text.prepare_preedit(imm,inputted_box);
             // レイアウトのことは投げる
             // IMContextごと
             queueDraw();
         }
     }
+    // ascii mode に切り替わったことを期待してみる
+    // どうもIMContextの実装依存ぽい
     private void preedit_end(IMContext imc){
         if(interpreter.input_state == InputState.edit)
         {
-            imc.reset();
+            // imc.reset();
         }
+    }
+    private void preedit_start(IMContext imc){
     }
 
     private bool retrieve_surrounding(IMContext imc){
-        auto surround = render_text.get_surrounding();
-        imc.setSurrounding(surround[0],surround[1]);
+ //        auto surround = render_text.get_surrounding();
+ //        imc.setSurrounding(surround[0],surround[1]);
         return true;
     }
     private bool focus_in(Event ev,Widget w){
