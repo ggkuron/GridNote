@@ -94,7 +94,6 @@ private:
         return interpreter.key_to_cmd(ev,w);
     }
     bool on_key_release(Event ev,Widget w){
-
         return cast(bool)imm.filterKeypress(ev.key());
     }
     bool onButtonPress(Event event, Widget widget)
@@ -184,6 +183,7 @@ private:
     void backDesign(Context cr){
         backdrw.clip(cr);
     }
+    bool show_contents_border = true;
     void renderTable(Context cr){
         debug(gui) writeln("render table start");
         set_in_view();
@@ -191,6 +191,9 @@ private:
 
         foreach(content_in_view; in_view.get_contents())
         {
+            if(show_contents_border)
+                render_text.render_fill(cr,content_in_view[1],Color(linen,50));
+
             switch(content_in_view[0])
             {
                 case "cell.textbox.TextBOX":
@@ -400,9 +403,13 @@ public:
     void zoom_out(){
         if(gridSpace)  --gridSpace;
     }
-    void switch_grid_show(){
+    void toggle_grid_show(){
         grid_show_flg = !grid_show_flg;
     }
+    void toggle_boxborder_show(){
+        show_contents_border = !show_contents_border;
+    }
+
     Rect select;
     RectDrawer select_drwer;
     void renderFillGrids(Context cr,const Cell[] cells,const Color color){

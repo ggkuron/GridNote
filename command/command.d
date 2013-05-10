@@ -64,7 +64,8 @@ class InputInterpreter{
     COMMAND expand_select_l;
     COMMAND expand_select_d;
     COMMAND expand_select_u;
-    COMMAND grid_switch;
+    COMMAND toggle_grid_show;
+    COMMAND toggle_boxborder_show;
 
     COMMAND manip_mode_normal;
     COMMAND mode_change_to_normal;
@@ -94,7 +95,8 @@ class InputInterpreter{
         expand_select_r = cmd_template!("manip_table.expand_if_on_edge(Direct.right);")(this,manip,view);
         expand_select_d = cmd_template!("manip_table.expand_if_on_edge(Direct.down);")(this,manip,view);
         expand_select_u = cmd_template!("manip_table.expand_if_on_edge(Direct.up);")(this,manip,view);
-        grid_switch = cmd_template!("view.switch_grid_show();")(this,manip,view);
+        toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,manip,view);
+        toggle_boxborder_show = cmd_template!("view.toggle_boxborder_show();")(this,manip,view);
 
         manip_mode_normal = cmd_template!("manip_table.return_to_normal_mode();")(this,manip,view);
         mode_change_to_normal = cmd_template!("interpreter.input_state = InputState.normal;")(this,manip,view);
@@ -168,6 +170,11 @@ class InputInterpreter{
         debug(cmd) writeln("input mode ",input_state);
         debug(cmd) writefln("%d",ModifierType.CONTROL_MASK);
  
+        // 魔界化する前に
+        // KeyConfigを
+        // 連キーをKeyConfigに割り当てたい
+        //    keyCheckをmethod化?
+        //    1つの発行自体を個々のmethodに分離?
         final switch (input_state)
         {
             case InputState.normal:
@@ -191,7 +198,8 @@ class InputInterpreter{
                     if(keyState[$-1] == MOVE_R_KEY) add_to_queue (move_focus_r); else 
                     if(keyState[$-1] == MOVE_U_KEY) add_to_queue (move_focus_u); else
                     if(keyState[$-1] == MOVE_D_KEY) add_to_queue (move_focus_d); else
-                    if(keyState[$-1] == GdkKeysyms.GDK_0) add_to_queue (grid_switch);
+                    if(keyState[$-1] == GdkKeysyms.GDK_0) add_to_queue (toggle_grid_show); else
+                    if(keyState[$-1] == GdkKeysyms.GDK_9) add_to_queue (toggle_boxborder_show);
                 }
                 break;
             case InputState.edit:

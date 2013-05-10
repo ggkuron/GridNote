@@ -98,11 +98,11 @@ public:
                 // auto min_width = sorted_width[0];
 
                 // expand後の box_widthで揺らがないように調整必要
-
-                if(max_width > box_width+gridSize/2)
+                // 次のループではbox_widthの大きさは変わってる
+                if(max_width > box_width)
                     box.expand(Direct.right); 
                 else
-                if(max_width < box_width-gridSize/2)
+                if(max_width < box_width-gridSize)
                 {
                     box.remove(Direct.right);
                 }
@@ -115,15 +115,18 @@ public:
         {
             debug(gui) writeln("render preedit start");
             // if(currentline !in layout)  <- 改行後現れなくなる
-            {
             layout[im_target_id][currentline] = PgCairo.createLayout(cr); // 
             layout[im_target_id][currentline].setFontDescription(desc[im_target_id]);
-            }
+
             if( im_target_id !in width || currentline !in width[im_target_id])   // この2つのifまとめられそうだけど精神的衛生上
                 width[im_target_id][currentline] = 0;
 
             layout[im_target_id][currentline].setAttributes(attrlist[im_target_id]);
             layout[im_target_id][currentline].setText(preedit);
+
+            auto fc = fontcolor[box_id]; // 初回のpreeditのため(だけ)に必要
+            cr.setSourceRgb(fc.r,fc.g,fc.b);
+
             cr.moveTo(box_pos[im_target_id].x+width[im_target_id][currentline],box_pos[im_target_id].y+currentline*gridSize);
             PgCairo.updateLayout(cr,layout[im_target_id][currentline]);
             PgCairo.showLayout(cr,layout[im_target_id][currentline]);
@@ -132,13 +135,9 @@ public:
             debug(gui) writeln("end");
         }
         void checkBOX(TextBOX box)
-            in{
-            assert(box !is null);
-            }
-        body{
+        {
             debug(gui) writeln("checkBOX start");
             if(render_target != box){
-                debug(id) writeln("box_id :",box_id);
 
                 desc[box_id] = PgFontDescription.fromString(box.get_fontname~fontsize[box_id]);
                 render_target = box;
@@ -146,11 +145,8 @@ public:
                 layout[box_id][0] = PgCairo.createLayout(cr);
                 layout[box_id][0].setFontDescription(desc[box_id]);
 
-                // debug(gui) writeln("write position: ",box_pos[box_id].x," ",box_pos[box_id].y);
                 auto fc = fontcolor[box_id];
                 cr.setSourceRgb(fc.r,fc.g,fc.b);
-
-                // fontsize = 0;
             }
             debug(gui) writeln("end");
         }
