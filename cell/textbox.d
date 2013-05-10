@@ -31,8 +31,8 @@ final class TextBOX : ContentBOX{
         foreach(dchar c; s)
             text.insert(c);
     }
+    // SDLのために作ったけどもう使わないはず
     // public void insert_char(char[32LU] cs){
-    //     import std.stdio;
     //     dstring s = cast(dstring)cs;
     //     insert_char(s[0]);
     // }

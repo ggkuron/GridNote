@@ -67,35 +67,49 @@ public:
         box_pos[box_id] = get_position(box); // gui.render_box::get_position
         box_pos[box_id].y += gridSize/3;
         fontsize[box_id] = cast(ubyte)box.font_size;    //  !!TextBOXで変更できるように 
-        fontcolor[box_id] = box.font_color;  //  !!なったら変更 
+        fontcolor[box_id] = box.font_color;             //  !!なったら変更 
         auto numof_lines = box.getText().numof_lines();
         currentline = box.getText().currentline();
             
         void  modify_boxsize()
-        {   // 入力に合わせて自動でBOXを変形させる挙動
+        {   // 描画された領域のサイズでBOXを変形させる
+            // フォントの大きさを順守するため
+            // 1Cell1Charモードならここは通るな通すな
+
             // 何通りかの挙動が考えられる
             //    1行目の横幅で自動改行
-            //    入力停止
             //    自動expnad <= 下の実装
-            //    横に圧縮
-            //    Cellごと縮小
+            //    横に圧縮して無理やり入れる
+            //    Cellごと縮小して無理やり入れる
+            // 
+            // 確定されてBOX はこの処理を通したくない
+            // TODO 確定されたBOXの定義
+            // auto pre_box = box.get_box_dup();
             if(box_id !in width) return;
 
-            auto box_width = page_view.get_gridSize() * box.numof_hcell();
-            debug(gui) writefln("box width %d",box_width);
+            do{
+                auto pre_box = box.get_box();
 
-            auto sorted_width = width[box_id].values.sort;
-            auto max_width = sorted_width[$-1];
-            // auto min_width = sorted_width[0];
+                auto box_width = gridSize * box.numof_hcell();
+                debug(gui) writefln("box width %d",box_width);
 
-            // 浮動小数点的に動きまわる時があるので余裕を少々
-            if(max_width > box_width)
-                box.expand(Direct.right); 
-            else
-            if(max_width < box_width-gridSize/2)
-            {
-                box.remove(Direct.right);
-            }
+                auto sorted_width = width[box_id].values.sort;
+                auto max_width = sorted_width[$-1];
+                // auto min_width = sorted_width[0];
+
+                // expand後の box_widthで揺らがないように調整必要
+
+                if(max_width > box_width+gridSize/2)
+                    box.expand(Direct.right); 
+                else
+                if(max_width < box_width-gridSize/2)
+                {
+                    box.remove(Direct.right);
+                }
+
+                if(pre_box == box.get_box())
+                    break;
+            }while(true);
         }
         void render_preedit()
         {

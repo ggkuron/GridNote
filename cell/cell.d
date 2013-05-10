@@ -314,10 +314,13 @@ public:
         debug(cell) writeln("end");
     }
 
-
     private static int id_counter;
     private int box_id; // 0: invalid id
     private void set_id(){
+        if(id_counter == int.max){
+            // TODO change to throw exception
+            assert(0);
+        }
         box_id = id_counter++;
     }
     this(){
@@ -846,7 +849,6 @@ class SelectBOX : ContentBOX{
         }
         debug(cell) writeln("end");
     }
-
     public void expand_to_focus()
         in{
         assert(!box.empty());

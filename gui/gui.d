@@ -207,8 +207,8 @@ final class PageView : DrawingArea{
     }
 
     private bool retrieve_surrounding(IMContext imc){
- //        auto surround = render_text.get_surrounding();
- //        imc.setSurrounding(surround[0],surround[1]);
+        auto surround = render_text.get_surrounding();
+        imc.setSurrounding(surround[0],surround[1]);
         return true;
     }
     private bool focus_in(Event ev,Widget w){
