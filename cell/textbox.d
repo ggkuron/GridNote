@@ -36,6 +36,7 @@ final class TextBOX : ContentBOX{
     //     dstring s = cast(dstring)cs;
     //     insert_char(s[0]);
     // }
+
     public void backspace(){
         text.backspace();
     }

@@ -189,9 +189,6 @@ final class ManipTextBOX {
         debug(manip) writeln("with commit text");
         insert(box,str);
     }
-    // void with_preedit_changed(string pre,TextBOX box){
-    //     debug(manip) writeln("with preedit change");
-    // }
     void backspace(TextBOX box){
         box.backspace();
     }

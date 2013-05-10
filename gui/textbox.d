@@ -37,6 +37,7 @@ class RenderTextBOX : BoxRenderer{
     PangoRectangle preedit_line_rect;
     int cursor_pos;
     string[int] strings;
+    int currentline;
     string preedit;
     ubyte fontsize;
     int[int] width,height;
@@ -51,10 +52,23 @@ class RenderTextBOX : BoxRenderer{
         fontsize = cast(ubyte)pv.get_gridSize;
         fontcolor = black;
     }
-    private void setBOX(TextBOX box){
+    private void checkBOX(TextBOX box){
         assert(box !is null);
-        desc = PgFontDescription.fromString(box.get_fontname~fontsize);
-        render_target = box;
+        if(render_target != box){
+            if(render_target) desc.free();
+            strings.clear();
+            currentline = 0;
+            preedit.clear();
+            layout.clear();
+            fontsize = 0;
+            width.clear();
+            height.clear();
+            desc = PgFontDescription.fromString(box.get_fontname~fontsize);
+            render_target = box;
+        }
+        else
+        {
+        }
     }
     public void render(Context cr,TextBOX box)
         in{
@@ -67,7 +81,7 @@ class RenderTextBOX : BoxRenderer{
         box_pos = get_position(box); // gui.render_box::get_position
         box_pos.y += gridSize/3;
         auto numof_lines = box.getText().numof_lines();
-        auto currentline = box.getText().currentline();
+        currentline = box.getText().currentline();
             
         void  modify_boxsize()
         {   // 入力に合わせて自動でBOXを変形させる挙動
@@ -86,7 +100,7 @@ class RenderTextBOX : BoxRenderer{
             // auto min_width = sorted_width[0];
 
             // 浮動小数点的に動きまわる時があるので余裕を少々
-            if(max_width > box_width+gridSize/2)
+            if(max_width > box_width)
                 box.expand(Direct.right); 
             else
             if(max_width < box_width-gridSize/2)
@@ -97,29 +111,35 @@ class RenderTextBOX : BoxRenderer{
         void render_preedit()
         {
             debug(gui) writeln("render preedit start");
-            if(currentline !in layout) 
+            // if(currentline !in layout)  <- 改行後現れなくなる
+            {
                 layout[currentline] = PgCairo.createLayout(cr); // 
+                layout[currentline].setFontDescription(desc);
+            }
             if(currentline !in width)   // この2つのifまとめられそうだけど精神的衛生上
                 width[currentline] = 0;
-            debug(gui) writeln("1"); layout[currentline].setAttributes(attrlist);
-            debug(gui) writeln("2"); layout[currentline].setText(preedit);
-            debug(gui) writeln("3"); cr.moveTo(box_pos.x+width[currentline],box_pos.y+currentline*gridSize);
-            debug(gui) writeln("4"); PgCairo.updateLayout(cr,layout[currentline]);
-            debug(gui) writeln("5"); PgCairo.showLayout(cr,layout[currentline]);
 
-            debug(gui) writeln("6"); set_preeditting(false);
-            debug(gui) writeln("end");
+            layout[currentline].setAttributes(attrlist);
+            layout[currentline].setText(preedit);
+            cr.moveTo(box_pos.x+width[currentline],box_pos.y+currentline*gridSize);
+            PgCairo.updateLayout(cr,layout[currentline]);
+            PgCairo.showLayout(cr,layout[currentline]);
+
+            set_preeditting(false);
         }
 
-        setBOX(box);
+        checkBOX(box);
         strings = box.getText().strings;
         debug(text) writeln("strings are ",strings);
 
         foreach(line,one_line; strings)
         {
             if(one_line.empty) break;
-            layout[line] = PgCairo.createLayout(cr);
-            layout[line].setFontDescription(desc);
+            // if(line !in layout) <- IMのpreedit位置が最初の位置にも反映されてしまう
+            {
+                layout[line] = PgCairo.createLayout(cr);
+                layout[line].setFontDescription(desc);
+            }
             debug(gui) writeln("write position: ",box_pos.x," ",box_pos.y);
             cr.setSourceRgb(fontcolor.r,fontcolor.g,fontcolor.b);
 
@@ -136,11 +156,9 @@ class RenderTextBOX : BoxRenderer{
             debug(gui) writefln("layout width %d",width[line]);
 
             debug(gui) writefln("wt %s",one_line);
-
         }
 
         if(is_preediting()) render_preedit();
-        desc.free();
         if(!strings.keys.empty) modify_boxsize();
         debug(gui) writeln("text render end");
     }
@@ -157,11 +175,10 @@ class RenderTextBOX : BoxRenderer{
     private void set_preeditting(bool b){
         preeditting = b;
     }
-
     public auto get_surrounding(){
-        cursor_pos = render_target.getText.caret.column;
+        cursor_pos = render_target.getText.get_caret().column;
         writeln("cursor_pos: ",cursor_pos); 
-        return tuple(strings,cursor_pos);
+        return tuple(strings[currentline],cursor_pos);
     }
 }
  

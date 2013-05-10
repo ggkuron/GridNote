@@ -16,6 +16,7 @@ final class Text
         static int cnt;
         debug(text) writefln("Text created up %d times",cnt++);
     }
+    private:
     int lines = 1;
     Cell caret;
     alias int pos;
@@ -26,6 +27,7 @@ final class Text
     invariant(){
         assert(current_line < lines);
     }
+    public:
     ulong insert(dchar c){
         writing[current_line][position++] = c;
         caret.move(Direct.right);
@@ -113,6 +115,9 @@ final class Text
     }
     int numof_lines()const{
         return lines;
+    }
+    Cell get_caret()const{
+        return caret;
     }
 }
 

@@ -35,7 +35,6 @@ import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
 
-import gtkc.gobject;
 
 immutable int start_size_w = 960;
 immutable int start_size_h = 640;
@@ -55,9 +54,10 @@ class Window : MainWindow{
         // box.setChildPacking(page_view,1,1,1,GtkPackType.START);
 
         // add(box);
-        // page_view.show();
         add(page_view);
-        // box.show();
+
+        page_view.show();
+        // box.showAll();
         showAll();
     }
 }
@@ -142,7 +142,7 @@ final class PageView : DrawingArea{
         imm.addOnCommit(&commit);
         imm.addOnPreeditChanged(&preedit_changed);
         imm.addOnPreeditEnd(&preedit_end);
-        // imm.addOnRetrieveSurrounding(&retrieve_surrounding);
+        imm.addOnRetrieveSurrounding(&retrieve_surrounding);
 
         menu = new Menu();
         menu.append( new ImageMenuItem(StockID.CUT, cast(AccelGroup)null) );
@@ -200,11 +200,11 @@ final class PageView : DrawingArea{
         }
     }
 
-    // private bool retrieve_surrounding(IMContext imc){
-    //     auto surround = render_text.get_surrounding();
-    //     imc.setSurrounding(surround[0],surround[1]);
-    //     return true;
-    // }
+    private bool retrieve_surrounding(IMContext imc){
+        auto surround = render_text.get_surrounding();
+        imc.setSurrounding(surround[0],surround[1]);
+        return true;
+    }
     private bool focus_in(Event ev,Widget w){
         grabFocus();
         return interpreter.focus_in(ev,w);
