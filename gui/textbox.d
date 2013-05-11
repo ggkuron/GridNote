@@ -157,7 +157,7 @@ public:
 
         foreach(line,one_line; strings[box_id])
         {
-            if(one_line.empty) break;
+            if(one_line.empty) continue;
             // if(line !in layout) <- IMのpreedit位置が最初の位置にも反映されてしまう
             layout[box_id][line] = PgCairo.createLayout(cr);
             layout[box_id][line].setFontDescription(desc[box_id]);
@@ -172,7 +172,7 @@ public:
             PgCairo.updateLayout(cr,layout[box_id][line]);
             PgCairo.showLayout(cr,layout[box_id][line]);
 
-            // get real using width and height
+            // get real ocupied width and height
             // render_preedit より前に取得する必要がある
             layout[box_id][line].getPixelSize(width[box_id][line],height[box_id][line]);
             debug(gui) writefln("layout width %d",width[box_id][line]);

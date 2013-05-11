@@ -29,7 +29,7 @@ final class ManipTable{
 
     focus_mode mode;
     SelectBOX select;
-    public:
+public:
     this(BoxTable table)
         out{
         assert(focused_table);
@@ -64,7 +64,7 @@ final class ManipTable{
     void select_clear(){
         select.clear();
     }
-    auto get_typebox(){
+    @property auto targetbox(){
         switch(box_type){
             case "cell.textbox.TextBOX":
                 return cast(TextBOX)maniped_box;
@@ -72,7 +72,6 @@ final class ManipTable{
                 assert(0);
         }
     }
-
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
     void expand_if_on_edge(Direct dir){
         if(select.is_on_edge(dir))
@@ -100,6 +99,21 @@ final class ManipTable{
         }
     body{
         select.expand(dir);
+    }
+    void move_box(Direct to)
+        in{
+        assert(mode==focus_mode.normal);
+        }
+        out{
+        assert(mode==focus_mode.normal);
+        }
+    body{
+        auto target = focused_table.get_content(select.focus);
+        if(target[1] is null) return;
+        else{
+            target[1].move(to);
+            select.move(to);
+        }
     }
     void return_to_normal_mode()
         in{
@@ -133,8 +147,7 @@ final class ManipTable{
     }
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
-        auto typedbox = get_typebox();
-        manip_textbox.with_commit(str,typedbox);
+        manip_textbox.with_commit(str,targetbox);
     }
     void backspace(){
         debug(manip) writeln("back space start");

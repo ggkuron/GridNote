@@ -67,6 +67,10 @@ class InputInterpreter{
     COMMAND toggle_grid_show;
     COMMAND toggle_boxborder_show;
 
+    COMMAND move_table_content_r;
+    COMMAND move_table_content_l;
+    COMMAND move_table_content_u;
+    COMMAND move_table_content_d;
     COMMAND manip_mode_normal;
     COMMAND mode_change_to_normal;
     COMMAND quit;
@@ -98,6 +102,10 @@ class InputInterpreter{
         toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,manip,view);
         toggle_boxborder_show = cmd_template!("view.toggle_boxborder_show();")(this,manip,view);
 
+        move_table_content_r = cmd_template!("manip_table.move_box(Direct.right);")(this,manip,view);
+        move_table_content_l = cmd_template!("manip_table.move_box(Direct.left);")(this,manip,view);
+        move_table_content_u = cmd_template!("manip_table.move_box(Direct.up);")(this,manip,view);
+        move_table_content_d = cmd_template!("manip_table.move_box(Direct.down);")(this,manip,view);
         manip_mode_normal = cmd_template!("manip_table.return_to_normal_mode();")(this,manip,view);
         mode_change_to_normal = cmd_template!("interpreter.input_state = InputState.normal;")(this,manip,view);
         quit = cmd_template!("stdlib.exit(0);")(this,manip,view);
@@ -180,11 +188,17 @@ class InputInterpreter{
             case InputState.normal:
                 if(ModState & ModifierType.CONTROL_MASK)
                 {
-                    input_state = InputState.select;
-                    if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (start_select_mode, move_focus_l,expand_select/*_l*/); }else
-                    if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (start_select_mode, move_focus_r,expand_select/*_r*/); }else
-                    if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (start_select_mode, move_focus_u,expand_select/*_u*/); }else
-                    if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (start_select_mode, move_focus_d,expand_select/*_d*/); }
+                    // input_state = InputState.select;
+                    // if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (start_select_mode, move_focus_l,expand_select/*_l*/); }else
+                    // if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (start_select_mode, move_focus_r,expand_select/*_r*/); }else
+                    // if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (start_select_mode, move_focus_u,expand_select/*_u*/); }else
+                    // if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (start_select_mode, move_focus_d,expand_select/*_d*/); }
+
+                    if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (move_table_content_l); }else
+                    if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (move_table_content_r); }else
+                    if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (move_table_content_u); }else
+                    if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (move_table_content_d); }
+
                 }
                 else
                 {

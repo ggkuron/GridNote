@@ -55,7 +55,6 @@ final class Text
             return toUTF8(s);
         }else return "";
     }   
-
     @property string[int] strings(){
         string[int] result;
         foreach(line_num,one_line; writing)
@@ -63,6 +62,9 @@ final class Text
         return result;
     }
     bool line_feed(){ // 新しい行を作ったか
+        if(currentline !in writing)
+            writing[currentline] = null;
+
         ++current_line;
         position = 0;
         if(current_line == lines)

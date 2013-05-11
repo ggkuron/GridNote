@@ -9,6 +9,7 @@ import std.math;
 
 import std.typecons;
 debug(cell) import std.stdio;
+debug(move) import std.stdio;
 
 struct Cell
 {
@@ -264,6 +265,31 @@ private:
         }
         return result;
     }
+    static int id_counter;
+    int box_id; // 0: invalid id
+    void set_id(){
+        if(id_counter == int.max){
+            // TODO change to throw exception
+            assert(0);
+        }
+        box_id = id_counter++;
+    }
+protected:
+    void take_over(CellBOX oldone)
+        in{
+        assert(!oldone.get_box_raw().empty);
+        }
+        out{
+        assert(!box.empty);
+        }
+    body{
+        debug(cell) writeln("take after start");
+        box = oldone.get_box_raw();
+        update_info();
+
+        oldone = null;
+        debug(cell) writeln("end");
+    }
 public:
     void remove(const Direct dir){
         debug(cell) writeln("remove start");
@@ -287,7 +313,6 @@ public:
     bool is_in(const Cell c)const{
         return .is_in(box,c);
     }
-
     // 破壊的にboxの中身を入れ替える
     // check == false はis_box でのチェック用
     // is_box でのチェックを行わない
@@ -298,48 +323,37 @@ public:
         update_info();
         return true;
     }
-    protected void take_over(CellBOX oldone)
-        in{
-        assert(!oldone.get_box_raw().empty);
-        }
-        out{
-        assert(!box.empty);
-        }
-    body{
-        debug(cell) writeln("take after start");
-        box = oldone.get_box_raw();
-        update_info();
-
-        oldone = null;
-        debug(cell) writeln("end");
-    }
-
-    private static int id_counter;
-    private int box_id; // 0: invalid id
-    private void set_id(){
-        if(id_counter == int.max){
-            // TODO change to throw exception
-            assert(0);
-        }
-        box_id = id_counter++;
-    }
     this(){
         set_id();
     }
     this(Cell ul,int rw,int cw){
         debug(cell){ 
-            writeln("ctro start");
+            writeln("ctor start");
             writefln("rw %d cw %d",rw,cw);
         }
         set_id();
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
-       
     void move(const Direct dir){
         expand(dir);
         remove(dir.reverse);
-        update_info();
+        // update_info は既に2回呼ばれてるっていう
+    }
+    unittest{
+        debug(cell) writeln("CellBOX move test start");
+        auto cb = new CellBOX(Cell(5,5),5,5);
+        cb.move(Direct.up);
+        assert(cb.top_left == Cell(4,5));
+        assert(cb.bottom_right == Cell(8,9));
+        cb.move(Direct.left);
+        assert(cb.top_left == Cell(4,4));
+        assert(cb.bottom_right == Cell(8,8));
+        cb.move(Direct.right);
+        assert(cb.top_left == Cell(4,5));
+        assert(cb.bottom_right == Cell(8,9));
+
+        debug(cell) writeln("end");
     }
     void create_in(const Cell c)
         in{
@@ -352,7 +366,7 @@ public:
         add(c);
         update_info();
     }
-    void expand(Direct dir)
+    void expand(const Direct dir)
         in{
         assert(is_box(box));
         }
@@ -410,15 +424,16 @@ public:
 
         return result;
     }
-    @property public bool empty()const{
+    @property bool empty()const{
         return box.empty();
     }
-    public void set_fixed(bool b){
-        box_fixed = b;
-    }
-    public bool is_fixed()const{
-        return box_fixed;
-    }
+    // TODO 名前変えて実装
+    // void set_fixed(bool b){ 固定化されたか
+    //     box_fixed = b;
+    // }
+    // bool is_fixed()const{
+    //     return box_fixed;
+    // }
     void hold_tl(const Cell start,int h,int w) // TopLeft
         in{
         assert(h >= 0);
@@ -535,13 +550,13 @@ public:
     }
 
     // getter:
+    final:
     const int numof_vcell()const{
         return numof_row;
     }
     const int numof_hcell()const{
         return numof_col;
     }
-    final:
     const(Cell[]) get_box()const{
         return box;
     }
@@ -557,32 +572,61 @@ public:
     Cell get_bottom_right()const{
         return bottom_right;
     }
-
 }
 
 abstract class ContentBOX : CellBOX{
+private:
     BoxTable table;
+public:
     this(BoxTable attach, ContentBOX taken)
-        in{
-        assert(attach !is null);
-        assert(taken !is null);
+        out{
+        assert(table !is null);
         }
     body{
         table = attach;
         box = taken.box;
     }
     this(BoxTable attach)
-        in{
-        assert(attach !is null);
+        out{
+        assert(table !is null);
         }
     body{
         table = attach;
     }
-    public BoxTable get_table(){
-        return table;
+    invariant(){
+        assert(table !is null);
     }
-    public bool is_to_spoil();
-    public int get_id()const{ return box_id; }
+    override void move(const Direct to){
+        debug(move) writeln("ContentBOX::move start");
+        debug(move) writefln("the cell is %s",this.box);
+        debug(move) writefln("the direct is %s",to);
+        if(table.require_move(this,to))
+        {
+            super.expand(to);
+            super.remove(to.reverse);
+            // CellBOX.move(to);
+        }
+        debug(move) writefln("the cell is %s",this.box);
+        debug(cell) writeln("end");
+    }
+    unittest{
+        import cell.textbox;
+        BoxTable table = new BoxTable;
+        auto cb = new TextBOX(table);
+        cb.create_in(Cell(3,3));
+        cb.expand(Direct.right);
+        assert(cb.top_left == Cell(3,3));
+        assert(cb.bottom_right == Cell(3,4));
+        cb.move(Direct.right);
+        assert(cb.top_left == Cell(3,4));
+        assert(cb.bottom_right == Cell(3,5));
+    }
+    override void expand(const Direct to){
+        if(table.require_expand(this,to))
+            super.expand(to);
+    }
+    abstract bool is_to_spoil();
+    int get_id()const{ return box_id; }
     // 削除対象かいなか
 }
 
@@ -599,26 +643,27 @@ class Holder : ContentBOX{
 }
 
 class BoxTable : CellBOX{
+private:
     ContentBOX[int] content_table;
     string[int] type_table;
     int[Cell] keys;
 
-    this(){}
-
-    invariant(){
+public:
+    this(){
+        content_table[0] = null;
+        type_table[0] = "none";
     }
-    public:
+    invariant(){
+        assert(content_table[0] is null);
+        assert(type_table[0] == "none");
+    }
     void add_box(T)(T u)
         in{
         assert(u.table == this);
         }
-        out{
-            // keys.keysはこのbox以外も含む
-        // assert(keys.keys == box);
-        }
     body{
-        debug(cell) writeln("add_box start");
-        assert(cast(ContentBOX)u !is null);
+        debug(move) writeln("add_box start");
+        assert(cast(ContentBOX)u !is null); // 静的に書き換えたい
         assert(!u.get_box().empty);
 
         auto box_id = u.get_id();
@@ -629,18 +674,53 @@ class BoxTable : CellBOX{
         }
         type_table[box_id] = u.toString;
         content_table[box_id] = u;
-        debug(cell){
+        debug(move){
             writeln("type: ",u.toString);
             writeln("table key(box_id): ",box_id);
+            writeln("boxes are: ",u.get_box());
             writeln("end");
         }
     }
+    // Tableに登録されたBOXは、自身の変形が可能か
+    // Tableに尋ねる。そのためのmethod。prefix: 
+    // 可能なときには処理も行なってしまう
+    //      分ける必要のある要件があったら統一して分離させる
+    bool require_expand(ContentBOX box,const Direct to){
+        debug(move) writeln("expand box start");
+        auto id = box.get_id();
+        auto edge = box.edge_cells;
+        Cell[] tobe_expanded;
+        foreach(c; edge[to]) // just check
+        {
+            auto the_cell = c.if_moved(to);
+            tobe_expanded ~= the_cell;
+            if(the_cell in keys)
+            { 
+                debug(move) writeln("not expanded");
+                return false;
+            }
+        }
+        foreach(c; tobe_expanded)
+            keys[c] = id;
+
+        debug(move) writeln("expanded");
+        return true;
+
+    }
+    // 移動できたらtrue そうでなければfalse
+    bool require_move(ContentBOX box,const Direct to){
+        if(require_expand(box,to))
+        {
+            foreach(c; box.edge_cells[reverse(to)])
+                keys.remove(c);
+            return true;
+        }else
+            return false;
+    }
+
     void remove(ContentBOX u)
         in{
         assert(u.table == this);
-        }
-        out{
-        // assert(keys.keys == box);
         }
     body{
         auto content_cells = u.get_box();
@@ -675,8 +755,9 @@ class BoxTable : CellBOX{
         assert(cb.numof_row == 3);
         assert(cb.bottom_right == Cell(3,3));
     }
-    public Tuple!(string,ContentBOX) get_content(const Cell c){
-        debug(cell) if(!(c in keys)) writeln("this cell is empty, no content return");
+    Tuple!(string,ContentBOX) get_content(const Cell c){
+        debug(move) if(c !in keys) writeln("this cell is empty, no content return");
+        if(c !in keys) return tuple("none",content_table[0]);
         auto key = keys[c];
         return tuple(type_table[key],content_table[key]);
     }
@@ -688,6 +769,10 @@ class BoxTable : CellBOX{
     }
 }
 
+// Viewの移動の際、
+// 原点方向にはTableの中身をシフトする形で展開するが
+// Cellの増加方向がPageViewの原点位置に来たときにTableを切り出す必要がある
+// 他、Tableを切り出すとHolderになるし便利(そう)
 class ReferTable : BoxTable{
     BoxTable master; // almost all manipulation acts on this table
     Cell offset;
@@ -776,30 +861,82 @@ class ReferTable : BoxTable{
 import cell.textbox;
 
 class SelectBOX : ContentBOX{
-    Cell focus;
-    Cell pivot;
+private:
+    Cell _focus;
+    Cell _pivot;
     /+ inherited
        CellBOX box
        alias box this +/
+    void set_pivot(const Cell p)
+        in{
+        assert(box.empty());
+        }
+    body{
+        debug(cell) writeln("set__pivot start");
+        _pivot = p;
+        super.create_in(_pivot);
+        debug(cell) writeln("end");
+    }
+    void pivot_bound(Cell cl){
+        debug(cell) writeln("privot_bound start");
+        if(_pivot == cl)  hold_tl(_pivot,1,1); else
+        if(_pivot < cl) // _pivot.rowの方が小さいブロック
+        {
+            auto d = diff(cl,_pivot);
+            auto dr = d.row+1;
+            auto dc = d.column+1;
+
+            if(cl.column == _pivot.column) // 縦軸下
+                hold_tl(_pivot,dr,1);
+            else if(cl.column < _pivot.column) // 第3象限
+                hold_tr(_pivot,dr,dc);
+            else 
+                hold_tl(_pivot,dr,dc); // 第四象限
+        }else{ // if(_pivot > cl) _pivot.rowが大きい
+            auto d = diff(_pivot,cl);
+            auto dr = d.row+1;
+            auto dc = d.column+1;
+            if(cl.column == _pivot.column) // 縦軸上
+                hold_br(_pivot,dr,1);
+            else if(cl.column > _pivot.column) // 1
+                hold_tr(cl,dr,dc);
+            else // 3象限
+                hold_br(_pivot,dr,dc);
+        }
+        debug(cell) writeln("end");
+    }
+public:
+    void expand_to_focus()
+        in{
+        assert(!box.empty());
+        }
+        out{
+        assert(is_box(box));
+        }
+    body{
+        debug(cell) writeln("expand_to__focus start");
+        pivot_bound(_focus);
+        debug(cell) writeln("end");
+    }
     this(BoxTable attach,Cell cursor=Cell(3,3))
     body{
         super(attach);
-        focus = cursor;
+        _focus = cursor;
     }
     override void move(const Direct dir){
-        focus.move(dir);
+        _focus.move(dir);
     }
     void create_in(){
-        super.create_in(focus);
-        debug(cell)writefln("create in %s",focus);
+        super.create_in(_focus);
+        debug(cell)writefln("create in %s",_focus);
     }
     bool is_on_edge()const{
-        return super.is_on_edge(focus);
+        return super.is_on_edge(_focus);
     }
     bool is_on_edge(Direct dir)const{
-        return super.is_on_edge(focus,dir);
+        return super.is_on_edge(_focus,dir);
     }
-    public TextBOX create_TextBOX(){
+    TextBOX create_TextBOX(){
         debug(cell) writeln("create_TextBOX start");
         create_in();
         auto tb = new TextBOX(table);
@@ -808,60 +945,17 @@ class SelectBOX : ContentBOX{
         debug(cell) writeln("end");
         return tb;
     }
-    private void set_pivot(const Cell p)
-        in{
-        assert(box.empty());
-        }
-    body{
-        debug(cell) writeln("set_pivot start");
-        pivot = p;
-        super.create_in(pivot);
-        debug(cell) writeln("end");
+    void set_pivot(){
+        set_pivot(_focus);
     }
-    public void set_pivot(){
-        set_pivot(focus);
-    }
-    private void pivot_bound(Cell cl){
-        debug(cell) writeln("privot_bound start");
-        if(pivot == cl)  hold_tl(pivot,1,1); else
-        if(pivot < cl) // pivot.rowの方が小さいブロック
-        {
-            auto d = diff(cl,pivot);
-            auto dr = d.row+1;
-            auto dc = d.column+1;
 
-            if(cl.column == pivot.column) // 縦軸下
-                hold_tl(pivot,dr,1);
-            else if(cl.column < pivot.column) // 第3象限
-                hold_tr(pivot,dr,dc);
-            else 
-                hold_tl(pivot,dr,dc); // 第四象限
-        }else{ // if(pivot > cl) pivot.rowが大きい
-            auto d = diff(pivot,cl);
-            auto dr = d.row+1;
-            auto dc = d.column+1;
-            if(cl.column == pivot.column) // 縦軸上
-                hold_br(pivot,dr,1);
-            else if(cl.column > pivot.column) // 1
-                hold_tr(cl,dr,dc);
-            else // 3象限
-                hold_br(pivot,dr,dc);
-        }
-        debug(cell) writeln("end");
-    }
-    public void expand_to_focus()
-        in{
-        assert(!box.empty());
-        }
-        out{
-        assert(is_box(box));
-        }
-    body{
-        debug(cell) writeln("expand_to_focus start");
-        pivot_bound(focus);
-        debug(cell) writeln("end");
-    }
     override bool is_to_spoil(){
         return false;
+    }
+    @property Cell focus()const{
+        return _focus;
+    }
+    @property Cell pivot()const{
+        return _pivot;
     }
 }

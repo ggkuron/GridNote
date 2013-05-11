@@ -14,7 +14,6 @@ final class TextBOX : ContentBOX{
         super(table);
         text = new Text();
     }
-
 private:
     Text text;
 
