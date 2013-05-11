@@ -17,12 +17,13 @@ final class TextBOX : ContentBOX{
 private:
     Text text;
 
+    // このpublicはそのうちどっかに
     public int cursor_pos; // 描画側（IM)が教えるために使う
                            // こいつに関してはTextBOXは面倒見ない 
     public int font_size = 32;
     public Color font_color;
 
-    string font_name = "Sans Bold";
+    string font_name = "Sans Normal";
     char[] composition;
     void insert_char(const dchar c){
         text.insert(c);
@@ -36,21 +37,22 @@ public:
         text.backspace();
     }
     // userの意思でcaretを動かすとき
-    void move_caretR(){
-        text.move_caretR();
+    bool move_caretR(){
+        return text.move_caretR();
     }
-    void move_caretL(){
-        text.move_caretL();
+    bool move_caretL(){
+        return text.move_caretL();
     }
-    void move_caretD(){
-        if(text.move_caretD())
+    bool move_caretD(){
+        if(expand(Direct.down)
+            && text.move_caretD())
         {
-            expand(Direct.down);
             debug(cell) writeln("expanded");
-        }
+            return true;
+        }else return false;
     }
-    void move_caretU(){
-        text.move_caretU();
+    bool move_caretU(){
+        return text.move_caretU();
     }
     void set_caret()(int pos){
         text.set_caret(pos); // 

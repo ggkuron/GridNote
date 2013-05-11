@@ -21,15 +21,16 @@ enum focus_mode{ normal,select,edit }
    // ここからCellBOXに対する操作も行う
    // その責任は分離すべき
 final class ManipTable{
+private:
     BoxTable focused_table;
     ContentBOX maniped_box;
     string box_type;
 
     ManipTextBOX manip_textbox;
 
+public:
     focus_mode mode;
     SelectBOX select;
-public:
     this(BoxTable table)
         out{
         assert(focused_table);
@@ -100,7 +101,7 @@ public:
     body{
         select.expand(dir);
     }
-    void move_box(Direct to)
+    void move_selected(Direct to)
         in{
         assert(mode==focus_mode.normal);
         }
@@ -115,6 +116,21 @@ public:
             select.move(to);
         }
     }
+    void delete_selected()
+        in{
+        assert(mode==focus_mode.normal);
+        }
+        out{
+        assert(mode==focus_mode.normal);
+        }
+    body{
+        auto target = focused_table.get_content(select.focus);
+        if(target[1] is null) return;
+        else{
+            target[1].remove_from_table();
+        }
+    }
+
     void return_to_normal_mode()
         in{
         assert(mode==focus_mode.select || mode==focus_mode.edit);

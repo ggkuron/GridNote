@@ -145,11 +145,12 @@ private:
         return true;
     }
     bool focus_in(Event ev,Widget w){
-        grabFocus();
-        return interpreter.focus_in(ev,w);
+        imm.focusIn();
+        return true;
     }
     bool focus_out(Event ev,Widget w){
-        return interpreter.focus_out(ev,w);
+        imm.focusOut();
+        return true;
     }
     void realize(Widget w){
         imm.setClientWindow(getParentWindow());
@@ -192,7 +193,10 @@ private:
         foreach(content_in_view; in_view.get_contents())
         {
             if(show_contents_border)
-                render_text.render_fill(cr,content_in_view[1],Color(linen,50));
+            {
+                render_text.render_fill(cr,content_in_view[1],Color(linen,96));
+                render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
+            }
 
             switch(content_in_view[0])
             {

@@ -338,7 +338,6 @@ public:
     void move(const Direct dir){
         expand(dir);
         remove(dir.reverse);
-        // update_info は既に2回呼ばれてるっていう
     }
     unittest{
         debug(cell) writeln("CellBOX move test start");
@@ -366,7 +365,9 @@ public:
         add(c);
         update_info();
     }
-    void expand(const Direct dir)
+    // aliways return true,
+    // オーバーライドさせるのに都合がいいからというだけ
+    bool expand(const Direct dir)
         in{
         assert(is_box(box));
         }
@@ -383,6 +384,7 @@ public:
         }
         update_info();
         debug(cell) writeln("end");
+        return true;
     }
     bool is_on_edge(Cell c)const{
         foreach(each_edged; edge_cells())
@@ -604,10 +606,13 @@ public:
         {
             super.expand(to);
             super.remove(to.reverse);
-            // CellBOX.move(to);
+            // super.move(to); 何がこれと違うのかわからない今
         }
         debug(move) writefln("the cell is %s",this.box);
         debug(cell) writeln("end");
+    }
+    void remove_from_table(){
+        table.remove(this);
     }
     unittest{
         import cell.textbox;
@@ -621,13 +626,17 @@ public:
         assert(cb.top_left == Cell(3,4));
         assert(cb.bottom_right == Cell(3,5));
     }
-    override void expand(const Direct to){
+    // 実行できたかどうかは知りたい
+    bool expand(const Direct to){
         if(table.require_expand(this,to))
+        {
             super.expand(to);
+            return true;
+        }else return false;
     }
+    // 削除対象かいなか
     abstract bool is_to_spoil();
     int get_id()const{ return box_id; }
-    // 削除対象かいなか
 }
 
 class Holder : ContentBOX{
@@ -807,9 +816,14 @@ class ReferTable : BoxTable{
     public:
     private auto get_content(const Cell c){
         master.get_content(c);
-        debug(cell) if(!(c in master.keys)) writeln("this cell is empty, no content return");
-        auto key = master.keys[c];
-        return tuple(master.type_table[key],master.content_table[key]);
+        debug(cell) if(c !in master.keys) writeln("this cell is empty, no content return");
+        if(c !in master.keys)
+            return tuple("none",master.content_table[0]);
+        else
+        {
+            auto key = master.keys[c];
+            return tuple(master.type_table[key],master.content_table[key]);
+        }
     }
     auto get_contents(){
         Tuple!(string,ContentBOX)[ContentBOX] i_have;
