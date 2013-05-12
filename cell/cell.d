@@ -41,10 +41,10 @@ struct Cell
         assert(column >= 0);
     }
     int opCmp(const Cell rhs)const{
-        auto row_result = rhs.row - row;
-        auto col_result = rhs.column - column;
-        if(!row_result) return row_result;
-        else return col_result;
+        auto row_result = row - rhs.row;
+        auto col_result = column - rhs.column;
+        if(!row_result) return col_result;
+        else return row_result;
     }
     unittest{
         Cell c = Cell(3,3);
@@ -898,12 +898,12 @@ private:
     bool check_range(const Cell c)const{
         return  (c <=  max_range);
     }
-    invariant(){
-        assert(top_left == Cell(0,0));
-        assert(check_range(top_left));
-        assert(check_range(bottom_right));
-        // assert(bottom_right == max_range - _offset );
-    }
+    // invariant(){
+    //     assert(top_left == Cell(0,0));
+    //     assert(check_range(top_left));
+    //     assert(check_range(bottom_right));
+    //     // assert(bottom_right == max_range - _offset );
+    // }
 public:
     this(BoxTable attach, Cell ul,int w=0,int h=0)
         in{
