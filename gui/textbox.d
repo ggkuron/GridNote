@@ -60,7 +60,7 @@ public:
         assert(!box.empty);
         }
     body{
-        debug(gui) writeln("render textbox start");
+        debug(gui) writeln("@@@@ render textbox start @@@@");
         // 
         auto box_id = box.get_id();
         gridSize = page_view.get_gridSize();
@@ -132,7 +132,7 @@ public:
             PgCairo.showLayout(cr,layout[im_target_id][currentline]);
 
             set_preeditting(false);
-            debug(gui) writeln("end");
+            debug(gui) writeln("#### render textbox end ####");
         }
         void checkBOX(TextBOX box)
         {

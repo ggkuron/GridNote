@@ -170,14 +170,13 @@ private:
         holding_area.w = getWidth();
         holding_area.h = getHeight();
     }
-    void set_in_view(){
-        in_view.set_table_size(in_view.offset,
+    void set_view_size(){
+        in_view.set_range(in_view.offset,
                 cast(int)(holding_area.w/gridSpace),
                 cast(int)(holding_area.h/gridSpace));
-        in_view.data_sync();
     }
     void move_view(Direct dir){
-        in_view.offset.move(dir);
+        in_view.move(dir);
     }
     Rect back;
     RectDrawer backdrw;
@@ -186,9 +185,8 @@ private:
     }
     bool show_contents_border = true;
     void renderTable(Context cr){
-        debug(gui) writeln("render table start");
-        set_in_view();
-        if(in_view.get_box().empty) return;
+        debug(gui) writeln("@@@@ render table start @@@@");
+        if(in_view.empty) return;
 
         foreach(content_in_view; in_view.get_contents())
         {
@@ -209,17 +207,17 @@ private:
                     break;
             }
         }
-        // render_text 全くふさわしくないけど、これ以外今ない、またまったく問題もない
+        // render_text 全くふさわしくないけど、これ以外今ない、問題もない
         render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
 
-        debug(gui) writeln("end");
+        debug(gui) writeln("#### render table end ####");
     }
     void render(Context cr,TextBOX b){
         render_text.render(cr,b);
     }
     
     // ascii mode に切り替わったことを期待してみる
-    // どうもIMContextの実装依存ぽい
+    // どうもIMContextの実装依存のよう
     bool draw_callback(Context cr,Widget widget){
         debug(gui) writeln("draw callback");
         backDesign(cr);
@@ -284,7 +282,7 @@ private:
     }
 
     void update(){
-        set_in_view();
+        set_view_size();
     }
     Line CellLine(const Cell cell,const Direct dir,Color color,double w){
         auto startp = new Point();

@@ -197,7 +197,6 @@ class InputInterpreter{
                     if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (move_selected_d); }else
 
                     if(keyState[$-1] == DELETE_KEY){ add_to_queue (delete_selected); }
-
                 }
                 else
                 {

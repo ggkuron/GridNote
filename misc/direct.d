@@ -1,6 +1,13 @@
 module misc.direct;
 
 enum Direct{ left,right,up,down };
+enum UpDown:Direct{ up=Direct.up,down=Direct.down };
+enum LeftRight:Direct{ left=Direct.left,right=Direct.right };
+alias UpDown.up up;
+alias UpDown.down down;
+alias LeftRight.left left;
+alias LeftRight.right right;
+
 pure Direct reverse(const Direct dir){
     final switch(dir){
         case Direct.left: return Direct.right;

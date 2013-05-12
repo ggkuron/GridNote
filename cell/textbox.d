@@ -10,10 +10,6 @@ debug(cell) import std.stdio;
 
 // Text自体をTableに取り付けるためにBOX領域を管理する
 final class TextBOX : ContentBOX{  
-    this(BoxTable table){ 
-        super(table);
-        text = new Text();
-    }
 private:
     Text text;
 
@@ -29,6 +25,10 @@ private:
         text.insert(c);
     }
 public:
+    this(BoxTable table){ 
+        super(table);
+        text = new Text();
+    }
     void insert(string s){
         foreach(dchar c; s)
             text.insert(c);

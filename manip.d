@@ -141,10 +141,10 @@ public:
     body{
         debug(manip) writeln("return to normal start");
         mode = focus_mode.normal;
-        if(maniped_box !is null && maniped_box.is_to_spoil)
+        if(maniped_box !is null)
         {
-            focused_table.remove(maniped_box);
-            debug(manip) writeln("REMOVED empty box from table");
+            // maniped_box.is_to_spoil == false なら削除されない
+            focused_table.tryto_remove(maniped_box);
         }
         select.clear();
         debug(manip) writeln("returned");
@@ -155,7 +155,7 @@ public:
         auto tb = select.create_TextBOX();
 
         maniped_box = tb;
-        focused_table.add_box!(TextBOX)(tb);
+        // focused_table.add_box!(TextBOX)(tb);
         debug(manip) writeln("type in: ",tb.toString());
         box_type = tb.toString();
 

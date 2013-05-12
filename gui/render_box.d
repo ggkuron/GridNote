@@ -25,7 +25,7 @@ class BoxRenderer{
     final protected Rect get_position(CellBOX b){
         assert(b.get_box() !is null);
 
-        auto cp = in_view.get_view_position(b);
+        auto cp = in_view.get_position(b);
         debug(gui) writefln("cp : %s",cp);
         auto x = page_view.get_x(cp);
         auto y = page_view.get_y(cp);
