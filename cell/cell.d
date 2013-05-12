@@ -165,7 +165,17 @@ private:
 
     int numof_row,
         numof_col;
+    alias int ROW;
+    alias int COL;
+
     Cell[] box;
+    Cell[][ROW] row_table;
+    Cell[][COL] col_table;
+
+    int min_row = int.max;
+    int min_col = int.max;
+    int max_row , max_col;
+
     bool box_fixed;
 
     unittest{
@@ -194,6 +204,12 @@ private:
     }
     final void add(const Cell c){
         box ~= c;
+        row_table[c.row] ~= c;
+        col_table[c.column] ~= c;
+        if(c.row < min_row) min_row = c.row;
+        if(c.column < min_column) min_col = c.column;
+        if(c.row > max_row) max_row = c.row;
+        if(c.column > max_col) max_col = c.column;
     }
     unittest{
         auto cb = new CellBOX();
@@ -206,10 +222,6 @@ private:
     void update_info(){
         debug(cell) writeln("update_info start");
         void update_edge_info(){
-            int min_column = edge[up][left].column;
-            int min_row = edge[up][left].row;
-            int max_column = bottom_right.column;
-            int max_row = bottom_right.row;
 
             _edge_line[Direct.left] = in_column(min_column);
             _edge_line[Direct.right] = in_column(max_column);
@@ -264,22 +276,10 @@ private:
         debug(cell) writeln("end");
     }
     Cell[] in_column(const int column)const{
-        Cell[] result;
-        foreach(c; box)
-        {
-            if(c.column == column)
-                result ~= c;
-        }
-        return result;
+        return col_table[column];
     }
     Cell[] in_row(const int row)const{
-        Cell[] result;  // このくらいの冗長さは許されるだろう
-        foreach(c; box)
-        {
-            if(c.row == row)
-                result ~= c;
-        }
-        return result;
+        return row_table[row];
     }
     static int id_counter;
     int box_id; // 0: invalid id
