@@ -898,12 +898,12 @@ private:
     bool check_range(const Cell c)const{
         return  (c <=  max_range);
     }
-    // invariant(){
-    //     assert(top_left == Cell(0,0));
-    //     assert(check_range(top_left));
-    //     assert(check_range(bottom_right));
-    //     // assert(bottom_right == max_range - _offset );
-    // }
+    invariant(){
+        assert(top_left == Cell(0,0));
+        assert(check_range(top_left));
+        assert(check_range(bottom_right));
+        // assert(bottom_right == max_range - _offset );
+    }
 public:
     this(BoxTable attach, Cell ul,int w=0,int h=0)
         in{
