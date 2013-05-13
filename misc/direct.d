@@ -24,3 +24,9 @@ pure bool is_horizontal(const Direct dir){
 pure bool is_vertical(const Direct dir){
     return dir == Direct.up || dir == Direct.down;
 }
+pure bool is_negative(const Direct dir){
+    return dir == Direct.left || dir == Direct.up;
+}
+pure bool is_positive(const Direct dir){
+    return dir == Direct.right || dir == Direct.down;
+}

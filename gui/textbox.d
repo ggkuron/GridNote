@@ -57,11 +57,12 @@ public:
     
     public void render(Context cr,TextBOX box)
         in{
-        assert(!box.empty);
+        // assert(!box.empty);
         }
     body{
         debug(gui) writeln("@@@@ render textbox start @@@@");
         // 
+        if(box.empty()) return;
         auto box_id = box.get_id();
         gridSize = page_view.get_gridSize();
         box_pos[box_id] = get_position(box); // gui.render_box::get_position
@@ -100,11 +101,11 @@ public:
                 // expand後の box_widthで揺らがないように調整必要
                 // 次のループではbox_widthの大きさは変わってる
                 if(max_width > box_width)
-                    box.expand(Direct.right); 
+                    box.require_expand(Direct.right); 
                 else
                 if(max_width < box_width-gridSize)
                 {
-                    box.remove(Direct.right);
+                    box.require_remove(Direct.right);
                 }
 
                 if(pre_box == box.get_box())

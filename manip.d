@@ -112,8 +112,8 @@ public:
         auto target = focused_table.get_content(select.focus);
         if(target[1] is null) return;
         else{
-            target[1].move(to);
-            select.move(to);
+            if(target[1].require_move(to))
+                select.move(to);
         }
     }
     void delete_selected()
@@ -152,6 +152,7 @@ public:
     void start_insert_normal_text(){
         debug(manip) writeln("start_insert_normal_text");
         mode = focus_mode.edit;
+        if(focused_table.has(select.focus)) return;
         auto tb = select.create_TextBOX();
 
         maniped_box = tb;

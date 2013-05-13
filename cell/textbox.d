@@ -44,7 +44,7 @@ public:
         return text.move_caretL();
     }
     bool move_caretD(){
-        if(expand(Direct.down)
+        if(require_expand(Direct.down)
             && text.move_caretD())
         {
             debug(cell) writeln("expanded");
