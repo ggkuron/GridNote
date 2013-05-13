@@ -41,13 +41,10 @@ struct Cell
         assert(column >= 0);
     }
     int opCmp(const Cell rhs)const{
-        if(row < rhs.row) return -1;
-        else if(row == rhs.row)
-        {
-            if(column < rhs.column) return -1;
-            else if(column == rhs.column) return 0;
-            else return 1;
-        }else return 1;
+        auto row_result = row - rhs.row;
+        auto col_result = column - rhs.column;
+        if(!row_result) return col_result;
+        else return row_result;
     }
     unittest{
         Cell c = Cell(3,3);
