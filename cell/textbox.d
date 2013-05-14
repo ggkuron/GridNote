@@ -58,6 +58,7 @@ public:
         text.set_caret(pos); // 
     }
     // 操作が終わった時にTableから取り除くべきか
+    // super.is_to_spoil()は強制削除のためにはかます必要がある
     override bool is_to_spoil(){
         return super.is_to_spoil() || text.empty();
     }
@@ -69,4 +70,5 @@ public:
     Text getText(){
         return text;
     }
+
 }

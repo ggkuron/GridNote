@@ -130,7 +130,6 @@ public:
             target[1].remove_from_table();
         }
     }
-
     void return_to_normal_mode()
         in{
         assert(mode==focus_mode.select || mode==focus_mode.edit);
@@ -142,8 +141,7 @@ public:
         debug(manip) writeln("return to normal start");
         mode = focus_mode.normal;
         if(maniped_box !is null)
-        {
-            // maniped_box.is_to_spoil == false なら削除されない
+        {   // maniped_box.is_to_spoil == false なら削除されない
             focused_table.tryto_remove(maniped_box);
         }
         select.clear();

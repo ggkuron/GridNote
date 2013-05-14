@@ -256,27 +256,6 @@ private:
         box_id = id_counter++;
     }
 protected:
-//    void take_over(CellBOX oldone)
-//        in{
-//        assert(!oldone.get_box_raw().empty);
-//        }
-//        out{
-//        assert(!box.empty);
-//        }
-//    body{
-//        debug(cell) writeln("take after start");
-//        box = oldone.get_box_dup();
-//        edge = oldone.edge.dup();
-//        min_col = oldone.min_col;
-//        max_col = oldone.max_col;
-//        min_row = oldone.min_row;
-//        max_row = oldone.max_row;
-//        row_table = oldone.row_table.dup();
-//        col_table = oldone.col_table.dup();
-//
-//        oldone.clear();
-//        debug(cell) writeln("end");
-//    }
     void create_in(const Cell c)
         in{
         assert(box.empty);
@@ -312,7 +291,6 @@ protected:
             max_col = c.column;
             max_col_f = true;
         }
-
         if(max_col_f && max_row_f)
             edge[down][right] = c;
         if(max_col_f && min_row_f)
@@ -346,7 +324,6 @@ protected:
             row_table[moved.row][moved.column] = true;
             col_table[moved.column][moved.row] = true;
         }
-
         final switch(dir){ // 
             case Direct.left:
                 ++numof_col;
@@ -425,7 +402,6 @@ protected:
         debug(move) writeln("col_table are ",col_table);
         debug(move) writeln("row_table are ",row_table);
     }
-
 public:
     void clear(){
         box.clear();
@@ -455,6 +431,28 @@ public:
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
+    this(CellBOX oldone)
+        in{
+        assert(!oldone.get_box_raw().empty);
+        }
+        out{
+        assert(!box.empty);
+        }
+    body{
+        debug(cell) writeln("take after start");
+        box = oldone.get_box_dup();
+        edge = oldone.edge.dup();
+        min_col = oldone.min_col;
+        max_col = oldone.max_col;
+        min_row = oldone.min_row;
+        max_row = oldone.max_row;
+        row_table = oldone.row_table.dup();
+        col_table = oldone.col_table.dup();
+
+        oldone.clear();
+        debug(cell) writeln("end");
+    }
+
     void move(const Direct dir){
         // この順番でないと1Cellだけのときに失敗する
         expand(dir);
@@ -705,13 +703,6 @@ private:
     alias CellBOX.expand expand;
     alias CellBOX.move move;
 protected:
-    // alias CellBOX.take_over take_over;
-    // void take_over(ContentBOX cb){
-    //     super.take_over(cb);
-
-    //     table.add_box(this);
-    //     cb.remove_from_table();
-    // }
     invariant(){
         assert(table !is null);
     }
@@ -730,6 +721,11 @@ public:
         }
     body{
         table = attach;
+    }
+    this(ContentBOX cb){
+        super(cb);
+        if(!box.empty())
+            table.add_box(this);
     }
     bool require_create_in(const Cell c){
         if(table.is_vacant(c))
@@ -786,17 +782,17 @@ public:
         spoiled = true;
         auto result = table.tryto_remove(this);
         assert(result);
-        clear();
     }
-
     // 削除対象かいなか
     private bool spoiled;
     bool is_to_spoil(){
-        return spoiled || empty();
+        debug(cell) writeln(spoiled, box.empty());
+        return spoiled || box.empty();
     };
     int get_id()const{ return box_id; }
 }
 
+// ReferBOXとの違いがよくわからなくなった
 // class Holder : ContentBOX{
 //     BoxTable inner_table;
 //     alias inner_table this;
@@ -916,13 +912,11 @@ public:
         {
             keys[c] = id;
         }
-
         if(id !in content_table)
             content_table[id] = box;
 
         debug(table) writeln("expanded");
         return true;
-
     }
     // 移動できたらtrue そうでなければfalse
     // boxの整形は呼び出し側の責任
@@ -940,22 +934,22 @@ public:
         assert(u.table == this);
         }
     body{
-        debug(cell) writeln("1"); if(!u.is_to_spoil()) return false;
+        if(!u.is_to_spoil()) return false;
 
-        debug(cell) writeln("2"); auto content_cells = u.get_box();
-        debug(cell) writeln("3"); auto box_id = u.get_id();
-        debug(cell) writeln("4"); debug(cell) writefln("keys are:%s",keys);
-        debug(cell) writeln("5"); debug(cell) writefln("boxes are:%s",content_cells);
-        debug(cell) writeln("6"); foreach(c; content_cells)
+        auto content_cells = u.get_box();
+        auto box_id = u.get_id();
+        debug(cell) writefln("keys are:%s",keys);
+        debug(cell) writefln("boxes are:%s",content_cells);
+        foreach(c; content_cells)
         {
-        debug(cell) writeln("8");     assert(c in keys); // 
-        debug(cell) writeln("9");     keys.remove(c);
+             assert(c in keys);
+             keys.remove(c);
         }
-        debug(cell) writeln("11"); content_table.remove(box_id);
-        debug(cell) writeln("12"); type_table.remove(box_id);
+        content_table.remove(box_id);
+        type_table.remove(box_id);
 
-        debug(cell) writeln("13"); assert(keys.keys.empty || !keys.values.is_in(box_id));
-        debug(cell) writeln("14"); return true;
+        assert(keys.keys.empty || !keys.values.is_in(box_id));
+        return true;
     }
     unittest{
         auto cb = new CellBOX(Cell(0,0),5,5);
@@ -1017,7 +1011,7 @@ class ReferTable : BoxTable{
 private:
     BoxTable master; // almost all manipulation acts on this table
     Cell _offset;
-    Cell _max_range; // table(master)の座標での最大値
+    Cell _max_range; // table(master)の座標での取りうる最大値
 
     bool check_range(const Cell c)const{
         return  (c <=  _max_range);
@@ -1064,7 +1058,7 @@ public:
     override Tuple!(string,ContentBOX) get_content(const Cell c){
         return master.get_content(c+_offset);
     }
-    // master のtableのなかでview に含まれるものすべて
+    // master のtableのなかでview に含まれるものを包めて返す
     auto get_contents(){
         Tuple!(string,ContentBOX)[] result;
         int[int] ranged_keys;
@@ -1093,8 +1087,7 @@ public:
             result ~= master.get_content(k);
         return result;
     }
-    // add_box は直接table番地に反映させる
-    // 
+
     override void add_box(T)(T u)
         in{
         assert(u.table == master);
@@ -1117,22 +1110,16 @@ public:
     bool empty(){
         return master.keys.keys.empty();
     }
-    /+ void remove(const ContentBOX) 
-       Cell[] get_struct()
-       ContentBOX get_content(const Cell)
-        +/
-    // you can use super class's difinition 
 }
 
 import cell.textbox;
 
-class SelectBOX : ContentBOX{
+// 継承によって贅肉付き過ぎてる感ある
+final class SelectBOX : CellBOX{
 private:
+    BoxTable table;
     Cell _focus;
     Cell _pivot;
-    /+ inherited
-       CellBOX box
-       alias box this +/
     void set_pivot(const Cell p)
         in{
         assert(box.empty());
@@ -1154,10 +1141,10 @@ private:
 
             if(cl.column == _pivot.column) // 縦軸下
                 hold_tl(_pivot,dr,1);
-            else if(cl.column < _pivot.column) // 第3象限
+            else if(cl.column < _pivot.column) // 3
                 hold_tr(_pivot,dr,dc);
             else 
-                hold_tl(_pivot,dr,dc); // 第四象限
+                hold_tl(_pivot,dr,dc); // 4
         }else{ // if(_pivot > cl) _pivot.rowが大きい
             auto d = diff(_pivot,cl);
             auto dr = d.row+1;
@@ -1172,7 +1159,7 @@ private:
         debug(cell) writeln("end");
     }
 public:
-    void expand(const Direct dir){
+    override void expand(const Direct dir){
         super.expand(dir);
     }
     void expand_to_focus()
@@ -1189,7 +1176,7 @@ public:
     }
     this(BoxTable attach,Cell cursor=Cell(3,3))
     body{
-        super(attach);
+        table = attach;
         _focus = cursor;
     }
     override void move(const Direct dir){
@@ -1209,21 +1196,20 @@ public:
         debug(cell) writeln("create_TextBOX start");
         auto tb = new TextBOX(table);
         if(!tb.require_create_in(_focus)) return null;
-        // tb.take_over(this);
-        clear();
+        box.clear();
         debug(cell) writeln("end");
         return tb;
     }
     void set_pivot(){
         set_pivot(_focus);
     }
-    override bool is_to_spoil(){
-        return false;
-    }
     @property Cell focus()const{
         return _focus;
     }
     @property Cell pivot()const{
         return _pivot;
+    }
+    override void clear(){
+        box.clear();
     }
 }
