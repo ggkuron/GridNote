@@ -70,7 +70,7 @@ public:
         fontsize[box_id] = cast(ubyte)box.font_size;    //  !!TextBOXで変更できるように 
         fontcolor[box_id] = box.font_color;             //  !!なったら変更 
         auto numof_lines = box.getText().numof_lines();
-        currentline = box.getText().currentline();
+        currentline = box.getText().current_line();
             
         void  modify_boxsize()
         {   // 描画された領域のサイズでBOXを変形させる
@@ -107,9 +107,9 @@ public:
                 {
                     box.require_remove(Direct.right);
                 }
-
                 if(pre_box == box.get_box())
                     break;
+
             }while(true);
         }
         void render_preedit()
@@ -206,7 +206,7 @@ public:
     }
     public auto get_surrounding(){
         debug(gui) writeln("get surrounding start");
-        im_target.cursor_pos = im_target.getText.get_caret().column;
+        im_target.cursor_pos = im_target.getText.caret().column;
         writeln("cursor_pos: ",im_target.cursor_pos); 
         return tuple(strings[im_target_id][currentline],im_target.cursor_pos);
         debug(gui) writeln("end");

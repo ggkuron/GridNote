@@ -16,95 +16,120 @@ final class Text
         static int cnt;
         debug(text) writefln("Text created up %d times",cnt++);
     }
-    private:
-    int lines = 1;
-    Cell caret;
+private:
+    int _lines = 1;
+    Cell _caret;
     alias int pos;
     alias int line;
-    dchar[pos][line] writing;
-    int current_line; 
-    int position;
+    dchar[pos][line] _writing;
+    int _current_line; 
+    int _position;
     invariant(){
-        assert(current_line < lines);
+        assert(_current_line < _lines);
     }
-    public:
+    void deleteChar(int pos){
+        _writing[current_line].remove(pos);
+    }
+    void set_caret(){
+        _caret = Cell(_current_line,_position);
+    }
+
+public:
     ulong insert(dchar c){
-        writing[current_line][position++] = c;
-        caret.move(Direct.right);
+        _writing[current_line][_position++] = c;
+        _caret.move(Direct.right);
         debug(text) writef("insert : %s\n",writing[current_line]);
         return writing[current_line].length;
     }
     @property bool empty(){
-        return (writing.keys.empty())
-        || (writing.length == 1 && writing[0].keys.empty());
+        return (_writing.keys.empty())
+        || (writing.length == 1 && _writing[0].keys.empty());
     }
-    void deleteChar(int pos){
-        writing[current_line].remove(pos);
-    }
-    void backspace(){
-        if(position)
-            deleteChar(--position);
+    // 行始でfalse 通常true
+    bool backspace(){
+        if(_position)
+        {
+            deleteChar(--_position);
+            return true;
+        }
+        else if(_current_line)
+            line_join();
+        return false;
     }
     @property string str(int line){
-        if(!writing.keys.empty()
-        || !writing[line].values.empty())
+        if(!_writing.keys.empty()
+        || !_writing[line].values.empty())
         {
-            dstring s;   // こざかしいこと
-            foreach(i; writing[line].keys.sort())
-                s ~= writing[line][i];
+            dstring s;   
+            foreach(i; _writing[line].keys.sort())
+                s ~= _writing[line][i];
             return toUTF8(s);
         }else return "";
     }   
     @property string[int] strings(){
         string[int] result;
-        foreach(line_num,one_line; writing)
+        foreach(line_num,one_line; _writing)
             result[line_num] = str(line_num);
         return result;
     }
     bool line_feed(){ // 新しい行を作ったか
-        if(currentline !in writing)
-            writing[currentline] = null;
+        if(_current_line !in _writing)
+            _writing[_current_line] = null;
 
-        ++current_line;
-        position = 0;
-        if(current_line == lines)
+        ++_current_line;
+        _position = 0;
+        if(_current_line == _lines)
         {
-            ++lines;
+            ++_lines;
             return true;
         }
         return false;
     }
+    bool line_join(){
+        if(!_current_line || _current_line !in _writing) return false;
+ 
+        auto cl = str(_current_line);
+        --_current_line;
+        --_lines;
+        _position = _writing[_current_line].keys.sort()[$-1] + 1;
+        set_caret();
+        foreach(dchar dc; cl)
+            insert(dc);
+        return true;
+    }
+
+
     int right_edge_pos(){
-        auto linepos = writing[current_line].keys.sort();
+        auto linepos = _writing[_current_line].keys.sort();
         debug(text) writefln("type:%s",typeid(linepos));
         return linepos[$-1];
     }
     bool move_caretR(){
-        if(caret.column < right_edge_pos())
+        if(_caret.column < right_edge_pos())
         {
-            caret.move(Direct.right);
+            _caret.move(Direct.right);
             return true;
         }else return false;
     }
     bool move_caretL(){
-        if(caret.column != 0)
+        if(_caret.column != 0)
         {
-            caret.move(Direct.left);
+            _caret.move(Direct.left);
             return true;
         }else return false;
     }
     bool move_caretU(){
-        if(current_line != 0)
+        if(_current_line != 0)
         {
-            --current_line;
-            caret.move(Direct.up);
+            --_current_line;
+            _caret.move(Direct.up);
             return true;
         }else return false;
     }
     bool move_caretD(){
         debug(text) writeln("text feed");
-        caret.move(Direct.down);
-        if(lines-1 == current_line)
+        _caret.move(Direct.down);
+        if(_lines-1 == _current_line)
         {
             debug(text) writeln("feeded");
             return line_feed();
@@ -112,14 +137,17 @@ final class Text
         else return false;
     }
     // アクセサ
-    int currentline()const{
-        return current_line;
+    @property int current_line()const{
+        return _current_line;
     }
-    int numof_lines()const{
-        return lines;
+    @property int numof_lines()const{
+        return _lines;
     }
-    Cell get_caret()const{
-        return caret;
+    @property Cell caret()const{
+        return _caret;
+    }
+    @property auto writing()const{
+        return _writing;
     }
 }
 

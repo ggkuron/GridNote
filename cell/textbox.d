@@ -34,7 +34,8 @@ public:
             text.insert(c);
     }
     void backspace(){
-        text.backspace();
+        if(!text.backspace())
+            require_remove(Direct.down);
     }
     // userの意思でcaretを動かすとき
     bool move_caretR(){
@@ -63,7 +64,6 @@ public:
         return super.is_to_spoil() || text.empty();
     }
     // アクセサ
-public:
     string get_fontname(){
         return font_name;
     }

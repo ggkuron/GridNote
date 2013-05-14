@@ -67,6 +67,7 @@ class InputInterpreter{
     COMMAND toggle_grid_show;
     COMMAND toggle_boxborder_show;
 
+    COMMAND grab_target;
     COMMAND move_selected_r;
     COMMAND move_selected_l;
     COMMAND move_selected_u;
@@ -82,6 +83,7 @@ class InputInterpreter{
     COMMAND text_feed;
     COMMAND im_focusin;
     COMMAND im_focusout;
+    COMMAND text_edit;
 
     InputState input_state = InputState.normal;
     this(ManipTable m,PageView pv,IMMulticontext im){
@@ -114,11 +116,13 @@ class InputInterpreter{
         manip_mode_normal = cmd_template!("manip_table.return_to_normal_mode();")(this,manip,view);
         mode_change_to_normal = cmd_template!("interpreter.input_state = InputState.normal;")(this,manip,view);
         quit = cmd_template!("stdlib.exit(0);")(this,manip,view);
+        grab_target = cmd_template!("manip_table.grab_selectbox();")(this,manip,view);
 
         start_insert_normal_text = cmd_template!("manip_table.start_insert_normal_text();")(this,manip,view);
         start_select_mode = cmd_template!("manip_table.start_select();")(this,manip,view);
         text_backspace = cmd_template!("manip_table.backspace();")(this,manip,view);
         text_feed = cmd_template!("manip_table.text_feed();")(this,manip,view);
+        text_edit = cmd_template!("manip_table.edit_textbox();")(this,manip,view);
         im_focusin = cmd_template!("interpreter.imm.focusIn();")(this,manip,view);
         im_focusout = cmd_template!("interpreter.imm.focusOut();")(this,manip,view);
     }
@@ -200,6 +204,8 @@ class InputInterpreter{
                 }
                 else
                 {
+                    add_to_queue(im_focusout);
+
                     if(keyState[$-1] == INSERT_KEY)
                     {
                         add_to_queue (start_insert_normal_text,im_focusin);
@@ -212,6 +218,11 @@ class InputInterpreter{
                     if(keyState[$-1] == MOVE_D_KEY) add_to_queue (move_focus_d); else
                     if(keyState[$-1] == GdkKeysyms.GDK_0) add_to_queue (toggle_grid_show); else
                     if(keyState[$-1] == GdkKeysyms.GDK_9) add_to_queue (toggle_boxborder_show);
+                    if(keyState[$-1] == EDIT_KEY)
+                    {
+                        add_to_queue (grab_target,text_edit,im_focusin);
+                        input_state = InputState.edit;
+                    }
                 }
                 break;
             case InputState.edit:

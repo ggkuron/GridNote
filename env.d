@@ -20,5 +20,6 @@ uint  MOVE_D_KEY = GdkKeysyms.GDK_j;
 uint  EXIT_KEY = GdkKeysyms.GDK_w;
 uint  DELETE_KEY = GdkKeysyms.GDK_x;
 uint  INSERT_KEY = GdkKeysyms.GDK_i;
+uint  EDIT_KEY = GdkKeysyms.GDK_e;
 
 string control_deco = "decoration/decoE.png";

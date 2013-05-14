@@ -62,9 +62,6 @@ public:
         mode = focus_mode.select;
         select.set_pivot();
     }
-    void select_clear(){
-        select.clear();
-    }
     @property auto targetbox(){
         switch(box_type){
             case "cell.textbox.TextBOX":
@@ -101,6 +98,12 @@ public:
     body{
         select.expand(dir);
     }
+    void grab_selectbox(){
+        auto target = focused_table.get_content(select.focus);
+        box_type = target[0];
+        maniped_box = target[1];
+    }
+
     void move_selected(Direct to)
         in{
         assert(mode==focus_mode.normal);
@@ -154,7 +157,6 @@ public:
         auto tb = select.create_TextBOX();
 
         maniped_box = tb;
-        // focused_table.add_box!(TextBOX)(tb);
         debug(manip) writeln("type in: ",tb.toString());
         box_type = tb.toString();
 
@@ -177,6 +179,10 @@ public:
     void text_feed(){
         if(box_type == "cell.textbox.TextBOX")
         manip_textbox.feed(cast(TextBOX)maniped_box);
+    }
+    void edit_textbox(){
+        if(box_type != "cell.textbox.TextBOX") return;
+        mode = focus_mode.edit;
     }
 }
 

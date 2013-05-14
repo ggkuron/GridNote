@@ -882,9 +882,10 @@ public:
         auto edge = box.edge_line[dir];
         foreach(c; edge)
         {
-            assert(c in keys); // 入ってないのは想定外
+            // assert(c in keys); // <- 1マスCell
             keys.remove(c);
         }
+        // if(box.empty()) throw
     }
 
     // Tableに登録されたBOXは、自身の変形が可能か
