@@ -59,7 +59,7 @@ public:
     }
     // 操作が終わった時にTableから取り除くべきか
     override bool is_to_spoil(){
-        return text.empty();
+        return super.is_to_spoil() || text.empty();
     }
     // アクセサ
 public:
