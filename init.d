@@ -2,7 +2,7 @@ module init;
 
 import gtk.Main;
 import env;
-import gui.gui;
+import gui.window;
 
 import std.string;
 

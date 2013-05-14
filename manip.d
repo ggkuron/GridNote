@@ -4,7 +4,7 @@ import misc.direct;
 import cell.textbox;
 import cell.cell;
 import command.command;
-import gui.gui;
+import gui.pageview;
 debug(manip) import std.stdio;
 
 enum focus_mode{ normal,select,edit }

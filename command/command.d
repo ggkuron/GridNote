@@ -8,7 +8,7 @@ import misc.direct;
 import gdk.Keysyms; // Keysyms
 import gdk.Event;
 import gtk.Widget;
-import gui.gui;
+import gui.pageview;
 import gtkc.gdktypes;  // ModifierType
 import gtk.IMMulticontext;
 debug(cmd) import std.stdio;

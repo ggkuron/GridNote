@@ -1,6 +1,6 @@
 module gui.textbox;
 
-import gui.gui;
+import gui.pageview;
 import gui.render_box;
 import cell.textbox;
 import cell.cell;

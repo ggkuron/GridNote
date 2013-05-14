@@ -1,4 +1,4 @@
-module gui.gui;
+module gui.pageview;
 
 debug(gui) import std.stdio;
 debug(cmd) import std.stdio;
@@ -34,31 +34,6 @@ import gtk.DrawingArea;
 import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
-
-immutable int start_size_w = 960;
-immutable int start_size_h = 640;
-
-class Window : MainWindow{
-    int width = start_size_w;
-    int height = start_size_h;
-
-    this(){
-        super(appname);
-        setDefaultSize(width,height);
-
-        auto box = new Box(GtkOrientation.HORIZONTAL,1);
-        setEvents(EventMask.ALL_EVENTS_MASK);
-        auto page_view = new PageView();
-        box.packStart(page_view,1,1,0);
-
-        add(box);
-        // add(page_view);
-
-        page_view.show();
-        box.showAll();
-        showAll();
-    }
-}
 
 // 主要なGrid領域
 final class PageView : DrawingArea{
@@ -351,7 +326,7 @@ public:
         table = new BoxTable();
         manip_table = new ManipTable(table);
         interpreter = new InputInterpreter(manip_table,this,imm);
-        holding_area = new Rect(0,0,start_size_w,start_size_h);
+        holding_area = new Rect(0,0,200,200);
 
         in_view = new ReferTable(table,start_offset,1,1);
 
@@ -375,7 +350,6 @@ public:
         imm.addOnPreeditEnd(&preedit_end);
         imm.addOnRetrieveSurrounding(&retrieve_surrounding);
 
-        menu = new Menu();
         menu.append( new ImageMenuItem(StockID.CUT, cast(AccelGroup)null) );
         menu.append( new ImageMenuItem(StockID.COPY, cast(AccelGroup)null) );
         menu.append( new ImageMenuItem(StockID.PASTE, cast(AccelGroup)null) );

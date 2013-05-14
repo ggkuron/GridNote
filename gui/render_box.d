@@ -1,6 +1,6 @@
 module gui.render_box;
 
-import gui.gui;
+import gui.pageview;
 import cell.cell;
 import misc.direct;
 import shape.shape;

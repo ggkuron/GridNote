@@ -5,7 +5,7 @@ import shape.shape;
 import shape.drawer;
 import cairo.Context;
 
-import gui.gui;
+import gui.pageview;
 
 class ImageBOX : ContentBOX{
     // imageは実際には生成しない
