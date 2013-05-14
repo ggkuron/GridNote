@@ -35,7 +35,6 @@ import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
 
-
 immutable int start_size_w = 960;
 immutable int start_size_h = 640;
 
@@ -45,19 +44,18 @@ class Window : MainWindow{
 
     this(){
         super(appname);
-        setDefaultSize(-1,-1);
+        setDefaultSize(width,height);
 
-        // auto box = new Box(GtkOrientation.HORIZONTAL,1);
+        auto box = new Box(GtkOrientation.HORIZONTAL,1);
         setEvents(EventMask.ALL_EVENTS_MASK);
         auto page_view = new PageView();
-        // box.add(page_view);
-        // box.setChildPacking(page_view,1,1,1,GtkPackType.START);
+        box.packStart(page_view,1,1,0);
 
-        // add(box);
-        add(page_view);
+        add(box);
+        // add(page_view);
 
         page_view.show();
-        // box.showAll();
+        box.showAll();
         showAll();
     }
 }
@@ -65,7 +63,9 @@ class Window : MainWindow{
 // 主要なGrid領域
 final class PageView : DrawingArea{
 private:
-    Rect holding_area;
+    GtkAllocation holding; // この2つの表すのは同じもの
+    Rect holding_area;  // 内部処理はこちらを使う
+
     ManipTable manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
     BoxTable table;    // 描画すべき対象: 
     ReferTable in_view;    // table にattachされた 表示領域
@@ -133,12 +133,10 @@ private:
     void preedit_end(IMContext imc){
         if(interpreter.input_state == InputState.edit)
         {
-            // imc.reset();
         }
     }
     void preedit_start(IMContext imc){
     }
-
     bool retrieve_surrounding(IMContext imc){
         auto surround = render_text.get_surrounding();
         imc.setSurrounding(surround[0],surround[1]);
@@ -163,12 +161,12 @@ private:
         assert(holding_area);
         }
         out{
-        assert(holding_area.w >=0);
-        assert(holding_area.h >=0);
+        assert(holding_area.w > 0);
+        assert(holding_area.h > 0);
         }
     body{
-        holding_area.w = getWidth();
-        holding_area.h = getHeight();
+        getAllocation(holding);
+        holding_area.set_by(holding);
     }
     void set_view_size(){
         in_view.set_range(in_view.offset,
@@ -281,8 +279,10 @@ private:
         grid_drwer.fill(cr);
     }
 
-    void update(){
+    void when_sizeallocate(GdkRectangle* n,Widget w){
+        set_holding_area();
         set_view_size();
+        setGrid();
     }
     Line CellLine(const Cell cell,const Direct dir,Color color,double w){
         auto startp = new Point();
@@ -296,33 +296,25 @@ private:
                 startp.x += gridSpace;
                 endp.x = startp.x;
                 endp.y = startp.y + gridSpace;
-                result = new Line(startp,endp);
-                result.set_width(w);
-                result.set_color(color);
                 break;
             case Direct.left:
                 endp.x = startp.x;
                 endp.y = startp.y + gridSpace;
-                result = new Line(startp,endp);
-                result.set_color(color);
-                result.set_width(w);
                 break;
             case Direct.up:
                 endp.x = startp.x + gridSpace;
                 endp.y = startp.y;
-                result = new Line(startp,endp);
-                result.set_color(color);
-                result.set_width(w);
                 break;
             case Direct.down:
                 startp.y += gridSpace;
                 endp.x = startp.x + gridSpace;
                 endp.y = startp.y;
-                result = new Line(startp,endp);
-                result.set_color(color);
-                result.set_width(w);
                 break;
         }
+        result = new Line(startp,endp);
+        result.set_width(w);
+        result.set_color(color);
+
         return result;
     }
 
@@ -352,27 +344,22 @@ public:
             // TODO: set start_offset 
         }
 
+        setProperty("can-focus",1);
+
         imm = new IMMulticontext();
         menu = new Menu();
         table = new BoxTable();
-        setProperty("can-focus",1);
-        holding_area = new Rect(0,0,2000,2000);
-        auto setting = getSettings();
-        // set_holding_area();
-
         manip_table = new ManipTable(table);
         interpreter = new InputInterpreter(manip_table,this,imm);
+        holding_area = new Rect(0,0,start_size_w,start_size_h);
 
-        int num_of_gird_x = cast(int)(holding_area.w/gridSpace);
-        int num_of_grid_y = cast(int)(holding_area.h/gridSpace);
-        in_view = new ReferTable(table,start_offset,num_of_gird_x,num_of_grid_y);
+        in_view = new ReferTable(table,start_offset,1,1);
 
         addOnKeyPress(&interpreter.key_to_cmd);
         addOnFocusIn(&focus_in);
         addOnFocusOut(&focus_out);
         addOnRealize(&realize);
         addOnUnrealize(&unrealize);
-        debug(gui) writefln("holding %f %f",holding_area.w,holding_area.h);
 
         init_selecter();
         init_drwer();
@@ -381,6 +368,7 @@ public:
 
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
+        addOnSizeAllocate(&when_sizeallocate);
         imm.addOnCommit(&commit);
         imm.addOnPreeditChanged(&preedit_changed);
         imm.addOnPreeditStart(&preedit_start);

@@ -1018,9 +1018,11 @@ private:
         return  (c <=  _max_range);
     }
 public:
-    this(BoxTable attach, Cell ul,int w=0,int h=0)
+    this(BoxTable attach, Cell ul,int w,int h)
         in{
         assert(attach !is null);
+        assert(h>0);
+        assert(w>0);
         }
     body{
         super();
@@ -1115,7 +1117,7 @@ public:
 
 import cell.textbox;
 
-// 継承によって贅肉付き過ぎてる感ある
+// 継承による贅肉付き過ぎてる感ある
 final class SelectBOX : CellBOX{
 private:
     BoxTable table;

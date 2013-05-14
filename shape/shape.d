@@ -3,7 +3,9 @@ module shape.shape;
 import cell.cell;
 import std.string;
 import cairo.ImageSurface;
-import gtkc.gdktypes;
+// import gtkc.gdktypes;
+import gtkc.gtktypes;
+
 public import misc.color;
 
 class Shape{
@@ -70,23 +72,30 @@ class Rect : Shape{
         w = ww;
         h = hh;
     }
+    private void set_gen(T)(T u){
+        x = cast(double)u.x;
+        y = cast(double)u.y;
+        w = cast(double)u.width;
+        h = cast(double)u.height;
+    }
     this(Rect r){
         this = r;
     }
-    T get_rect(T)(){
+    this(GtkAllocation ga){
+        set_gen(ga);
+    }
+    void set_by(GtkAllocation ga){
+        set_gen(ga);
+    }
+    // this(cairo_rectangle_int_t cr){
+    //     set_gen(cr);
+    // }
+    T get_struct(T)(){
         return T(cast(int)x,
                  cast(int)y,
                  cast(int)w,
                  cast(int)h);
     }
-    // Rectangle get_cairo_rect(){
-    //     return Rectangle(cast(int)x,
-    //                      cast(int)y,
-    //                      cast(int)w,
-    //                      cast(int)h);
-    // }
-    // PangoRectangle get_pango_rect(){
-
 }
         
 class Circle : Shape{

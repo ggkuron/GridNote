@@ -14,7 +14,6 @@ enum focus_mode{ normal,select,edit }
 // 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
 // 複合的な操作は現在思いつかないのでこのままにする
 // このコメントを消そうとするときに考える
-// どうしたかはcommit messageに書くべきだと思われる
 
 
 // Table に関する操作
@@ -27,7 +26,6 @@ private:
     string box_type;
 
     ManipTextBOX manip_textbox;
-
 public:
     focus_mode mode;
     SelectBOX select;
@@ -67,7 +65,7 @@ public:
             case "cell.textbox.TextBOX":
                 return cast(TextBOX)maniped_box;
             default:
-                assert(0);
+                return null;
         }
     }
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
@@ -103,7 +101,6 @@ public:
         box_type = target[0];
         maniped_box = target[1];
     }
-
     void move_selected(Direct to)
         in{
         assert(mode==focus_mode.normal);
@@ -164,6 +161,7 @@ public:
     }
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
+        if(mode!=focus_mode.edit) return;
         manip_textbox.with_commit(str,targetbox);
     }
     void backspace(){

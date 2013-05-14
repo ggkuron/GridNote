@@ -24,11 +24,11 @@ COMMAND cmd_template(alias func_body)(InputInterpreter i,ManipTable m,PageView p
     return new CMD!(func_body)(i,m,p);
 }
 class CMD(alias func_body) : COMMAND{
-    private:
+private:
     ManipTable manip_table;
     PageView view;
     InputInterpreter interpreter;
-    public:
+public:
     this(InputInterpreter i,ManipTable m,PageView p){
         interpreter = i;
         manip_table = m;
@@ -59,7 +59,7 @@ class InputInterpreter{
 
     COMMAND move_focus_d ;
     COMMAND move_focus_u ;
-    COMMAND expand_select;
+    COMMAND expand_select_to_pivot;
     COMMAND expand_select_r;
     COMMAND expand_select_l;
     COMMAND expand_select_d;
@@ -74,7 +74,8 @@ class InputInterpreter{
     COMMAND move_selected_d;
     COMMAND delete_selected;
     COMMAND manip_mode_normal;
-    COMMAND mode_change_to_normal;
+    COMMAND input_mode_change_to_normal;
+    COMMAND input_mode_change_to_edit;
     COMMAND quit;
 
     COMMAND start_insert_normal_text;
@@ -100,7 +101,7 @@ class InputInterpreter{
 
         move_focus_d = cmd_template!("manip_table.move_focus(Direct.down);")(this,manip,view);
         move_focus_u = cmd_template!("manip_table.move_focus(Direct.up);")(this,manip,view);
-        expand_select = cmd_template!("manip_table.expand_to_focus();")(this,manip,view);
+        expand_select_to_pivot = cmd_template!("manip_table.expand_to_focus();")(this,manip,view);
         expand_select_l = cmd_template!("manip_table.expand_if_on_edge(Direct.left);")(this,manip,view);
         expand_select_r = cmd_template!("manip_table.expand_if_on_edge(Direct.right);")(this,manip,view);
         expand_select_d = cmd_template!("manip_table.expand_if_on_edge(Direct.down);")(this,manip,view);
@@ -114,7 +115,8 @@ class InputInterpreter{
         move_selected_d = cmd_template!("manip_table.move_selected(Direct.down);")(this,manip,view);
         delete_selected = cmd_template!("manip_table.delete_selected();")(this,manip,view);
         manip_mode_normal = cmd_template!("manip_table.return_to_normal_mode();")(this,manip,view);
-        mode_change_to_normal = cmd_template!("interpreter.input_state = InputState.normal;")(this,manip,view);
+        input_mode_change_to_normal = cmd_template!("interpreter.input_state = InputState.normal;")(this,manip,view);
+        input_mode_change_to_edit = cmd_template!("interpreter.input_state = InputState.edit;")(this,manip,view);
         quit = cmd_template!("stdlib.exit(0);")(this,manip,view);
         grab_target = cmd_template!("manip_table.grab_selectbox();")(this,manip,view);
 
@@ -132,14 +134,15 @@ class InputInterpreter{
         }
     body{
         auto ev = event.key();
-        debug(cmd) writeln("im_driven: ",im_driven);
-        debug(cmd) writeln("key is ",ev.keyval);
-        debug(cmd) writeln("mod is ",ev.state);
-        debug(cmd) writefln("str is %s",*(ev.string));
-        debug(cmd) writeln(imm.getContextId());
+        debug(cmd){
+            writeln("im_driven: ",im_driven);
+            writeln("key is ",ev.keyval);
+            writeln("mod is ",ev.state);
+            writefln("str is %s",*(ev.string));
+            writeln(imm.getContextId());
+            writeln("input state ",input_state);
+        }
 
-        debug(cmd) writeln("input state ",input_state);
-        // alias interpreter.input_state input_state;
         final switch(input_state){
             case InputState.edit:
                 im_driven = cast(bool)imm.filterKeypress(ev);
@@ -160,8 +163,7 @@ class InputInterpreter{
         debug(cmd) writeln(keyState);
         return true;
     }
-    void control_input(){
-
+    private void control_input(){
         debug(cmd) writeln(keyState);
         interpret();
         execute();
@@ -189,11 +191,6 @@ class InputInterpreter{
             case InputState.normal:
                 if(ModState & ModifierType.CONTROL_MASK)
                 {
-                    // input_state = InputState.select;
-                    // if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (start_select_mode, move_focus_l,expand_select/*_l*/); }else
-                    // if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (start_select_mode, move_focus_r,expand_select/*_r*/); }else
-                    // if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (start_select_mode, move_focus_u,expand_select/*_u*/); }else
-                    // if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (start_select_mode, move_focus_d,expand_select/*_d*/); }
 
                     if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (move_selected_l); }else
                     if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (move_selected_r); }else
@@ -202,15 +199,21 @@ class InputInterpreter{
 
                     if(keyState[$-1] == DELETE_KEY){ add_to_queue (delete_selected); }
                 }
+                else if(ModState & ModifierType.SHIFT_MASK)
+                {
+                    input_state = InputState.select;
+                    if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (start_select_mode, move_focus_l,expand_select_to_pivot/*_l*/); }else
+                    if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (start_select_mode, move_focus_r,expand_select_to_pivot/*_r*/); }else
+                    if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (start_select_mode, move_focus_u,expand_select_to_pivot/*_u*/); }else
+                    if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (start_select_mode, move_focus_d,expand_select_to_pivot/*_d*/); }
+                }
                 else
                 {
                     add_to_queue(im_focusout);
 
                     if(keyState[$-1] == INSERT_KEY)
-                    {
-                        add_to_queue (start_insert_normal_text,im_focusin);
-                        input_state = InputState.edit;
-                    }else
+                        add_to_queue (start_insert_normal_text,im_focusin,input_mode_change_to_edit);
+                    else
 
                     if(keyState[$-1] == MOVE_L_KEY) add_to_queue (move_focus_l); else
                     if(keyState[$-1] == MOVE_R_KEY) add_to_queue (move_focus_r); else 
@@ -219,15 +222,12 @@ class InputInterpreter{
                     if(keyState[$-1] == GdkKeysyms.GDK_0) add_to_queue (toggle_grid_show); else
                     if(keyState[$-1] == GdkKeysyms.GDK_9) add_to_queue (toggle_boxborder_show);
                     if(keyState[$-1] == EDIT_KEY)
-                    {
-                        add_to_queue (grab_target,text_edit,im_focusin);
-                        input_state = InputState.edit;
-                    }
+                        add_to_queue (grab_target,text_edit,im_focusin,input_mode_change_to_edit);
                 }
                 break;
             case InputState.edit:
                 if(keyState[$-1] == GdkKeysyms.GDK_Escape)
-                    add_to_queue (mode_change_to_normal,manip_mode_normal,im_focusout); else
+                    add_to_queue (input_mode_change_to_normal,manip_mode_normal,im_focusout); else
                 if(keyState[$-1] == GdkKeysyms.GDK_BackSpace)
                     add_to_queue (text_backspace); else
                 if(keyState[$-1] == GdkKeysyms.GDK_Return)
@@ -238,16 +238,15 @@ class InputInterpreter{
                 }
                 return;
             case InputState.select:
-                if(keyState[$-1] == GdkKeysyms.GDK_Escape) add_to_queue (mode_change_to_normal);
-                // if(keyState[$-1] == EXIT_KEY) command_queue ~= quit;
+                if(keyState[$-1] == GdkKeysyms.GDK_Escape) add_to_queue (input_mode_change_to_normal);
                 if(manip.mode == focus_mode.select)
                 {
-                    if(ModState & ModifierType.CONTROL_MASK)
+                    if(ModState & ModifierType.SHIFT_MASK)
                     {
-                        if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (move_focus_l,expand_select/*_l*/); }else
-                        if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (move_focus_r,expand_select/*_r*/); }else
-                        if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (move_focus_u,expand_select/*_u*/); }else
-                        if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (move_focus_d,expand_select/*_d*/); }
+                        if(keyState[$-1] == MOVE_L_KEY){ add_to_queue (move_focus_l,expand_select_to_pivot); }else
+                        if(keyState[$-1] == MOVE_R_KEY){ add_to_queue (move_focus_r,expand_select_to_pivot); }else
+                        if(keyState[$-1] == MOVE_U_KEY){ add_to_queue (move_focus_u,expand_select_to_pivot); }else
+                        if(keyState[$-1] == MOVE_D_KEY){ add_to_queue (move_focus_d,expand_select_to_pivot); }
                     }
                     else
                     {
@@ -268,7 +267,6 @@ class InputInterpreter{
         }
     body{
         input_state = InputState.edit;
-        // SDL_StartTextInput();
     }
     void input_end()
         in{
@@ -276,7 +274,6 @@ class InputInterpreter{
         }
     body{
         input_state = InputState.normal;
-        // SDL_StopTextInput();
     }
     public:
     void execute(){
