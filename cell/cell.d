@@ -11,6 +11,7 @@ import std.typecons;
 debug(cell) import std.stdio;
 debug(move) import std.stdio;
 debug(table) import std.stdio;
+debug(refer) import std.stdio;
 
 struct Cell
 {
@@ -1027,7 +1028,7 @@ public:
     body{
         super();
         master = attach; // manipulating ReferBOX acts on attached Table
-        set_range(ul,h,w);
+        set_range(ul,w,h);
     }
     unittest{
         auto table = new BoxTable();
@@ -1047,7 +1048,7 @@ public:
         auto tb2 = new TextBOX(table);
         tb2.require_create_in(Cell(6,6));
     }
-    void set_range(Cell ul,int h,int w)
+    void set_range(Cell ul,int w,int h)
         in{
         assert(h>0);
         assert(w>0);
@@ -1057,6 +1058,7 @@ public:
         auto row = _offset.row + h-1;
         auto col = _offset.column + w-1;
         _max_range = Cell(row,col);
+        debug(refer) writefln("range h:%d w:%d",h,w);
     }
     override Tuple!(string,ContentBOX) get_content(const Cell c){
         return master.get_content(c+_offset);

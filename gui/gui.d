@@ -452,7 +452,6 @@ public:
     double get_x(const Cell c)const{ return c.column * gridSpace + holding_area.x; }
     double get_y(const Cell c)const{ return c.row * gridSpace + holding_area.y; }
     Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
-
    // アクセサ
 public:
     ReferTable get_view(){
