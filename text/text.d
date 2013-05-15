@@ -1,10 +1,9 @@
 module text.text;
 
 import cell.cell;
-
 import std.array;
-import misc.array;
-import misc.direct;
+import util.array;
+import util.direct;
 import std.string;
 import std.algorithm;
 import std.utf;
@@ -41,7 +40,7 @@ public:
         debug(text) writef("insert : %s\n",writing[current_line]);
         return writing[current_line].length;
     }
-    @property bool empty(){
+    @property bool empty()const{
         return (_writing.keys.empty())
         || (writing.length == 1 && _writing[0].keys.empty());
     }

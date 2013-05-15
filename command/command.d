@@ -4,7 +4,7 @@ import std.array;
 
 import manip;
 import env;
-import misc.direct;
+import util.direct;
 import gdk.Keysyms; // Keysyms
 import gdk.Event;
 import gtk.Widget;
@@ -92,10 +92,10 @@ class InputInterpreter{
         imm = im;
         view = pv;
 
-        move_box_r = cmd_template!("manip_table.get_target().move(Direct.right);")(this,manip,view);
-        move_box_l = cmd_template!("manip_table.get_target().move(Direct.left);")(this,manip,view);
-        move_box_u = cmd_template!("manip_table.get_target().move(Direct.up);")(this,manip,view);
-        move_box_d = cmd_template!("manip_table.get_target().move(Direct.down);")(this,manip,view);
+        move_box_r = cmd_template!("manip_table.get_target().require_move(Direct.right);")(this,manip,view);
+        move_box_l = cmd_template!("manip_table.get_target().require_move(Direct.left);")(this,manip,view);
+        move_box_u = cmd_template!("manip_table.get_target().require_move(Direct.up);")(this,manip,view);
+        move_box_d = cmd_template!("manip_table.get_target().require_move(Direct.down);")(this,manip,view);
         move_focus_l = cmd_template!("manip_table.move_focus(Direct.left);")(this,manip,view);
         move_focus_r = cmd_template!("manip_table.move_focus(Direct.right);")(this,manip,view);
 

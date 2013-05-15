@@ -1,8 +1,11 @@
 module manip;
 
-import misc.direct;
+import util.direct;
 import cell.textbox;
 import cell.cell;
+import cell.table;
+import cell.select;
+import cell.contentbox;
 import command.command;
 import gui.pageview;
 debug(manip) import std.stdio;
@@ -15,21 +18,23 @@ enum focus_mode{ normal,select,edit }
 // 複合的な操作は現在思いつかないのでこのままにする
 // このコメントを消そうとするときに考える
 
-
 // Table に関する操作
    // ここからCellBOXに対する操作も行う
-   // その責任は分離すべき
+   // 表示位置の移動ってここでやってしまおうか
+   // 指示棒をここがもってるから
 final class ManipTable{
 private:
     BoxTable focused_table;
-    ContentBOX maniped_box;
+    ReferTable refer_table;
+    CellContent maniped_box;
     string box_type;
 
     ManipTextBOX manip_textbox;
 public:
     focus_mode mode;
+    // Selectはここで持つべきか否か
     SelectBOX select;
-    this(BoxTable table)
+    this(BoxTable table,ReferTable r)
         out{
         assert(focused_table);
         assert(manip_textbox);
@@ -40,13 +45,18 @@ public:
         select = new SelectBOX(focused_table);
 
         manip_textbox = new ManipTextBOX(this);
+        ReferTable = 
     }
     void move_focus(Direct dir){
-        import std.stdio;
-        select.move(dir);
+        auto focus = select.focus();
+        if((!focus.column && dir == Direct.left)
+        || (!focus.row && dir == Direct.up)
+        || (focus.column == in_
+        else
+            select.move(dir);
         debug(manip) writefln("focus: %s",select.focus);
     }
-    ContentBOX get_target(){
+    CellContent get_target(){
         return maniped_box;
     }
     void start_select()
@@ -109,11 +119,21 @@ public:
         assert(mode==focus_mode.normal);
         }
     body{
-        auto target = focused_table.get_content(select.focus);
-        if(target[1] is null) return;
+        auto target = focused_table.get_content(select.focus)[1];
+        if(target is null) return;
         else{
-            if(target[1].require_move(to))
-                select.move(to);
+            if(target.top_left.row == 0 && to == Direct.up)
+            {
+                focused_table.shift(Cell(1,0));
+                target.require_move(to);
+            }
+            else if(target.top_left.column == 0 && to == Direct.left)
+            {
+                focused_table.shift(Cell(0,1));
+                target.require_move(to);
+            }
+            else if(target.require_move(to))
+                move_focus(to);
         }
     }
     void delete_selected()
@@ -142,7 +162,7 @@ public:
         mode = focus_mode.normal;
         if(maniped_box !is null)
         {   // maniped_box.is_to_spoil == false なら削除されない
-            focused_table.tryto_remove(maniped_box);
+            focused_table.try_remove(maniped_box);
         }
         select.clear();
         debug(manip) writeln("returned");

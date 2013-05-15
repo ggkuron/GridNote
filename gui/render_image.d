@@ -5,7 +5,7 @@ import cell.cell;
 import shape.shape;
 import shape.drawer;
 import gui.pageview;
-import cell.image_box;
+import cell.imagebox;
 import cairo.Context;
 
 class RenderImage : BoxRenderer{

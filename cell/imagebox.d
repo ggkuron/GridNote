@@ -1,6 +1,8 @@
-module cell.image_box;
+module cell.imagebox;
 
 import cell.cell;
+import cell.contentbox;
+import cell.table;
 import shape.shape;
 import shape.drawer;
 import cairo.Context;
@@ -8,8 +10,8 @@ import cairo.Context;
 import gui.pageview;
 
 class ImageBOX : ContentBOX{
-    // imageは実際には生成しない
-    // Model であって Viewでない
+   // imageは実際には生成しない
+   // Model であって Viewでない
     PageView pv;
     Image image;
     Rect frame;

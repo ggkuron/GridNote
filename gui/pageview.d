@@ -6,10 +6,14 @@ import std.string;
 import std.array;
 import env;
 import cell.cell;
+import cell.table;
+import cell.contentbox;
+import cell.refer;
 import cell.textbox;
+// import cell.rangebox;
 import text.text;
 import manip;
-import misc.direct;
+import util.direct;
 import std.algorithm;
 import gui.textbox;
 import shape.shape;
@@ -36,6 +40,7 @@ import cairo.Surface;
 import cairo.Context;
 
 // 主要なGrid領域
+// view と guiに纏わる操作を分離したい
 final class PageView : DrawingArea{
 private:
     GtkAllocation holding; // この2つの表すのは同じもの
@@ -149,7 +154,7 @@ private:
                 cast(int)(holding_area.h/gridSpace));
     }
     void move_view(Direct dir){
-        in_view.move(dir);
+        in_view.move_area(dir);
     }
     Rect back;
     RectDrawer backdrw;
@@ -163,23 +168,24 @@ private:
 
         foreach(content_in_view; in_view.get_contents())
         {
-            if(show_contents_border)
-            {
-                render_text.render_fill(cr,content_in_view[1],Color(linen,96));
-                render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
-            }
-
+            if(content_in_view[1].empty()) continue;
             switch(content_in_view[0])
             {
                 case "cell.textbox.TextBOX":
                     debug(gui) writeln("render textbox");
-                    render(cr,cast(TextBOX)content_in_view[1]);
+                        if(show_contents_border)
+                        {
+                            render_text.render_fill(cr,cast(TextBOX)content_in_view[1],Color(linen,96));
+                            render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
+                        }
+                        render(cr,cast(TextBOX)content_in_view[1]);
                     break;
                 default:
                     debug(gui) writeln("something wrong");
                     break;
             }
         }
+
         // render_text 全くふさわしくないけど、これ以外今ない、問題もない
         render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
 
@@ -196,7 +202,7 @@ private:
         backDesign(cr);
         if(grid_show_flg) renderGrid(cr);
         renderTable(cr);
-        renderSelect(cr);
+        renderSelection(cr);
         renderFocus(cr);
         cr.resetClip(); // end of rendering
         debug(gui) writeln("end");
@@ -242,8 +248,8 @@ private:
                 break;
         }
     }
-    void renderSelect(Context cr){
-        renderGrids(cr,manip_table.select.get_box(),
+    void renderSelection(Context cr){
+        renderGrids(cr,manip_table.select.get_cells(),
                 selected_cell_border_color,selectedLineWidth);
     }
     void renderFillCell(Context cr,const Cell cell,const Color grid_color){
@@ -253,7 +259,6 @@ private:
         grid_rect.set_color(grid_color);
         grid_drwer.fill(cr);
     }
-
     void when_sizeallocate(GdkRectangle* n,Widget w){
         set_holding_area();
         set_view_size();
@@ -360,7 +365,9 @@ public:
 
         showAll();
     }
-
+    void move_view(in Direct dir){
+        in_view.move_area(dir);
+    }
     void zoom_in(){
         ++gridSpace;
     }
@@ -426,6 +433,24 @@ public:
     double get_x(const Cell c)const{ return c.column * gridSpace + holding_area.x; }
     double get_y(const Cell c)const{ return c.row * gridSpace + holding_area.y; }
     Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
+
+    void renderFillBox(Context cr,const ContentBOX rb,const Color grid_color){
+        immutable top_left = rb.top_left();
+        Rect grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
+        auto grid_drwer = new RectDrawer(grid_rect);
+
+        grid_rect.set_color(grid_color);
+        grid_drwer.fill(cr);
+    }
+    void renderStrokeBox(Context cr,const ContentBOX rb,const Color grid_color){
+        immutable top_left = rb.top_left();
+        Rect grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
+        auto grid_drwer = new RectDrawer(grid_rect);
+
+        grid_rect.set_color(grid_color);
+        grid_drwer.stroke(cr);
+    }
+
    // アクセサ
 public:
     ReferTable get_view(){

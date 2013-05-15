@@ -1,10 +1,12 @@
 module cell.textbox;
 
 import cell.cell;
+import cell.table;
+import cell.contentbox;
 import text.text;
 import std.string;
 import std.utf;
-import misc.direct;
+import util.direct;
 import shape.shape;
 debug(cell) import std.stdio;
 
@@ -29,6 +31,11 @@ public:
         super(table);
         text = new Text();
     }
+    this(BoxTable table,const Cell tl,const int w,const int h){
+        super(table,tl,w,h);
+        text = new Text();
+    }
+
     void insert(string s){
         foreach(dchar c; s)
             text.insert(c);
@@ -60,7 +67,7 @@ public:
     }
     // 操作が終わった時にTableから取り除くべきか
     // super.is_to_spoil()は強制削除のためにはかます必要がある
-    override bool is_to_spoil(){
+    override bool is_to_spoil()const{
         return super.is_to_spoil() || text.empty();
     }
     // アクセサ

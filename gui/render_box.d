@@ -2,8 +2,15 @@ module gui.render_box;
 
 import gui.pageview;
 import cell.cell;
-import misc.direct;
+// import cell.rangebox;
+import cell.collection;
+import cell.contentflex;
+import cell.contentbox;
+import cell.table;
+import cell.refer;
+import util.direct;
 import shape.shape;
+import shape.drawer;
 import cairo.Context;
 debug(gui) import std.stdio;
 
@@ -22,8 +29,8 @@ class BoxRenderer{
         page_view = pv;
         in_view = pv.get_view();
     }
-    final protected Rect get_position(CellBOX b){
-        assert(b.get_box() !is null);
+    final protected Rect get_position(const CellContent b){
+        assert(b !is null);
 
         auto cp = in_view.get_position(b);
         debug(gui) writefln("cp : %s",cp);
@@ -32,18 +39,29 @@ class BoxRenderer{
 
         auto grid = page_view.get_gridSize;
 
-        int w = grid * b.numof_hcell();
-        int h = grid * b.numof_vcell();
+        int w = grid * b.numof_col();
+        int h = grid * b.numof_row();
 
         auto result =  new Rect(x,y,w,h);
         debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
-    final public void render_grid(Context cr,CellBOX b,const Color color,const ubyte width){
-        page_view.renderGrids(cr,b.get_box(),color,width);
+    final public void render_grid(Context cr,const CellContent b,const Color color,const ubyte width){
+        page_view.renderGrids(cr,b.get_cells(),color,width);
     }
-    final public void render_fill(Context cr,CellBOX b,const Color color){
-        page_view.renderFillGrids(cr,b.get_box(),color);
+    final public void render_fill(Context cr,const ContentFlex b,const Color color){
+        page_view.renderFillGrids(cr,b.get_cells(),color);
+    }
+    final public void render_fill(Context cr,const ContentBOX b,const Color color){
+        page_view.renderFillBox(cr,b,color);
     }
 
+    // final public void render_fill(Context cr,const CellContent b,const Color color){
+    //     Rect grid_rect = get_position(b);
+    //     auto grid_drwer = new RectDrawer(grid_rect);
+
+    //     grid_rect.set_color(color);
+    //     grid_drwer.fill(cr);
+
+    // }
 }
