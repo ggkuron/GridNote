@@ -4,7 +4,7 @@ import std.array;
 
 import manip;
 import env;
-import misc.direct;
+import util.direct;
 import gdk.Keysyms; // Keysyms
 import gdk.Event;
 import gtk.Widget;

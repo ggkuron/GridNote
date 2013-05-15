@@ -1,5 +1,5 @@
-module misc.array;
-import std.array;
+module util.array;
+public import std.array;
 import std.algorithm;
 
 void remove(T)(ref T[] array,T del){

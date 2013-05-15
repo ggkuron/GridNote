@@ -1,6 +1,7 @@
 module cell.image_box;
 
 import cell.cell;
+import cell.table;
 import shape.shape;
 import shape.drawer;
 import cairo.Context;

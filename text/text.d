@@ -1,10 +1,9 @@
 module text.text;
 
 import cell.cell;
-
 import std.array;
-import misc.array;
-import misc.direct;
+import util.array;
+import util.direct;
 import std.string;
 import std.algorithm;
 import std.utf;

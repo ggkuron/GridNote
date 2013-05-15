@@ -1,8 +1,10 @@
 module manip;
 
-import misc.direct;
+import util.direct;
 import cell.textbox;
 import cell.cell;
+import cell.table;
+import cell.select;
 import command.command;
 import gui.pageview;
 debug(manip) import std.stdio;
@@ -42,8 +44,13 @@ public:
         manip_textbox = new ManipTextBOX(this);
     }
     void move_focus(Direct dir){
-        import std.stdio;
-        select.move(dir);
+        auto focus = select.focus();
+        if(!focus.column && dir == Direct.left)
+            focused_table.shift(Cell(0,1));
+        else if(!focus.row && dir == Direct.up)
+            focused_table.shift(Cell(1,0));
+        else
+            select.move(dir);
         debug(manip) writefln("focus: %s",select.focus);
     }
     ContentBOX get_target(){

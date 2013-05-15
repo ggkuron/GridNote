@@ -1,7 +1,7 @@
 # Makefile
 
 PROJECTDIR = ./
-SRC 	= env.d init.d gui/*.d misc/*.d  manip.d cell/*.d  command/*.d  text/*.d shape/* 
+SRC 	= env.d init.d gui/*.d misc/*.d  manip.d cell/*.d  command/*.d  text/*.d shape/* util/*
 FLAGS	= -L-L/usr/local/lib -L-lgtk-3 -L-lgtkd-2   -L-lpthread -L-lfreetype  -L-lcairo -version=CairoHasPngFunctions -unittest  -debug=refer
 OUT		= exe
 

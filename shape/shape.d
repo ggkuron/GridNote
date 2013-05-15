@@ -1,6 +1,7 @@
 module shape.shape;
 
 import cell.cell;
+import cell.table;
 import std.string;
 import cairo.ImageSurface;
 // import gtkc.gdktypes;
@@ -12,7 +13,6 @@ class Shape{
     Color color;
     void attach(ContentBOX box){}
     void set_color(Color c){
-        import std.stdio;
         color = c;
     }
     void scale(){}

@@ -1,10 +1,11 @@
 module cell.textbox;
 
 import cell.cell;
+import cell.table;
 import text.text;
 import std.string;
 import std.utf;
-import misc.direct;
+import util.direct;
 import shape.shape;
 debug(cell) import std.stdio;
 

@@ -6,10 +6,12 @@ import std.string;
 import std.array;
 import env;
 import cell.cell;
+import cell.table;
+import cell.refer;
 import cell.textbox;
 import text.text;
 import manip;
-import misc.direct;
+import util.direct;
 import std.algorithm;
 import gui.textbox;
 import shape.shape;
@@ -163,12 +165,12 @@ private:
 
         foreach(content_in_view; in_view.get_contents())
         {
+            if(content_in_view[1].empty()) continue;
             if(show_contents_border)
             {
                 render_text.render_fill(cr,content_in_view[1],Color(linen,96));
                 render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
             }
-
             switch(content_in_view[0])
             {
                 case "cell.textbox.TextBOX":
