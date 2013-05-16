@@ -63,15 +63,15 @@ public:
         _max_range = Cell(row,col);
         debug(refer) writefln("range h:%d w:%d",h,w);
     }
-    override Tuple!(string,ContentBOX) get_content(const Cell c){
-        return master.get_content(c+_offset);
+    override Tuple!(string,ContentCollection) get_collection(const Cell c){
+        return master.get_collection(c+_offset);
     }
-    // master のtableのなかでview に含まれるものを包めて返す
-    auto get_contents(){
-        Tuple!(string,ContentBOX)[] result;
+    override Tuple!(string,ContentBOX) get_box(const Cell c){
+        return master.get_box(c+_offset);
+    }
+    int[] get_ranged_key()const{
         int[int] ranged_keys;
         auto master_keys = master.refer_keys();
-
         auto itr = offset;
         while(1)
         {
@@ -91,15 +91,52 @@ public:
             if(itr == _max_range)
                 break;
         }
-        foreach(k; ranged_keys.values)
+        return ranged_keys.values;
+    }
+
+    Tuple!(string,ContentCollection)[] get_collections(){
+        Tuple!(string,CellContent)[] result;
+        auto collection_table = master.refer_collection_table();
+
+        auto ranged_keys = get_ranged_key();
+        foreach(k; ranged_keys)
         {
             if(k == 0) continue;
-            auto content = master.get_content(k);
-            result ~= master.get_content(k);
+            if(k in collection_table)
+                result ~= collection_table[k];
+        }
+        return result;
+    }
+    Tuple!(string,ContentBOX)[] get_boxes(){
+        Tuple!(string,CellContent)[] result;
+        auto box_table = master.refer_box_table();
+
+        auto ranged_keys = get_ranged_key();
+        foreach(k; ranged_keys)
+        {
+            if(k == 0) continue;
+            if(k in box_table)
+                result ~= box_table[k];
         }
         return result;
     }
 
+    // master のtableのなかでview に含まれるものを包めて返す
+    // Contentの型情報はさらに落ちる
+    Tuple!(string,CellContent)[] get_contents(){
+        Tuple!(string,CellContent)[] result;
+        auto master_keys = master.refer_keys();
+        auto box_table = master.refer_box_table();
+        auto collection_table = master.refer_collection_table();
+
+        auto ranged_keys = get_ranged_key();
+        foreach(k; ranged_keys)
+        {
+            if(k == 0) continue;
+            result ~= master.get_content(k);
+        }
+        return result;
+    }
     override void add_box(T)(T u)
         in{
         assert(u.table == master);
@@ -115,7 +152,7 @@ public:
     @property Cell offset()const{
         return _offset;
     }
-    Cell get_position(const CellBOX b)const{
+    Cell get_position(const CellContent b)const{
         assert(!b.empty());
         return b.top_left + _offset;
     }
@@ -123,5 +160,7 @@ public:
         return master.refer_keys().keys.empty();
     }
 }
+
+
 
 

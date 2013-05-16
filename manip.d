@@ -104,7 +104,7 @@ public:
         select.expand(dir);
     }
     void grab_selectbox(){
-        auto target = focused_table.get_content(select.focus);
+        auto target = focused_table.get_box(select.focus);
         box_type = target[0];
         maniped_box = target[1];
     }

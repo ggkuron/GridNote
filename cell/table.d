@@ -1,53 +1,158 @@
 module cell.table;
 
 import cell.cell;
+import cell.collection;
 import std.typecons;
 import util.direct;
 import util.array;
+import util.range;
+import cell.content;
 
 debug(cell) import std.stdio;
 debug(move) import std.stdio;
 debug(table) import std.stdio;
 debug(refer) import std.stdio;
 
+// Cellによる空間を提供する
+// 誰がその空間を使っているかを管理する
+// どのように空間を使うかは各BOX
 class BoxTable{
 private:
-    ContentBOX[int] content_table;
-    string[int] type_table;
-    int[Cell] keys;
+    alias int KEY;
+    alias int ROW;
+    alias int COL;
+
+    alias Range RowRange;
+    alias Range ColRange;
+    alias Tuple!(RowRange,ColRange) BoxRange;
+
+    ContentBOX[KEY] box_table;
+    ContentCollection[KEY] collection_table;
+    string[KEY] type_table;
+
+    BoxRange[KEY] box_range; 
+    Cell[][KEY] collection;
+
+    KEY[Cell] collection_keys;
+    KEY[BoxRange] box_keys;
+
+    int _content_counter;
+    void set_id(CellContent c){
+        if(_content_counter == int.max)
+        {   // throw exception
+            assert(0);
+        }
+        // 0は欠番にしておく
+        c.set_id(++_content_counter);
+        debug(table){
+            assert(_content_counter !in keys);
+        }
+    }
 protected:
 public:
-    auto refer_content_table(){
-        return content_table;
+    bool is_in(Cell c){
+        foreach(br; box_table.values)
+            if(br.is_in(c)) return true;
+        if(c in collection_keys)
+            return true;
+        return false;
     }
-    auto refer_type_table(){
-        return type_table;
+    int get_boxkey_first_by_row(Cell c)const{
+        foreach(k,bk; box_keys.keys)
+        {
+            if(bk[0].is_in(c))
+                if(bk[1].is_in(c))
+                    return k;
+            else return 0;
+        }
     }
-    auto refer_keys()const{
-        return keys;
+    int get_boxkey_first_by_col(Cell c)const{
+        foreach(k,bk; box_keys.keys)
+        {
+            if(bk[1].is_in(c))
+                if(bk[0].is_in(c))
+                    return k;
+            else return 0;
+        }
     }
-    auto get_content(int key){
-        // 継承先はこのTableのkeyを知れるのでcheckはあまく
-        // 特定のContent idを指定しては呼び出さないだろうと仮定しているということ
-        assert(keys.values.is_in(key));
-        return tuple(type_table[key],content_table[key]);
+    BoxRange get_boxrange(int key){
+        assert(key in box_body);
+        return box_range[key];
+    }
+    Cell[] get_collection(int key){
+        assert(key in collection_body);
+        return collection[key];
+    }
+    Tuple!(string,CellStructure) get_content(int key){
+        assert(key in keys.values);
+        if(key in box_table)
+            return tuple(type_table[key],box_table[key]);
+        else if(key in collection_table)
+            return tuple(type_table[key],collection_table[key]);
+        else assert(0);
     }
     this(){
-        content_table[0] = null;
+        box_table[0] = null;
         type_table[0] = "none";
+        collection_table[0] = null;
     }
     this(BoxTable r){
-        content_table = r.content_table;
+        box_table = r.box_table;
         type_table = r.type_table;
         keys = r.keys;
         this();
     }
     invariant(){
-        assert(content_table[0] is null);
+        assert(box_table[0] is null);
         assert(type_table[0] == "none");
     }
-    // content_box[0] にはnullが入っているが
-    // 他のkeyにはnullは入らない
+    // content_box[0] にはnullが入っている
+    // 他のkeyにはnullは入れない
+    final void add_collection(T)(T u)
+        in{
+        assert(u.table == this);
+        assert(cast(ContentCollection)u !is null); // 静的に書き換えたい
+        assert(!u.get_box().empty);
+        }
+    body{
+        debug(move) writeln("add_box start");
+
+        set_id(u);
+        auto box_id = u.id();
+        auto box = u.get_box();
+        foreach(c; box)
+        {
+            keys[c] = box_id;
+        }
+        type_table[box_id] = u.toString;
+        box_table[box_id] = u;
+
+        assert(box_id in box_table);
+        assert(box_id in type_table);
+        debug(table){
+            writeln("type: ",u.toString);
+            writeln("table key(box_id): ",box_id);
+            writeln("boxes are: ",u.get_box());
+        }
+    }
+    final bool try_create_in(T)(T u,Cell c)
+        in{
+        assert(u.table == this);
+        assert(cast(ContentBOX)u !is null); // 静的に書き換えたい
+        }
+    body{
+        if(c in keys) return false;
+
+        if(!u.id()) set_id(u);
+        auto box_id = u.id();
+        type_table[box_id] = u.toString;
+        // keys[c] = box_id;
+        auto range = u.get_range();
+        box_keys[range] = box_id;
+        box_range[box_id] = range;
+        box_table[box_id] = u;
+        return true;
+    }
     final void add_box(T)(T u)
         in{
         assert(u.table == this);
@@ -58,6 +163,7 @@ public:
     body{
         debug(move) writeln("add_box start");
 
+        set_id(u);
         auto box_id = u.box_id();
         auto box = u.get_box();
         foreach(r; box[0].get())
@@ -66,9 +172,9 @@ public:
             keys[Cell(r,c)] = box_id;
         }
         type_table[box_id] = u.toString;
-        content_table[box_id] = u;
+        collection_table[box_id] = u;
 
-        assert(box_id in content_table);
+        assert(box_id in box_table);
         assert(box_id in type_table);
         debug(table){
             writeln("type: ",u.toString);
@@ -76,14 +182,35 @@ public:
             writeln("boxes are: ",u.get_box());
         }
     }
-    Tuple!(string,ContentBOX) get_content(const Cell c){
+    Tuple!(string,CellContent) get_content(const Cell c){
         int key;
         debug(move) if(c !in keys) writeln("this cell is empty, no content return");
         if(c !in keys)
-            return tuple("none",content_table[0]);
+            return tuple("none",box_table[0]);
         else
             key = keys[c];
-        return tuple(type_table[key],content_table[key]);
+        if(key !in box_table) assert(0);
+        return get_content(key);
+    }
+    Tuple!(string,ContentBOX) get_box(const Cell c){
+        int key;
+        debug(move) if(c !in keys) writeln("this cell is empty, no content return");
+        if(c !in keys)
+            return tuple("none",box_table[0]);
+        else
+            key = keys[c];
+        if(key !in box_table) assert(0);
+        return tuple(type_table[key],box_table[key]);
+    }
+    Tuple!(string,ContentCollection) get_collection(const Cell c){
+        int key;
+        debug(move) if(c !in keys) writeln("this cell is empty, no content return");
+        if(c !in keys)
+            return tuple("none",box_table[0]);
+        else
+            key = keys[c];
+        if(key !in collection_table) assert(0);
+        return tuple(type_table[key],box_table[key]);
     }
     final void remove_content_edge(ContentBOX box,const Direct dir){
         auto edge = box.edge_line[dir];
@@ -94,12 +221,10 @@ public:
         }
         // if(box.empty()) throw exception
     }
-
     // Tableに登録されたBOXは、自身の変形が可能か
     // Tableに尋ねる。そのためのmethod。prefix: 
-    // 可能なときには処理も行なってしまう
     //      分ける必要のある要件があったら統一して分離させる
-    final bool tryto_expand(ContentBOX box,const Direct to){
+    final bool try_expand(ContentBOX box,const Direct to,int width){
         debug(move) writeln("expand box start");
         auto id = box.box_id();
         auto edge = box.edge_line[to];
@@ -120,24 +245,57 @@ public:
         {
             keys[c] = id;
         }
-        if(id !in content_table)
-            content_table[id] = box;
+        if(id !in box_table)
+            box_table[id] = box;
+
+        debug(table) writeln("expanded");
+        return true;
+    }
+    final bool try_expand(ContentCollection cc,const Direct to,int width){
+        debug(move) writeln("expand box start");
+        auto id = cc.id();
+        auto edge = cc.edge_line[to];
+        debug(move) writeln("edge ",edge);
+        Cell[] tobe_expanded;
+        if(box.empty()) return false;
+        foreach(c; edge) // just check
+        {
+            while(width--)
+            {
+                auto the_cell = c.if_moved(to);
+                tobe_expanded ~= the_cell;
+                if(the_cell in keys)
+                { 
+                    debug(move) writeln("not expanded");
+                    return false;
+                }
+            }
+        }
+        foreach(c; tobe_expanded)
+        {
+            keys[c] = id;
+        }
+        if(id !in box_table)
+            box_table[id] = box;
 
         debug(table) writeln("expanded");
         return true;
     }
     // 移動できたらtrue そうでなければfalse
     // boxの整形は呼び出し側の責任
-    final bool tryto_move(ContentBOX box,const Direct to){
-        if(tryto_expand(box,to))
-        {
-            foreach(c; box.edge_line[reverse(to)])
-                keys.remove(c);
-            return true;
-        }else
-            return false;
+    final bool try_move(ContentCollection cc,const Direct to,int width){
+            if(try_expand(cc,to,width))
+            {
+                while(width--)
+                {
+                    foreach(c; cc.edge_line[reverse(to)])
+                        keys.remove(c);
+                }
+                return true;
+            }else
+                return false;
     }
-    final bool tryto_remove(ContentBOX u)
+    final bool try_remove(ContentBOX u)
         in{
         assert(u.table == this);
         }
@@ -153,7 +311,7 @@ public:
              assert(c in keys);
              keys.remove(c);
         }
-        content_table.remove(box_id);
+        box_table.remove(box_id);
         type_table.remove(box_id);
 
         assert(keys.keys.empty || !keys.values.is_in(box_id));
@@ -204,14 +362,14 @@ public:
         int[Cell] new_key;
         foreach(c,id; keys)
         {
-            assert(id in content_table);
+            assert(id in box_table);
             new_key[c+o] = id;
         }
         keys = new_key;
-        foreach(content; content_table)
+        foreach(content; box_table)
         {
             if(content is null
-                    || content.empty()) continue; // content_table[0]
+                    || content.empty()) continue; // box_table[0]
             debug(refer) writeln("null test through");
             debug(refer) writefln("o: %s\n ",o);
             content.move(o);
@@ -221,7 +379,7 @@ public:
     final void clear(){
         keys.clear();
         type_table.clear();
-        content_table.clear();
+        box_table.clear();
     }
     final bool is_vacant(Cell c)const{
         return cast(bool)(c !in keys);
@@ -229,23 +387,31 @@ public:
     final bool has(Cell c)const{
         return cast(bool)(c in keys);
     }
+    @property int content_id()const{
+        return _content_id;
+    }
+
 }
 
-abstract class ContentBOX : CellBOX{
+abstract class ContentCollection : CellCollection{
 private:
     BoxTable table;
+    alias CellBOX.create_in create_in;
+    alias CellBOX.expand expand;
+    alias CellBOX.move move;
+    int _content_id;
 protected:
     invariant(){
         assert(table !is null);
     }
 public:
-    this(BoxTable attach, ContentBOX taken)
+    this(BoxTable attach, ContentCollection taken)
         out{
         assert(table !is null);
         }
     body{
         table = attach;
-        super(taken);
+        box = taken.box;
     }
     this(BoxTable attach)
         out{
@@ -254,15 +420,11 @@ public:
     body{
         table = attach;
     }
-    this(ContentBOX cb){
+    this(ContentCollection cb){
         super(cb);
         if(!box.empty())
             table.add_box(this);
     }
-    alias CellBOX.create_in create_in;
-    alias CellBOX.expand expand;
-    alias CellBOX.move move;
-
     bool require_create_in(const Cell c){
         if(table.is_vacant(c))
         {
@@ -274,9 +436,9 @@ public:
     }
     bool require_move(const Direct to){
         debug(move){
-            writeln("ContentBOX::move start");
+            writeln("ContentCollection::move start");
         }
-        if(table.tryto_move(this,to))
+        if(table.try_move(this,to))
         {
             CellBOX.move(to);
             debug(move) writeln("moved");
@@ -292,10 +454,10 @@ public:
         auto cb = new TextBOX(table);
         cb.create_in(Cell(3,3));
         cb.expand(Direct.right);
-        assert(cb.top_left == Cell(3,3));
+        assert(cb.edge[up][left] == Cell(3,3));
         assert(cb.bottom_right == Cell(3,4));
         cb.move(Direct.right);
-        assert(cb.top_left == Cell(3,4));
+        assert(cb.edge[up][left] == Cell(3,4));
         assert(cb.bottom_right == Cell(3,5));
         cb.move(Direct.up);
         assert(cb.top_left == Cell(2,4));
@@ -304,7 +466,7 @@ public:
     }
     // 実行できたかどうかは知りたい
     bool require_expand(const Direct to){
-        if(table.tryto_expand(this,to))
+        if(table.try_expand(this,to))
         {
             super.expand(to);
             return true;
@@ -316,7 +478,7 @@ public:
     }
     void remove_from_table(){
         spoiled = true;
-        auto result = table.tryto_remove(this);
+        auto result = table.try_remove(this);
         assert(result);
     }
     // 削除対象かいなか
@@ -325,6 +487,13 @@ public:
         debug(cell) writeln(spoiled, box.empty());
         return spoiled || box.empty();
     };
+    int id()const{ return _content_id; }
+    void set_id(int id){
+        if(id_counter == int.max){
+            // throw exception
+            assert(0);
+        }
+        _content_id = id;
+    }
 }
-
 

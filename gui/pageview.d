@@ -163,7 +163,7 @@ private:
         debug(gui) writeln("@@@@ render table start @@@@");
         if(in_view.empty) return;
 
-        foreach(content_in_view; in_view.get_contents())
+        foreach(content_in_view; in_view.get_boxes())
         {
             if(content_in_view[1].empty()) continue;
             if(show_contents_border)
@@ -182,6 +182,22 @@ private:
                     break;
             }
         }
+        foreach(content_in_view; in_view.get_collections())
+        {
+            if(content_in_view[1].empty()) continue;
+            if(show_contents_border)
+            {
+                render_text.render_fill(cr,content_in_view[1],Color(linen,96));
+                render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
+            }
+            switch(content_in_view[0])
+            {
+                default:
+                    debug(gui) writeln("something wrong");
+                    break;
+            }
+        }
+
         // render_text 全くふさわしくないけど、これ以外今ない、問題もない
         render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
 

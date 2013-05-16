@@ -2,14 +2,14 @@ module cell.select;
 
 import util.direct;
 import cell.cell;
+import cell.collection;
 import cell.table;
 import cell.textbox;
 import util.array;
 
 // 継承による贅肉付き過ぎてる感ある
 // focus 使わずにbox使ってfocus表現できる。
-// box が遊んでる感
-final class SelectBOX : CellBOX{
+final class SelectBOX : CellCollection{
 private:
     BoxTable table;
     Cell _focus;
@@ -65,12 +65,15 @@ public:
         pivot_bound(_focus);
         debug(cell) writeln("end");
     }
+    override void expand(const Direct dir){
+        super.expand(dir);
+    }
     this(BoxTable attach,Cell cursor=Cell(2,2))
     body{
         table = attach;
         _focus = cursor;
     }
-    override void move(const Direct dir,int width = 1){
+    override void move(const Direct dir){
         _focus.move(dir);
     }
     void create_in(){

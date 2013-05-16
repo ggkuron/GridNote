@@ -2,10 +2,12 @@ module gui.render_box;
 
 import gui.pageview;
 import cell.cell;
+import cell.collection;
 import cell.table;
 import cell.refer;
 import util.direct;
 import shape.shape;
+import shape.drawer;
 import cairo.Context;
 debug(gui) import std.stdio;
 
@@ -24,7 +26,7 @@ class BoxRenderer{
         page_view = pv;
         in_view = pv.get_view();
     }
-    final protected Rect get_position(const CellBOX b){
+    final protected Rect get_position(const CellContent b){
         assert(b !is null);
 
         auto cp = in_view.get_position(b);
@@ -41,10 +43,18 @@ class BoxRenderer{
         debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
-    final public void render_grid(Context cr,const CellBOX b,const Color color,const ubyte width){
-        page_view.renderGrids(cr,b.get_box(),color,width);
+    final public void render_grid(Context cr,const CellContent b,const Color color,const ubyte width){
+        page_view.renderGrids(cr,b.get_cells(),color,width);
+    }
+    final public void render_fill(Context cr,const CellCollection b,const Color color){
+        page_view.renderFillGrids(cr,b.get_cells(),color);
     }
     final public void render_fill(Context cr,const CellBOX b,const Color color){
-        page_view.renderFillGrids(cr,b.get_box(),color);
+        Rect grid_rect = get_position(b);
+        auto grid_drwer = new RectDrawer(grid_rect);
+
+        grid_rect.set_color(color);
+        grid_drwer.fill(cr);
+
     }
 }
