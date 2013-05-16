@@ -80,8 +80,9 @@ public:
         return _min <= v && v <= _max;
     }
     int[] get()const{ 
-        int[] result;
-        foreach(int i; _min .. _max+1)
+        // min == max の時にその値を返す
+        int[] result = [min];
+        foreach(int i; _min+1 .. _max+1)
         {
             result ~= i;
         }

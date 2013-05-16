@@ -6,6 +6,7 @@ import util.array;
 import util.direct;
 import std.math;
 import std.algorithm;
+import std.typecons;
 // 四角い領域
 // BoxRangeがそのすべて
 // 領域の操作方法をまとめてるけど、
@@ -26,20 +27,20 @@ private:
     bool box_fixed;
 
     unittest{
-        auto cb = new CellBOX();
+        auto cb = new RangeBOX();
         cb.create_in(Cell(3,3));
         assert(cb.is_in(Cell(3,3)));
         assert(!cb.is_in(Cell(3,4)));
         cb.expand(Direct.right);
         assert(cb.is_in(Cell(3,4)));
-        cb = new CellBOX();
+        cb = new RangeBOX();
         cb.create_in(Cell(5,5));
         cb.expand(Direct.right);
         cb.expand(Direct.down);
         // assert(cb.box.count_lined(Cell(5,5),Direct.right) == 1);
         // assert(cb.box.count_lined(Cell(5,5),Direct.down) == 1);
         debug(cell) writeln("@@@@ update_info unittest start @@@@@");
-        cb = new CellBOX();
+        cb = new RangeBOX();
         cb.create_in(Cell(5,5));
         assert(cb.top_left == Cell(5,5));
         assert(cb.numof_row == 1);
@@ -56,6 +57,7 @@ private:
         assert(cb.numof_col == 5);
         debug(cell) writeln("#### update_info unittest end ####");
     }
+public:
     const(Cell)[] all_in_column(const int column)const{
         Cell[] result;
         int[] range = row_range.get();
@@ -70,7 +72,6 @@ private:
         return result;
     }
     int _box_id; // 0: invalid id
-public:
     void create_in(const Cell c)
         in{
         assert(row_range.empty);
@@ -105,7 +106,7 @@ public:
             r_or_c_range.pop_front(width);
     }
     void remove(const Direct dir,int width=1){
-        debug(cell) writeln("@@@@ CellBOX.remove start @@@@");
+        debug(cell) writeln("@@@@ RangeBOX.remove start @@@@");
 
         if(dir.is_horizontal && numof_col <= 1
         || dir.is_vertical && numof_row <= 1 )
@@ -117,7 +118,6 @@ public:
         else // (dir.is_vertical)
             r_or_c_range = row_range;
 
-        // 0以下にならない条件をここでさばいてる。が、Rangeに条件課したほうが
         if(dir.is_negative)
             r_or_c_range.remove_back(width);
         else // (dir.is_positive)
@@ -131,6 +131,11 @@ public:
         return row_range.is_in(c.row)
             && col_range.is_in(c.column);
     }
+    bool is_a_cell()const{
+        return min_row == max_row &&
+            max_row == min_col && min_col == max_row;
+    }
+
     this(){
         row_range = new Range(-1,-1);
         col_range = new Range(-1,-1);
@@ -144,10 +149,11 @@ public:
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
-    this(CellBOX oldone)
+    this(RangeBOX oldone)
     body{
         debug(cell) writeln("take after start");
-        auto ranges = oldone.get_box();
+        auto ranges = oldone.get_range();
+
         row_range = ranges[0];
         col_range = ranges[1];
 
@@ -156,8 +162,6 @@ public:
     }
     // 増加方向のみ
     final void move(const Cell c){
-        int pop_cnt;
-
         if(c.row)
             move(down,c.row);
         if(c.column)
@@ -186,8 +190,8 @@ public:
             r_or_c_range.move_front(pop_cnt);
     }
     unittest{
-        debug(cell) writeln("@@@@ CellBOX move unittest start @@@@");
-        auto cb = new CellBOX(Cell(5,5),5,5);
+        debug(cell) writeln("@@@@ RangeBOX move unittest start @@@@");
+        auto cb = new RangeBOX(Cell(5,5),5,5);
         assert(cb.top_left == Cell(5,5));
         assert(cb.bottom_right == Cell(9,9));
         assert(cb.top_right == Cell(5,9));
@@ -224,14 +228,14 @@ public:
         assert(cb.max_row == 8);
         assert(cb.max_col == 9);
 
-        debug(cell) writeln("#### CellBOX move unittest end ####");
+        debug(cell) writeln("#### RangeBOX move unittest end ####");
     }
     bool is_on_edge(Cell c)const{
         return row_range.is_in(c.row) && col_range.is_in(c.column);
     }
     unittest{
         debug(cell) writeln("@@@@is_on_edge unittest start@@@@");
-        auto cb = new CellBOX();
+        auto cb = new RangeBOX();
         auto c = Cell(3,3);
         cb.create_in(c);
         assert(cb.is_on_edge(c));
@@ -269,7 +273,7 @@ public:
     @property bool empty()const{
         return row_range.empty && col_range.empty;
     }
-    // TODO 名前変えて実装
+    // TODO 名前変えて
     // void set_fixed(bool b){ 固定化されたか
     //     box_fixed = b;
     // }
@@ -296,33 +300,33 @@ public:
     alias hold!(UpDown.down,LR.right) hold_br;
     unittest{
         debug(cell) writeln("@@@@hold_br unittest start@@@@");
-        auto cb = new CellBOX();
+        auto cb = new RangeBOX();
         cb.hold_br(Cell(5,5),3,3);
 
         assert(cb.top_left == Cell(3,3));
         assert(cb.numof_row == 3);
         assert(cb.numof_col == 3);
         debug(cell) writeln("@@@@ hold_tr unittest start @@@@");
-        cb = new CellBOX();
+        cb = new RangeBOX();
         cb.hold_tr(Cell(5,5),3,3);
 
         assert(cb.top_left == Cell(5,3));
         assert(cb.numof_row == 3);
         assert(cb.numof_col == 3);
         debug(cell) writeln("@@@@ hold_bl unittest start @@@@");
-        cb = new CellBOX();
+        cb = new RangeBOX();
         cb.hold_bl(Cell(5,5),3,3);
 
         assert(cb.top_left == Cell(3,5));
         assert(cb.numof_row == 3);
         assert(cb.numof_col == 3);
         debug(cell) writeln("@@@@ hold_tl unittest start @@@@");
-        cb = new CellBOX();
+        cb = new RangeBOX();
         cb.hold_tl(Cell(3,3),5,5);
 
         assert(cb.top_left == Cell(3,3));
         assert(cb.bottom_right == Cell(7,7));
-        cb = new CellBOX();
+        cb = new RangeBOX();
         // cb.hold_tl(Cell(3,3),0,0);
         cb.create_in(Cell(3,3));
         assert(cb.top_left == Cell(3,3));
@@ -350,7 +354,7 @@ public:
     const int numof_col()const{
         return col_range.length;
     }
-    Cell[] get_cells()const{
+    const(Cell)[] get_cells()const{
         Cell[] result;
         foreach(r; row_range.get())
         foreach(c; col_range.get())

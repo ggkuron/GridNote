@@ -259,14 +259,14 @@ public:
     }
     this(CellCollection oldone)
         in{
-        assert(!oldone.get_box_raw().empty);
+        assert(!oldone.get_cells().empty);
         }
         out{
         assert(!box.empty);
         }
     body{
         debug(cell) writeln("take after start");
-        box = oldone.get_box_dup();
+        box = oldone.get_cells().dup;
         edge = oldone.edge.dup();
         min_col = oldone.min_col;
         max_col = oldone.max_col;
@@ -277,6 +277,17 @@ public:
 
         oldone.clear();
         debug(cell) writeln("end");
+    }
+    void move(const Cell c){
+        if(!c.row)
+            move(right,c.row);
+        if(!c.column)
+            move(down,c.column);
+    }
+
+    void move(const Direct dir,int width){
+        while(width--)
+            move(dir);
     }
     void move(const Direct dir){
         // この順番でないと1Cellだけのときに失敗する
@@ -498,13 +509,7 @@ public:
     const int numof_col()const{
         return _numof_col;
     }
-    const(Cell[]) get_box()const{
-        return box;
-    }
-    Cell[] get_box_dup()const{
-        return box.dup;
-    }
-    Cell[] get_box_raw(){
+    const(Cell)[] get_cells()const{
         return box;
     }
     @property Cell top_left()const{

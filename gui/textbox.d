@@ -4,6 +4,7 @@ import gui.pageview;
 import gui.render_box;
 import cell.textbox;
 import cell.cell;
+import cell.content;
 import cell.table;
 import text.text;
 import util.direct;
@@ -64,7 +65,7 @@ public:
         debug(gui) writeln("@@@@ render textbox start @@@@");
         // 
         if(box.empty()) return;
-        auto box_id = box.box_id();
+        auto box_id = box.id();
         gridSize = page_view.get_gridSize();
         box_pos[box_id] = get_position(box); // gui.render_box::get_position
         box_pos[box_id].y += gridSize/3;
@@ -90,7 +91,7 @@ public:
             if(box_id !in width) return;
 
             do{
-                auto pre_box = box.get_box();
+                auto pre_box = box.get_cells();
 
                 auto box_width = gridSize * box.numof_col();
                 debug(gui) writefln("box width %d",box_width);
@@ -108,7 +109,7 @@ public:
                 {
                     box.require_remove(Direct.right);
                 }
-                if(pre_box == box.get_box())
+                if(pre_box == box.get_cells())
                     break;
 
             }while(true);
@@ -187,11 +188,11 @@ public:
         if(!strings[box_id].keys.empty) modify_boxsize();
         debug(gui) writeln("text render end");
     }
-    public void prepare_preedit(IMContext imc,ContentBOX inputted_box){
+    public void prepare_preedit(IMContext imc,CellContent inputted_box){
         debug(text) writeln("prepare_preedit start");
         im_target = cast(TextBOX)inputted_box;
         assert(im_target !is null);
-        im_target_id = inputted_box.box_id();
+        im_target_id = inputted_box.id();
         imc.getPreeditString(preedit,attrlist[im_target_id],render_target.cursor_pos);
         set_preeditting(true);
         debug(text) writeln("end");

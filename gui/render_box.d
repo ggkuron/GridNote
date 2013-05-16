@@ -49,7 +49,7 @@ class BoxRenderer{
     final public void render_fill(Context cr,const CellCollection b,const Color color){
         page_view.renderFillGrids(cr,b.get_cells(),color);
     }
-    final public void render_fill(Context cr,const CellBOX b,const Color color){
+    final public void render_fill(Context cr,const CellContent b,const Color color){
         Rect grid_rect = get_position(b);
         auto grid_drwer = new RectDrawer(grid_rect);
 

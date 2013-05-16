@@ -27,8 +27,7 @@ struct Cell
         }
         auto r = minus_tobe_zero(row - rhs.row);
         auto c = minus_tobe_zero(column - rhs.column);
-        auto result = Cell(r,c);
-        return result;
+        return Cell(r,c);
     }
     unittest{
         Cell a = Cell(5,5);
@@ -152,7 +151,7 @@ bool is_box(const Cell[] box){
     }
     int i;
     // width == 0 はありえない
-    assert(width != 0);
+    assert(width.length != 0);
     foreach(r; width){
         if(i && r!=i) return false;
         i = r;
@@ -173,10 +172,10 @@ unittest{
 // 独立して存在できる
 // 各々が各々のTableを持っている
 interface CellStructure{
-    @property Cell top_left();
-    @property Cell top_right();
-    @property Cell bottom_left();
-    @property Cell bottom_right();
+    @property Cell top_left()const;
+    @property Cell top_right()const;
+    @property Cell bottom_left()const;
+    @property Cell bottom_right()const;
     @property bool empty();
     void move(const Cell c);
     void move(const Direct,int pop_cnt=1);
@@ -185,26 +184,32 @@ interface CellStructure{
     void remove(const Direct,int width=1);
     void clear();
     bool is_in(const Cell c)const;
-    Cell[] get_cells()const;
-    int numof_col()const;
-    int numof_row()const;
+    const(Cell)[] get_cells()const;
+    @property int numof_col()const;
+    @property int numof_row()const;
 }
 
 // 構造をTableに持たせる
 // Table上のCellContentと空間を共有する
 interface CellContent{
-    @property Cell top_left();
-    @property Cell top_right();
-    @property Cell bottom_left();
-    @property Cell bottom_right();
-    @property bool empty();
+    @property Cell top_left()const;
+    @property Cell top_right()const;
+    @property Cell bottom_left()const;
+    @property Cell bottom_right()const;
+    @property bool empty()const;
     @property int id()const;
+    @property int numof_col()const;
+    @property int numof_row()const;
+    bool is_in(Cell c)const;
+    @property const(Cell[][Direct]) edge_line()const;
     bool require_create_in(const Cell);
+    bool require_move(const Cell);
     bool require_move(const Direct,int width=1);
     bool require_expand(const Direct,int width=1);
     void require_remove(const Direct,int width=1);
     bool is_to_spoil()const;
     void remove_from_table();
     void set_id(int);
+    const(Cell)[] get_cells()const;
 }
 

@@ -1,6 +1,7 @@
-module cell.image_box;
+module cell.imagebox;
 
 import cell.cell;
+import cell.content;
 import cell.table;
 import shape.shape;
 import shape.drawer;
@@ -41,4 +42,5 @@ class ImageBOX : ContentBOX{
         return false;
         // tobe implement
     }
+
 }

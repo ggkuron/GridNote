@@ -2,6 +2,7 @@ module shape.shape;
 
 import cell.cell;
 import cell.table;
+import cell.content;
 import std.string;
 import cairo.ImageSurface;
 // import gtkc.gdktypes;

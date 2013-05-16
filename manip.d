@@ -5,6 +5,7 @@ import cell.textbox;
 import cell.cell;
 import cell.table;
 import cell.select;
+import cell.content;
 import command.command;
 import gui.pageview;
 debug(manip) import std.stdio;
@@ -24,7 +25,7 @@ enum focus_mode{ normal,select,edit }
 final class ManipTable{
 private:
     BoxTable focused_table;
-    ContentBOX maniped_box;
+    CellContent maniped_box;
     string box_type;
 
     ManipTextBOX manip_textbox;
@@ -53,7 +54,7 @@ public:
             select.move(dir);
         debug(manip) writefln("focus: %s",select.focus);
     }
-    ContentBOX get_target(){
+    CellContent get_target(){
         return maniped_box;
     }
     void start_select()
@@ -104,7 +105,7 @@ public:
         select.expand(dir);
     }
     void grab_selectbox(){
-        auto target = focused_table.get_box(select.focus);
+        auto target = focused_table.get_content(select.focus);
         box_type = target[0];
         maniped_box = target[1];
     }
@@ -149,7 +150,7 @@ public:
         mode = focus_mode.normal;
         if(maniped_box !is null)
         {   // maniped_box.is_to_spoil == false なら削除されない
-            focused_table.tryto_remove(maniped_box);
+            focused_table.try_remove(maniped_box);
         }
         select.clear();
         debug(manip) writeln("returned");

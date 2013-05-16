@@ -40,7 +40,7 @@ public:
         debug(text) writef("insert : %s\n",writing[current_line]);
         return writing[current_line].length;
     }
-    @property bool empty(){
+    @property bool empty()const{
         return (_writing.keys.empty())
         || (writing.length == 1 && _writing[0].keys.empty());
     }

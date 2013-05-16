@@ -4,6 +4,7 @@ import std.typecons;
 import util.direct;
 import util.array;
 import cell.cell;
+import cell.content;
 import cell.table;
 debug(refer) import std.stdio;
 
@@ -41,16 +42,20 @@ public:
         tb.require_create_in(Cell(4,4));
         auto items = rtable.get_content(Cell(1,1));
         assert(items[1] !is null);
-        assert(tb.box_id == items[1].box_id);
+        assert(tb.id == items[1].id);
         tb.require_expand(Direct.right);
         items = rtable.get_content(Cell(1,2));
         assert(items[1] !is null);
         auto all_items = rtable.get_contents();
         assert(all_items[0] == items);
-        assert(tb.box_id == items[1].box_id);
+        assert(tb.id == items[1].id);
         auto tb2 = new TextBOX(table);
         tb2.require_create_in(Cell(6,6));
     }
+    auto get_contents(){
+        return master.get_contents(_offset,_max_range);
+    }
+
     void set_range(Cell ul,int w,int h)
         in{
         assert(h>0);
@@ -63,80 +68,8 @@ public:
         _max_range = Cell(row,col);
         debug(refer) writefln("range h:%d w:%d",h,w);
     }
-    override Tuple!(string,ContentCollection) get_collection(const Cell c){
-        return master.get_collection(c+_offset);
-    }
-    override Tuple!(string,ContentBOX) get_box(const Cell c){
-        return master.get_box(c+_offset);
-    }
-    int[] get_ranged_key()const{
-        int[int] ranged_keys;
-        auto master_keys = master.refer_keys();
-        auto itr = offset;
-        while(1)
-        {
-            if(itr in master_keys)
-            {
-                auto cells_key = master_keys[itr];
-                ranged_keys[cells_key] = cells_key; // 重複を避けるため
-            }
-            if(itr.column < _max_range.column)
-                ++itr.column;
-            else
-            {
-                ++itr.row;
-                itr.column = offset.column;
-            }
-
-            if(itr == _max_range)
-                break;
-        }
-        return ranged_keys.values;
-    }
-
-    Tuple!(string,ContentCollection)[] get_collections(){
-        Tuple!(string,CellContent)[] result;
-        auto collection_table = master.refer_collection_table();
-
-        auto ranged_keys = get_ranged_key();
-        foreach(k; ranged_keys)
-        {
-            if(k == 0) continue;
-            if(k in collection_table)
-                result ~= collection_table[k];
-        }
-        return result;
-    }
-    Tuple!(string,ContentBOX)[] get_boxes(){
-        Tuple!(string,CellContent)[] result;
-        auto box_table = master.refer_box_table();
-
-        auto ranged_keys = get_ranged_key();
-        foreach(k; ranged_keys)
-        {
-            if(k == 0) continue;
-            if(k in box_table)
-                result ~= box_table[k];
-        }
-        return result;
-    }
-
     // master のtableのなかでview に含まれるものを包めて返す
     // Contentの型情報はさらに落ちる
-    Tuple!(string,CellContent)[] get_contents(){
-        Tuple!(string,CellContent)[] result;
-        auto master_keys = master.refer_keys();
-        auto box_table = master.refer_box_table();
-        auto collection_table = master.refer_collection_table();
-
-        auto ranged_keys = get_ranged_key();
-        foreach(k; ranged_keys)
-        {
-            if(k == 0) continue;
-            result ~= master.get_content(k);
-        }
-        return result;
-    }
     override void add_box(T)(T u)
         in{
         assert(u.table == master);
@@ -157,7 +90,7 @@ public:
         return b.top_left + _offset;
     }
     bool empty(){
-        return master.refer_keys().keys.empty();
+        return master.empty();
     }
 }
 

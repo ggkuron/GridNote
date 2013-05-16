@@ -16,7 +16,7 @@ private:
     Cell _pivot;
     void set_pivot(const Cell p)
         in{
-        assert(get_box.empty());
+        assert(get_cells.empty());
         }
     body{
         debug(cell) writeln("set__pivot start");
@@ -55,10 +55,10 @@ private:
 public:
     void expand_to_focus()
         in{
-        assert(!get_box.empty());
+        assert(!get_cells.empty());
         }
         out{
-        assert(is_box(get_box()));
+        assert(is_box(get_cells()));
         }
     body{
         debug(cell) writeln("expand_to__focus start");
@@ -90,7 +90,7 @@ public:
         debug(cell) writeln("create_TextBOX start");
         auto tb = new TextBOX(table);
         if(!tb.require_create_in(_focus)) return null;
-        box.clear();
+        clear();
         debug(cell) writeln("end");
         return tb;
     }
@@ -104,6 +104,6 @@ public:
         return _pivot;
     }
     override void clear(){
-        box.clear();
+        super.clear();
     }
 }

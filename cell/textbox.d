@@ -2,6 +2,7 @@ module cell.textbox;
 
 import cell.cell;
 import cell.table;
+import cell.content;
 import text.text;
 import std.string;
 import std.utf;
@@ -61,7 +62,7 @@ public:
     }
     // 操作が終わった時にTableから取り除くべきか
     // super.is_to_spoil()は強制削除のためにはかます必要がある
-    override bool is_to_spoil(){
+    override bool is_to_spoil()const{
         return super.is_to_spoil() || text.empty();
     }
     // アクセサ
