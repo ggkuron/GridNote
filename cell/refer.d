@@ -83,7 +83,12 @@ public:
         if(!check_range) assert(0);
         master.add_box(u+_offset);
     }
-    void move_area(in Direct to){
+    // offsetの増加方向にしか要求は来ないはず
+    void shift(in Direct to)
+        in{
+        assert(to.is_positive());
+        }
+    body{
         _offset.move(to);
         _max_range.move(to);
     }
@@ -97,11 +102,15 @@ public:
     bool empty(){
         return master.empty();
     }
-    void shift(in Direct dir){
-        if(dir.is_positive)
-            master.shift(dir);
+    // content（tableの中身）の移動方向で指定
+    void move_area(in Direct dir){
+        if(dir.is_negative)
+            master.shift(dir.reverse);
         else
-            move_area(dir);
+            shift(dir);
+    }
+    @property Cell max_cell()const{
+        return _max_range;
     }
 }
 

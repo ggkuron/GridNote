@@ -25,8 +25,8 @@ enum focus_mode{ normal,select,edit }
 final class ManipTable{
 private:
     BoxTable focused_table;
-    ReferTable refer_table;
     CellContent maniped_box;
+    PageView _pv;
     string box_type;
 
     ManipTextBOX manip_textbox;
@@ -34,7 +34,7 @@ public:
     focus_mode mode;
     // Selectはここで持つべきか否か
     SelectBOX select;
-    this(BoxTable table,ReferTable r)
+    this(BoxTable table,PageView p)
         out{
         assert(focused_table);
         assert(manip_textbox);
@@ -45,13 +45,23 @@ public:
         select = new SelectBOX(focused_table);
 
         manip_textbox = new ManipTextBOX(this);
-        ReferTable = 
+        _pv =  p;
     }
     void move_focus(Direct dir){
         auto focus = select.focus();
+        const max_view = _pv.get_view_max();
         if((!focus.column && dir == Direct.left)
         || (!focus.row && dir == Direct.up)
-        || (focus.column == in_
+        || (focus.column >= max_view.column && dir==Direct.right )
+        || (focus.row >= max_view.row && dir==Direct.down ))
+        {
+            import std.stdio;
+            debug(manip) writeln("focus ",focus);
+            debug(manip) writeln("max ",max_view);
+
+            _pv.move_view(dir.reverse);
+            select.move(dir);
+        }
         else
             select.move(dir);
         debug(manip) writefln("focus: %s",select.focus);
@@ -124,12 +134,24 @@ public:
         else{
             if(target.top_left.row == 0 && to == Direct.up)
             {
-                focused_table.shift(Cell(1,0));
+                // focused_table.shift(Cell(1,0));
+                _pv.move_view(to);
                 target.require_move(to);
             }
             else if(target.top_left.column == 0 && to == Direct.left)
             {
-                focused_table.shift(Cell(0,1));
+                // focused_table.shift(Cell(0,1));
+                _pv.move_view(to);
+                target.require_move(to);
+            }
+            else if(target.bottom_right.row == _pv.get_view_max().row && to == Direct.down)
+            {
+                _pv.move_view(to);
+                target.require_move(to);
+            }
+            else if(target.bottom_right.column == _pv.get_view_max().column && to==Direct.right)
+            {
+                _pv.move_view(to);
                 target.require_move(to);
             }
             else if(target.require_move(to))

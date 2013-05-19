@@ -153,9 +153,6 @@ private:
                 cast(int)(holding_area.w/gridSpace),
                 cast(int)(holding_area.h/gridSpace));
     }
-    void move_view(Direct dir){
-        in_view.move_area(dir);
-    }
     Rect back;
     RectDrawer backdrw;
     void backDesign(Context cr){
@@ -329,7 +326,7 @@ public:
         imm = new IMMulticontext();
         menu = new Menu();
         table = new BoxTable();
-        manip_table = new ManipTable(table);
+        manip_table = new ManipTable(table,this);
         interpreter = new InputInterpreter(manip_table,this,imm);
         holding_area = new Rect(0,0,200,200);
 
@@ -458,6 +455,9 @@ public:
     }
     int get_gridSize()const{
         return gridSpace;
+    }
+    Cell get_view_max()const{
+        return in_view.max_cell();
     }
 }
 
