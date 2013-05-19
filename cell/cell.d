@@ -74,40 +74,44 @@ unittest{
     auto c = diff(a,b);
     assert(c == Cell(5,5));
 }
-void move(ref Cell cell,const Direct to){
+void move(ref Cell cell,const Direct to,int width=1){
     final switch(to){
         case Direct.right: 
-            ++cell.column;
+            cell.column += width;
             break;
         case Direct.left:
+            while(width--)
             if(cell.column != 0)
                 --cell.column;
             break;
         case Direct.up:
+            while(width--)
             if(cell.row != 0)
                 --cell.row;
             break;
         case Direct.down:
-            ++cell.row;
+            cell.row += width;
             break;
     }
 }
-pure Cell if_moved(const Cell c,const Direct to){
+pure Cell if_moved(const Cell c,const Direct to,int width=1){
     Cell result = c;
     final switch(to){
         case Direct.right: 
-            ++result.column;
+            result.column += width;
             break;
         case Direct.left:
+            while(width--)
             if(result.column != 0)
                 --result.column;
             break;
         case Direct.up:
+            while(width--)
             if(result.row != 0)
                 --result.row;
             break;
         case Direct.down:
-            ++result.row;
+            result.row += width;
             break;
     }
     return result;
@@ -170,20 +174,19 @@ unittest{
 }
 
 // 独立して存在できる
-// 各々が各々のTableを持っている
 interface CellStructure{
     @property Cell top_left()const;
     @property Cell top_right()const;
     @property Cell bottom_left()const;
     @property Cell bottom_right()const;
-    @property bool empty();
+    @property bool empty()const;
     void move(const Cell c);
     void move(const Direct,int pop_cnt=1);
     void create_in(const Cell);
     void expand(const Direct,int width=1);
     void remove(const Direct,int width=1);
     void clear();
-    bool is_in(const Cell c)const;
+    bool is_hold(const Cell c)const;
     const(Cell)[] get_cells()const;
     @property int numof_col()const;
     @property int numof_row()const;
@@ -191,16 +194,9 @@ interface CellStructure{
 
 // 構造をTableに持たせる
 // Table上のCellContentと空間を共有する
-interface CellContent{
-    @property Cell top_left()const;
-    @property Cell top_right()const;
-    @property Cell bottom_left()const;
-    @property Cell bottom_right()const;
-    @property bool empty()const;
+// CellStructureをラップしたもの
+interface CellContent : CellStructure{
     @property int id()const;
-    @property int numof_col()const;
-    @property int numof_row()const;
-    bool is_in(Cell c)const;
     @property const(Cell[][Direct]) edge_line()const;
     bool require_create_in(const Cell);
     bool require_move(const Cell);
@@ -212,4 +208,5 @@ interface CellContent{
     void set_id(int);
     const(Cell)[] get_cells()const;
 }
+
 

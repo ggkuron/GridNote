@@ -1,20 +1,14 @@
-module cell.collection;
+module cell.flex_common;
 
 import cell.cell;
-import cell.rangecell;
+public import cell.rangecell;
 import util.direct;
 import util.array;
 import util.range;
-import cell.flex_common;
-debug(collec) import std.stdio;
 
 // 自由変形できる構造
-class Collection : CellStructure{
+mixin template flex_common(alias box_body){
 private:
-
-    Cell[] box;
-    // _min_row 等に依存
-    // rangeとは独立している
     Cell[LR][UpDown] _edge;
 
     int _numof_row = 1;  // 
@@ -32,14 +26,19 @@ private:
     int _max_row = int.min;
     int _max_col = int.min;
 
+    @property Cell[] box(){
+        return mixin (box_body);
+    }
+
+
     bool _fixed;
     unittest{
         auto cb = new Collection();
         cb.create_in(Cell(3,3));
-        assert(cb.is_hold(Cell(3,3)));
-        assert(!cb.is_hold(Cell(3,4)));
+        assert(cb.is_in(Cell(3,3)));
+        assert(!cb.is_in(Cell(3,4)));
         cb.expand(Direct.right);
-        assert(cb.is_hold(Cell(3,4)));
+        assert(cb.is_in(Cell(3,4)));
         cb = new Collection();
         cb.create_in(Cell(5,5));
         cb.expand(Direct.right);
@@ -65,47 +64,48 @@ private:
         assert(cb._numof_col == 5);
         debug(cell) writeln("#### update_info unittest end ####");
     }
-    final void expand1(const Direct dir){
+    final void expand1(const Direct dir)
+    body{
         debug(cell) writeln("@@@@ expand start @@@@");
+        debug(cell) writeln("direct is ",dir);
+
 
         const Cell[] one_edges = edge_line[dir];
-        _edge_line[dir].clear();
         foreach(c; one_edges) //one_edgesが配列でないとexpanded_edgeがsortされない
         {
             auto moved = c.if_moved(dir);
             box ~= moved;
-            _edge_line[dir] ~= moved;
             _range.add(moved);
         }
         if(dir.is_horizontal)
         {
-            _edge[up][cast(LR)dir].move(dir);
-            _edge[down][cast(LR)dir].move(dir);
-            _edge_line[Direct.up] ~= _edge[up][cast(LR)dir];
-            _edge_line[Direct.down] ~= _edge[down][cast(LR)dir];
-            ++_numof_col;
-            
-            if(dir.is_positive)
-                ++_max_col;
-            else 
-                --_min_col;
+          edge[up][dir].move(dir);
+          edge[down][dir].move(dir);
+          ++_numof_col;
+          if(dir.is_positive)
+              ++_max_col;
+          else 
+              --_min_col;
         }
         else // if(dir.is_vertical)
         {
-          _edge[cast(UpDown)dir][left].move(dir);
-          _edge[cast(UpDown)dir][right].move(dir);
-          _edge_line[Direct.left] ~= _edge[cast(UpDown)dir][left];
-          _edge_line[Direct.right] ~= _edge[cast(UpDown)dir][right];
-
+          edge[dir][left].move(dir);
+          edge[dir][right].move(dir);
           ++_numof_row;
           if(dir.is_positive)
               ++_max_row;
           else 
               --_min_row;
         }
-        _range.expand(dir);
+        range.expand(dir);
 
         debug(cell) writeln("#### expand end ####");
+        // debug(cell) writeln("boxes are ",box);
+        debug(move) writeln("min col ",min_col);
+        debug(move) writeln("max col ",max_col);
+        debug(move) writeln("col_table are ",col_table);
+        debug(move) writeln("row_table are ",row_table);
+        return true;
     }
     final void remove1(const Direct dir){
         debug(cell) writeln("@@@@ Collection.remove start @@@@");
@@ -122,8 +122,8 @@ private:
 
         if(dir.is_horizontal)
         {
-          _edge[up][cast(LR)dir].move(dir.reverse);
-          _edge[down][cast(LR)dir].move(dir.reverse);
+          edge[up][dir].move(dir.reverse);
+          edge[down][dir].move(dir.reverse);
           --_numof_col;
           if(dir.is_positive)
               --_max_col;
@@ -132,15 +132,15 @@ private:
         }
         else // if(dir.is_vertical)
         {
-          _edge[cast(UpDown)dir][left].move(dir.reverse);
-          _edge[cast(UpDown)dir][right].move(dir.reverse);
+          edge[dir][left].move(dir.reverse);
+          edge[dir][right].move(dir.reverse);
           --_numof_row;
           if(dir.is_positive)
               --_max_row;
           else 
               ++_min_row;
         }
-        _range.remove(dir);
+        range.remove(dir);
             
         debug(cell) writeln("#### Collection.remove end ####");
         debug(move) writeln("col_table are ",col_table);
@@ -152,49 +152,16 @@ private:
         remove(dir.reverse);
     }
 public:
-    this(){
-        _range = new RangeCell();
-    }
-    this(Cell ul,int rw,int cw){
-        debug(cell){ 
-            writeln("ctor start");
-            writefln("rw %d cw %d",rw,cw);
-        }
-        this();
-        hold_tl(ul,rw,cw);
-        debug(cell)writeln("ctor end");
-    }
-    // this(Collection oldone)
-    //     in{
-    //     assert(!oldone.get_cells().empty);
-    //     }
-    //     out{
-    //     assert(!box.empty);
-    //     }
-    // body{
-    //     debug(cell) writeln("take after start");
-    //     box = oldone.get_cells().dup;
-    //     _edge = oldone._edge.dup();
-    //     _min_col = oldone.min_col;
-    //     _max_col = oldone.max_col;
-    //     _min_row = oldone.min_row;
-    //     _max_row = oldone.max_row;
-    //     _range = oldone._range.clone();
-
-    //     oldone.clear();
-    //     debug(cell) writeln("end");
-    // }
-
     void create_in(const Cell c){
         clear(); // <- range.clear()
         box ~= c;
-        _range.add(c);
-        _min_row = _max_row = c.row;
-        _min_col = _max_col = c.column;
-        _edge[up][left] = c;
-        _edge[up][right] = c;
-        _edge[down][left] = c;
-        _edge[down][right] = c;
+        range.add(c);
+        min_row = max_row = c.row;
+        min_col = max_col = c.column;
+        edge[up][left] = c;
+        edge[up][right] = c;
+        edge[down][left] = c;
+        edge[down][right] = c;
         _edge_line[Direct.left] ~= c;
         _edge_line[Direct.right] ~= c;
         _edge_line[Direct.up] ~= c;
@@ -212,51 +179,51 @@ public:
         bool min_row_f,min_col_f,max_row_f,max_col_f;
         box ~= c;
 
-        if(c.row < _range.row)
+        if(c.row < range.row)
         {
-            min_row_f = true;
+            mon_row_f = true;
             _edge_line[Direct.up].clear();
-            _edge_line[Direct.up] ~= c;
+            _edge_line[Direct.up] ~= c.row;
         }
-        else if(c.row > _range.row)
+        else if(c.row > range.row)
         {
             max_row_f = true;
             _edge_line[Direct.down].clear();
-            _edge_line[Direct.down] ~= c;
+            _edge_line[Direct.down] ~= c.row;
         }
-        else if(c.row == _range.row)
-            _edge_line[Direct.up] ~= c;
+        else if(c.row == range.row)
+            _edge_line[Direct.up] ~= c.row;
         else // if(c.row == row_table.max)
-            _edge_line[Direct.down] ~= c;
+            _edge_line[Direct.down] ~= c.row;
 
-        if(c.column < _range.col)
+        if(c.column < range.col)
         {
             min_row_f = true;
             _edge_line[Direct.left].clear();
-            _edge_line[Direct.left] ~= c;
+            _edge_line[Direct.left] ~= min_col;
         }
-        else if(c.column > _range.col)
+        else if(c.column > range.col)
         {
             max_col_f = true;
             _edge_line[Direct.right].clear();
-            _edge_line[Direct.right] ~= c;
+            _edge_line[Direct.right] ~= max_col;
         }
-        else if(c.column == _range.col)
-            _edge_line[Direct.left] ~= c;
+        else if(c.column == col_table.min)
+            _edge_line[Direct.left] ~= c.column;
         else // if(c.column == col_table.max)
-            _edge_line[Direct.right] ~= c;
+            _edge_line[Direct.right] ~= c.column;
 
         // cellを判定後に更新
         _range.add(c);
 
         if(max_col_f && max_row_f)
-            _edge[down][right] = c;
+            edge[down][right] = c;
         if(max_col_f && min_row_f)
-            _edge[up][right] = c;
+            edge[up][right] = c;
         if(min_col_f && max_row_f)
-            _edge[down][left] = c;
+            edge[down][left] = c;
         if(min_col_f && min_row_f)
-            _edge[up][left] = c;
+            edge[up][left] = c;
     }
     void expand(const Direct dir,int width=1){
         while(width--)
@@ -267,21 +234,20 @@ public:
             remove1(dir);
     }
     void clear(){
-        import std.stdio;
         box.clear();
-        _range.clear();
+        range.clear();
         _numof_row =1;
         _numof_col =1;
-        _max_row = int.min;
-        _max_col = int.min;
-        _min_row = int.max;
-        _min_col = int.max;
-        _edge.clear();
-        _edge_line.clear();
+        max_row = int.min;
+        max_col = int.min;
+        min_row = int.max;
+        min_col = int.max;
+        edge.clear();
+        edge_line.clear();
     }
     // 線形探索:要素数は小さいものしか想定してないから
     // box.lenthでアルゴリズム切り分ける必要があるかも
-    bool is_hold(const Cell c){
+    bool is_in(const Cell c){
         return .is_in(box,c);
     }
     
@@ -291,7 +257,7 @@ public:
         if(!c.column)
             move(down,c.column);
     }
-    void move(const Direct dir,int width=1){
+    void move(const Direct dir,int width){
         while(width--)
             move1(dir);
     }
@@ -307,7 +273,7 @@ public:
         assert(cb.max_row == 9);
         assert(cb.max_col == 9);
         cb.move(Direct.up);
-        assert(cb.top_left == Cell(4,5));
+        assert(cb.edge[up][left] == Cell(4,5));
         assert(cb.bottom_right == Cell(8,9));
         assert(cb.top_right == Cell(4,9));
         assert(cb.bottom_left == Cell(8,5));
@@ -316,7 +282,7 @@ public:
         assert(cb.max_row == 8);
         assert(cb.max_col == 9);
         cb.move(Direct.left);
-        assert(cb.top_left == Cell(4,4));
+        assert(cb.edge[up][left] == Cell(4,4));
         assert(cb.bottom_right == Cell(8,8));
         assert(cb.top_right == Cell(4,8));
         assert(cb.bottom_left == Cell(8,4));
@@ -325,7 +291,7 @@ public:
         assert(cb.max_row == 8);
         assert(cb.max_col == 8);
         cb.move(Direct.right);
-        assert(cb.top_left == Cell(4,5));
+        assert(cb.edge[up][left] == Cell(4,5));
         assert(cb.bottom_right == Cell(8,9));
         assert(cb.top_right == Cell(4,9));
         assert(cb.bottom_left == Cell(8,5));
@@ -336,7 +302,7 @@ public:
 
         debug(cell) writeln("#### Collection move unittest end ####");
     }
-    bool is_on_edge(const Cell c)const{
+    bool is_on_edge(Cell c){
             
         foreach(each_edged; edge_line())
         {
@@ -351,31 +317,26 @@ public:
         auto c = Cell(3,3);
         cb.create_in(c);
         assert(cb.is_on_edge(c));
-
         foreach(idir; Direct.min .. Direct.max+1)
         {   // 最終的に各方向に1Cell分拡大
             auto dir = cast(Direct)idir;
             cb.expand(dir);
-            debug(collec) writeln("edge ",cb.edge_line[dir]);
-            debug(collec) writeln("tl ",cb.top_left);
-            debug(collec) writeln("br ",cb.bottom_right);
-
             assert(cb.is_on_edge(cb.top_left));
             assert(cb.is_on_edge(cb.bottom_right));
         }
         debug(cell) writeln("####is_on_edge unittest end####");
     }
-    bool is_on_edge(const Cell c,const Direct on)const{
+    bool is_on_edge(const Cell c,const Direct on){
         return edge_line[on].is_in(c);
     }
-    @property const (Cell[][Direct]) edge_line()const{
+    @property const (Cell[][Direct]) edge_line(){
         debug(cell) writefln("min_row %d max_row %d\n min_col %d max_col %d",min_row,max_row,min_col,max_col);
-        return  [Direct.right:_edge_line[Direct.right],
-                 Direct.left:_edge_line[Direct.left],
-                 Direct.up:_edge_line[Direct.up],
-                 Direct.down:_edge_line[Direct.down]];
+        return  [Direct.right:all_in_column(max_col),
+                 Direct.left:all_in_column(min_col).dup,
+                 Direct.up:all_in_row(min_row),
+                 Direct.down:all_in_row(max_row)];
     }
-    @property bool empty()const{
+    @property bool empty(){
         return box.empty();
     }
     // 初期段階に矩形領域を確保するために使う
@@ -385,7 +346,7 @@ public:
         assert(w >= 0);
         }
         out{
-        // assert(is_box(box));
+        assert(is_box(box));
         }
     body{
         clear();
@@ -407,7 +368,6 @@ public:
                 --h;
             }
         }
-        debug(collec) writeln("hold ",box);
     }
     void hold_br(const Cell lr,int h,int w) // BottomRight
         in{
@@ -431,7 +391,7 @@ public:
         auto cb = new Collection();
         cb.hold_br(Cell(5,5),3,3);
 
-        assert(cb.top_left == Cell(3,3));
+        assert(cb.edge[up][left] == Cell(3,3));
         assert(cb._numof_row == 3);
         assert(cb._numof_col == 3);
         debug(cell) writeln("####hold_br unittest end####");
@@ -460,7 +420,7 @@ public:
         auto cb = new Collection();
         cb.hold_tr(Cell(5,5),3,3);
 
-        assert(cb.top_left == Cell(5,3));
+        assert(cb.edge[up][left] == Cell(5,3));
         assert(cb._numof_row == 3);
         assert(cb._numof_col == 3);
         debug(cell) writeln("#### hold_tr unittest start ####");
@@ -507,41 +467,38 @@ public:
 
     // getter:
     final:
-    int numof_row()const{
+    int numof_row(){
         return _numof_row;
     }
-    int numof_col()const{
+    int numof_col(){
         return _numof_col;
     }
-    @property int min_row()const{
+    @property int min_row(){
         return _min_row;
     }
-    @property int max_row()const{
+    @property int max_row(){
         return _max_row;
     }
-    @property int min_col()const{
+    @property int min_col(){
         return _min_col;
     }
-    @property int max_col()const{
+    @property int max_col(){
         return _max_col;
     }
-    const(Cell)[] get_cells()const{
+    const(Cell)[] get_cells(){
         return box;
     }
-    @property Cell top_left()const{
-        return _edge[up][left];
+    @property Cell top_left(){
+        return edge[up][left];
     }
-    @property Cell bottom_right()const{
-        return _edge[down][right];
+    @property Cell bottom_right(){
+        return edge[down][right];
     }
-    @property Cell top_right()const{
-        return _edge[up][right];
+    @property Cell top_right(){
+        return edge[up][right];
     }
-    @property Cell bottom_left()const{
-        return _edge[down][left];
-    }
-    Cell[] grab_box(){
-        return box;
+    @property Cell bottom_left(){
+        return edge[down][left];
     }
 }
 

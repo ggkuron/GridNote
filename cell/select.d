@@ -7,9 +7,8 @@ import cell.table;
 import cell.textbox;
 import util.array;
 
-// 継承による贅肉付き過ぎてる感ある
 // focus 使わずにbox使ってfocus表現できる。
-final class SelectBOX : CellCollection{
+final class SelectBOX : Collection{
 private:
     BoxTable table;
     Cell _focus;
@@ -24,7 +23,7 @@ private:
         super.create_in(_pivot);
         debug(cell) writeln("end");
     }
-    void pivot_bound(Cell cl){
+    void pivot_bound(const Cell cl){
         debug(cell) writeln("privot_bound start");
         if(_pivot == cl)  hold_tl(_pivot,1,1); else
         if(_pivot < cl) // _pivot.rowの方が小さいブロック
@@ -65,20 +64,23 @@ public:
         pivot_bound(_focus);
         debug(cell) writeln("end");
     }
-    override void expand(const Direct dir){
-        super.expand(dir);
+    override void expand(const Direct dir,int width=1){
+        super.expand(dir,width);
     }
     this(BoxTable attach,Cell cursor=Cell(2,2))
     body{
         table = attach;
         _focus = cursor;
     }
-    override void move(const Direct dir){
-        _focus.move(dir);
+    override void move(const Direct dir,int width=1){
+        _focus.move(dir,width);
     }
     void create_in(){
         super.create_in(_focus);
         debug(cell)writefln("create in %s",_focus);
+    }
+    void add(const Cell c){
+        super.add(c);
     }
     bool is_on_edge()const{
         return super.is_on_edge(_focus);
@@ -90,7 +92,7 @@ public:
         debug(cell) writeln("create_TextBOX start");
         auto tb = new TextBOX(table);
         if(!tb.require_create_in(_focus)) return null;
-        clear();
+        selection_clear();
         debug(cell) writeln("end");
         return tb;
     }
@@ -103,7 +105,8 @@ public:
     @property Cell pivot()const{
         return _pivot;
     }
-    override void clear(){
+    // focusは残す
+    void selection_clear(){
         super.clear();
     }
 }

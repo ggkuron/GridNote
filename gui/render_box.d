@@ -2,7 +2,10 @@ module gui.render_box;
 
 import gui.pageview;
 import cell.cell;
+// import cell.rangebox;
 import cell.collection;
+import cell.contentflex;
+import cell.contentbox;
 import cell.table;
 import cell.refer;
 import util.direct;
@@ -46,15 +49,19 @@ class BoxRenderer{
     final public void render_grid(Context cr,const CellContent b,const Color color,const ubyte width){
         page_view.renderGrids(cr,b.get_cells(),color,width);
     }
-    final public void render_fill(Context cr,const CellCollection b,const Color color){
+    final public void render_fill(Context cr,const ContentFlex b,const Color color){
         page_view.renderFillGrids(cr,b.get_cells(),color);
     }
-    final public void render_fill(Context cr,const CellContent b,const Color color){
-        Rect grid_rect = get_position(b);
-        auto grid_drwer = new RectDrawer(grid_rect);
-
-        grid_rect.set_color(color);
-        grid_drwer.fill(cr);
-
+    final public void render_fill(Context cr,const ContentBOX b,const Color color){
+        page_view.renderFillBox(cr,b,color);
     }
+
+    // final public void render_fill(Context cr,const CellContent b,const Color color){
+    //     Rect grid_rect = get_position(b);
+    //     auto grid_drwer = new RectDrawer(grid_rect);
+
+    //     grid_rect.set_color(color);
+    //     grid_drwer.fill(cr);
+
+    // }
 }

@@ -2,7 +2,7 @@ module cell.textbox;
 
 import cell.cell;
 import cell.table;
-import cell.content;
+import cell.contentbox;
 import text.text;
 import std.string;
 import std.utf;
@@ -31,6 +31,11 @@ public:
         super(table);
         text = new Text();
     }
+    this(BoxTable table,const Cell tl,const int w,const int h){
+        super(table,tl,w,h);
+        text = new Text();
+    }
+
     void insert(string s){
         foreach(dchar c; s)
             text.insert(c);
