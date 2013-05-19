@@ -477,6 +477,7 @@ public:
         return get_content(key);
     }
     // 見た目的な正方向にだけしかshiftできない
+    // table上の全てのcontentのキーと実体を動かす
    final void shift(const Cell o){
         debug(refer) writeln("shift start");
         int[Cell] new_key;
@@ -494,12 +495,15 @@ public:
         }
         debug(refer) writeln("shift end");
     }
-    void shift(in Direct dir){
+    void shift(in Direct dir)
+        in{
+        assert(dir.is_positive);
+        }
+    body{
         if(dir == Direct.right)
             shift(Cell(0,1));
-        else if(dir == Direct.down)
+        else // if(dir == Direct.down)
             shift(Cell(1,0));
-        else assert(0);
     }
     final void clear(){
         keys.clear();

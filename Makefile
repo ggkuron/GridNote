@@ -2,7 +2,7 @@
 
 PROJECTDIR = ./
 SRC 	= env.d init.d gui/*.d misc/*.d  manip.d cell/*.d  command/*.d  text/*.d shape/*.d util/*.d
-FLAGS	= -L-L/usr/local/lib -L-lgtk-3 -L-lgtkd-2   -L-lpthread -L-lfreetype  -L-lcairo -version=CairoHasPngFunctions -unittest  -debug=collec -debug=cb -debug=table
+FLAGS	= -L-L/usr/local/lib -L-lgtk-3 -L-lgtkd-2   -L-lpthread -L-lfreetype  -L-lcairo -version=CairoHasPngFunctions -unittest  -debug=collec -debug=cb -debug=manip
 OUT		= exe
 
 .PHONY : all
