@@ -8,7 +8,7 @@ import cairo.ImageSurface;
 // import gtkc.gdktypes;
 import gtkc.gtktypes;
 
-public import misc.color;
+public import util.color;
 
 class Shape{
     Color color;

@@ -102,11 +102,19 @@ public:
     bool empty(){
         return master.empty();
     }
+
     // content（tableの中身）の移動方向で指定
     void move_area(in Direct dir){
         if(dir.is_negative)
-            master.shift(dir.reverse);
-        else
+        {
+            if(_offset.row == 0 && dir == Direct.up
+            || _offset.column == 0 && dir == Direct.left)
+            {
+                master.shift(dir.reverse);
+            }
+            // else // page上の端の座標のみだよね!!
+                //shift(dir.reverse);
+        }else
             shift(dir);
     }
     @property Cell max_cell()const{

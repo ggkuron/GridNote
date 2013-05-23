@@ -55,7 +55,6 @@ private:
 
         cb.hold_tl(Cell(0,0),5,5);
 
-        debug(cell) writefln("!!!! top_left %s",cb.edge[up][left]);
         debug(cell) writefln("!!!! box %s",cb.box);
         assert(cb.top_left == Cell(0,0));
         assert(cb.bottom_right == Cell(4,4));

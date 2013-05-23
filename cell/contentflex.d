@@ -9,6 +9,7 @@ import util.direct;
 import util.array;
 import util.range;
 debug(table) import std.stdio;
+debug(cell) import std.stdio;
 
 // Collection をTableに取り付けるように拡張した形
 // Cell[] box はTableもどのみち持つことになるので

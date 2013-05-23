@@ -23,7 +23,6 @@ import command.command;
 import gtk.Box;
 
 import gtkc.gdktypes;
-import gtk.MainWindow;
 import gtk.Widget;
 import gtk.IMContext;
 
@@ -92,14 +91,14 @@ private:
         return false;
     }
     void commit(string str,IMContext imc){
-        if(interpreter.input_state == InputState.edit)
+        if(interpreter.state == InputState.edit)
         {
             manip_table.im_commit_to_box(str);
             queueDraw();
         }
     }
     void preedit_changed(IMContext imc){
-        if(interpreter.input_state == InputState.edit)
+        if(interpreter.state == InputState.edit)
         {
             auto inputted_box = manip_table.get_target();
             render_text.prepare_preedit(imm,inputted_box);
@@ -111,7 +110,7 @@ private:
     // ascii mode に切り替わったことを期待してみる
     // どうもIMContextの実装依存ぽい
     void preedit_end(IMContext imc){
-        if(interpreter.input_state == InputState.edit)
+        if(interpreter.state == InputState.edit)
         {
         }
     }
@@ -156,6 +155,10 @@ private:
     Rect back;
     RectDrawer backdrw;
     void backDesign(Context cr){
+        back = new Rect(0,0,holding_area.w,holding_area.h);
+        back.set_color(orenge);
+        backdrw = new RectDrawer(back);
+
         backdrw.clip(cr);
     }
     bool show_contents_border = true;
@@ -209,16 +212,16 @@ private:
         grid = new Lines();
         grid.set_color(grid_color);
         grid.set_width(grid_width);
-        for(double y = holding_area.y; y < holding_area.h + holding_area.h; y += gridSpace)
+        for(double y = 0; y < holding_area.h ; y += gridSpace)
         {
-            auto start = new Point(holding_area.x,y);
-            auto end = new Point(holding_area.x+holding_area.w,y);
+            auto start = new Point(0,y);
+            auto end = new Point(holding_area.w,y);
             grid.add_line(new Line(start,end,grid_width));
         }
-        for(double x = holding_area.x ; x < holding_area.w + holding_area.x; x += gridSpace)
+        for(double x = 0 ; x < holding_area.w ; x += gridSpace)
         {
-            auto start = new Point(x,holding_area.y);
-            auto end = new Point(x, holding_area.y + holding_area.h);
+            auto start = new Point(x,0);
+            auto end = new Point(x, holding_area.h);
             grid.add_line(new Line(start,end,grid_width));
         }
         drw_grid = new LinesDrawer(grid);
@@ -249,7 +252,7 @@ private:
         renderGrids(cr,manip_table.select.get_cells(),
                 selected_cell_border_color,selectedLineWidth);
     }
-    void renderFillCell(Context cr,const Cell cell,const Color grid_color){
+    void renderFillCell(Context cr,in Cell cell,in Color grid_color){
         Rect grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
         auto grid_drwer = new RectDrawer(grid_rect);
 
@@ -294,7 +297,6 @@ private:
 
         return result;
     }
-
 public:
     this(Cell start_offset = Cell(0,0))
         out{
@@ -303,19 +305,11 @@ public:
         assert(render_text);
         assert(select);
         assert(select_drwer);
-        assert(back);
-        assert(backdrw);
         }
     body{ 
         void init_selecter(){
             select = new Rect(0,0,gridSpace,gridSpace);
             select_drwer = new RectDrawer(select);
-        }
-        void init_drwer(){
-            back = new Rect(holding_area);
-            back.set_color(orenge);
-            backdrw = new RectDrawer(back);
-            debug(gui) writefln("x:%f y:%f w:%f h:%f ",holding_area.x,holding_area.y,holding_area.w,holding_area.h);
         }
         void set_view_offset(){
             // TODO: set start_offset 
@@ -339,9 +333,8 @@ public:
         addOnUnrealize(&unrealize);
 
         init_selecter();
-        init_drwer();
         setGrid();
-        render_text =  new RenderTextBOX(this);
+        render_text = new RenderTextBOX(this);
 
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
@@ -427,11 +420,11 @@ public:
         LinesDrawer drwer = new LinesDrawer(perimeters);
         drwer.stroke(cr);
     }
-    double get_x(const Cell c)const{ return c.column * gridSpace + holding_area.x; }
-    double get_y(const Cell c)const{ return c.row * gridSpace + holding_area.y; }
+    double get_x(in Cell c)const{ return (c.column - in_view.offset.column) * gridSpace ; }
+    double get_y(in Cell c)const{ return (c.row - in_view.offset.row)* gridSpace ; }
     Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
 
-    void renderFillBox(Context cr,const ContentBOX rb,const Color grid_color){
+    void renderFillBox(Context cr,in ContentBOX rb,const Color grid_color){
         immutable top_left = rb.top_left();
         Rect grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
         auto grid_drwer = new RectDrawer(grid_rect);
@@ -447,7 +440,6 @@ public:
         grid_rect.set_color(grid_color);
         grid_drwer.stroke(cr);
     }
-
    // アクセサ
 public:
     ReferTable get_view(){

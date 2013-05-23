@@ -11,9 +11,13 @@ import std.utf;
 debug(text) import std.stdio; // printf dbg
 final class Text
 {   // TextBOX itemBOX その他で使われる文字列表現TextBuffer相当
-    this(){
-        static int cnt;
-        debug(text) writefln("Text created up %d times",cnt++);
+    this(){}
+    this(Text t){
+        _lines = t._lines;
+        _caret = t._caret;
+        _current_line = t._current_line;
+        _position = t._position;
+        _writing = t._writing.dup;
     }
 private:
     int _lines = 1;
@@ -90,7 +94,9 @@ public:
         auto cl = str(_current_line);
         --_current_line;
         --_lines;
-        _position = _writing[_current_line].keys.sort()[$-1] + 1;
+        if(_current_line in _writing && !_writing[_current_line].keys.empty()
+        || _current_line == 0 )
+            _position = _writing[_current_line].keys.sort()[$-1] + 1;
         set_caret();
         foreach(dchar dc; cl)
             insert(dc);
