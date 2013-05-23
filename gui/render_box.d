@@ -32,7 +32,7 @@ class BoxRenderer{
     final protected Rect get_position(const CellContent b){
         assert(b !is null);
 
-        auto cp = in_view.get_position(b);
+        auto cp = b.top_left;
         debug(gui) writefln("cp : %s",cp);
         auto x = page_view.get_x(cp);
         auto y = page_view.get_y(cp);

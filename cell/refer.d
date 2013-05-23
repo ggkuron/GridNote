@@ -83,21 +83,18 @@ public:
         if(!check_range) assert(0);
         master.add_box(u+_offset);
     }
-    // offsetの増加方向にしか要求は来ないはず
-    void shift(in Direct to)
-        in{
-        assert(to.is_positive());
-        }
-    body{
+    // 
+    void shift(in Direct to){
         _offset.move(to);
         _max_range.move(to);
     }
     @property Cell offset()const{
         return _offset;
     }
+    // 今使ってない
     Cell get_position(in CellContent b)const{
         assert(!b.empty());
-        return b.top_left + _offset;
+        return b.top_left - _offset;
     }
     bool empty(){
         return master.empty();
@@ -112,16 +109,16 @@ public:
             {
                 master.shift(dir.reverse);
             }
-            // else // page上の端の座標のみだよね!!
-                //shift(dir.reverse);
+            else // 既に広げたエリアでviewを移動
+                shift(dir);
         }else
             shift(dir);
     }
     @property Cell max_cell()const{
         return _max_range;
     }
+    @property Cell min_cell()const{
+        return _offset;
+    }
 }
-
-
-
 
