@@ -50,16 +50,15 @@ public:
         manip_textbox = new ManipTextBOX(this);
         _pv =  p;
     }
-    void move_focus(Direct dir){
-        auto focus = select.focus();
-        debug(manip) writeln("mode:",mode);
-        const max_view = _pv.get_view_max();
-        if((!focus.column && dir == Direct.left)
-        || (!focus.row && dir == Direct.up)
+    void move_focus(in Direct dir){
+        immutable focus = select.focus();
+        immutable max_view = _pv.get_view_max();
+        immutable min_view = _pv.get_view_min();
+        if((focus.column <= min_view.column && dir == Direct.left)
+        || (focus.row <= min_view.row && dir == Direct.up)
         || (focus.column >= max_view.column && dir==Direct.right )
         || (focus.row >= max_view.row && dir==Direct.down ))
         {
-            import std.stdio;
             debug(manip) writeln("focus ",focus);
             debug(manip) writeln("max ",max_view);
 
@@ -131,32 +130,43 @@ public:
         }
     body{
         auto target = focused_table.get_content(select.focus)[1];
+        immutable view_min = _pv.get_view_min();
+        immutable view_max = _pv.get_view_max();
         if(target is null) return;
         else{
-            if(target.top_left.row == 0 && to == Direct.up)
-            {
-                // focused_table.shift(Cell(1,0));
+            if(target.top_left.row <= view_min.row && to == Direct.up)
+            {   // viewを動かしたあとそれに合わせるためにmoveする
+                // このrequire_moveは必ず通る
                 _pv.move_view(to);
-                target.require_move(to);
+                // target.require_move(to);
+                if(!view_min.row)
+                    select.move(to.reverse);
             }
-            else if(target.top_left.column == 0 && to == Direct.left)
-            {
-                // focused_table.shift(Cell(0,1));
-                _pv.move_view(to);
-                target.require_move(to);
-            }
-            else if(target.bottom_right.row == _pv.get_view_max().row && to == Direct.down)
+            else if(target.top_left.column <= view_min.column && to == Direct.left)
             {
                 _pv.move_view(to);
-                target.require_move(to);
+                // target.require_move(to);
+                if(!view_min.column)
+                    select.move(to.reverse);
             }
-            else if(target.bottom_right.column == _pv.get_view_max().column && to==Direct.right)
+            else if(target.bottom_right.row >= view_max.row && to == Direct.down)
+            {   // 
+                _pv.move_view(to);
+                // target.require_move(to);
+                if(target.require_move(to))
+                    move_focus(to);
+            }
+            else if(target.bottom_right.column >= view_max.column && to==Direct.right)
             {
                 _pv.move_view(to);
-                target.require_move(to);
+                // target.require_move(to);
+                if(target.require_move(to))
+                    move_focus(to);
             }
-            else if(target.require_move(to))
-                move_focus(to);
+            else if(target.require_move(to)
+                 || target.top_left.column == view_min.column && to == Direct.left
+                 || target.top_left.row == view_min.row && to == Direct.up)
+               select.move(to);
         }
     }
     void delete_selected()

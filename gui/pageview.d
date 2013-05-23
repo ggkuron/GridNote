@@ -421,12 +421,12 @@ public:
         drwer.stroke(cr);
     }
     double get_x(in Cell c)const{ return (c.column - in_view.offset.column) * gridSpace ; }
-    double get_y(in Cell c)const{ return (c.row - in_view.offset.row)* gridSpace ; }
+    double get_y(in Cell c)const{ return (c.row - in_view.offset.row) * gridSpace ; }
     Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
 
     void renderFillBox(Context cr,in ContentBOX rb,const Color grid_color){
         immutable top_left = rb.top_left();
-        Rect grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
+        Rect grid_rect = new Rect(get_x(top_left), get_y(top_left), gridSpace*rb.numof_col, gridSpace*rb.numof_row);
         auto grid_drwer = new RectDrawer(grid_rect);
 
         grid_rect.set_color(grid_color);
@@ -450,6 +450,9 @@ public:
     }
     Cell get_view_max()const{
         return in_view.max_cell();
+    }
+    Cell get_view_min()const{
+        return in_view.min_cell();
     }
 }
 
