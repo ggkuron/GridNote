@@ -13,11 +13,11 @@ debug(cb) import std.stdio;
 // ContentBOX
 abstract class ContentBOX : CellContent{
 private:
-    BoxTable table;
     RangeCell inner_range_cell;
     int _box_id;
 package:
 protected:
+    BoxTable table;
     invariant(){
     //     assert(table !is null);
     }
@@ -213,7 +213,7 @@ public:
     // 削除対象かいなか
     private bool spoiled;
     bool is_to_spoil()const{
-        debug(cell) writeln(spoiled, box.empty());
+        debug(cell) writeln(spoiled, empty());
         return spoiled ||empty();
     };
     @property int id()const{
@@ -299,7 +299,7 @@ public:
 
         cb.hold_tl(Cell(0,0),5,5);
 
-        debug(cell) writefln("!!!! top_left %s",cb.edge[up][left]);
+        debug(cell) writefln("!!!! top_left %s",cb.top_left);
         assert(cb.top_left == Cell(0,0));
         assert(cb.bottom_right == Cell(4,4));
         debug(cell) writeln("numof_row:",cb.numof_row);

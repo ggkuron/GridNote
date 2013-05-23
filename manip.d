@@ -8,6 +8,8 @@ import cell.select;
 import cell.contentbox;
 import command.command;
 import gui.pageview;
+
+import std.array;
 debug(manip) import std.stdio;
 
 enum focus_mode{ normal,select,edit }
@@ -26,12 +28,13 @@ final class ManipTable{
 private:
     BoxTable focused_table;
     CellContent maniped_box;
+    CellContent[] old_state;
     PageView _pv;
     string box_type;
 
     ManipTextBOX manip_textbox;
 public:
-    focus_mode mode;
+    shared focus_mode mode;
     // Selectはここで持つべきか否か
     SelectBOX select;
     this(BoxTable table,PageView p)
@@ -49,6 +52,7 @@ public:
     }
     void move_focus(Direct dir){
         auto focus = select.focus();
+        debug(manip) writeln("mode:",mode);
         const max_view = _pv.get_view_max();
         if((!focus.column && dir == Direct.left)
         || (!focus.row && dir == Direct.up)
@@ -59,7 +63,7 @@ public:
             debug(manip) writeln("focus ",focus);
             debug(manip) writeln("max ",max_view);
 
-            _pv.move_view(dir.reverse);
+            _pv.move_view(dir);
             select.move(dir);
         }
         else
@@ -69,7 +73,7 @@ public:
     CellContent get_target(){
         return maniped_box;
     }
-    void start_select()
+    void change_mode_select()
         in{
         assert(mode != focus_mode.select);
         }
@@ -122,11 +126,8 @@ public:
         maniped_box = target[1];
     }
     void move_selected(Direct to)
-        in{
-        assert(mode==focus_mode.normal);
-        }
         out{
-        assert(mode==focus_mode.normal);
+        // assert(mode==focus_mode.normal);
         }
     body{
         auto target = focused_table.get_content(select.focus)[1];
@@ -172,9 +173,9 @@ public:
             target[1].remove_from_table();
         }
     }
-    void return_to_normal_mode()
+    void change_mode_normal()
         in{
-        assert(mode==focus_mode.select || mode==focus_mode.edit);
+        // assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
         out{
         assert(mode == focus_mode.normal);
@@ -186,10 +187,17 @@ public:
         {   // maniped_box.is_to_spoil == false なら削除されない
             focused_table.try_remove(maniped_box);
         }
-        select.clear();
+        select.selection_clear();
         debug(manip) writeln("returned");
     }
-    void start_insert_normal_text(){
+    void change_mode_edit()
+        out{
+        assert(mode == focus_mode.edit);
+        }
+    body{
+        mode = focus_mode.edit;
+    }
+    void create_TextBOX(){
         debug(manip) writeln("start_insert_normal_text");
         mode = focus_mode.edit;
         if(focused_table.has(select.focus)) return;
@@ -204,10 +212,13 @@ public:
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
         if(mode!=focus_mode.edit) return;
+        
+        old_state ~= maniped_box;
         manip_textbox.with_commit(str,targetbox);
     }
     void backspace(){
         debug(manip) writeln("back space start");
+        old_state ~= maniped_box;
         switch(box_type){
             case "cell.textbox.TextBOX":
                 manip_textbox.backspace(cast(TextBOX)maniped_box);
@@ -217,13 +228,20 @@ public:
         }
     }
     void text_feed(){
+        auto tb = cast(TextBOX)maniped_box;
+        old_state ~= new TextBOX(tb);
         if(box_type == "cell.textbox.TextBOX")
-        manip_textbox.feed(cast(TextBOX)maniped_box);
+        manip_textbox.feed(tb);
     }
     void edit_textbox(){
+        old_state ~= maniped_box;
         if(box_type != "cell.textbox.TextBOX") return;
-        mode = focus_mode.edit;
     }
+    void undo(){
+        if(!old_state.empty())
+        maniped_box = old_state[$-1];
+    }
+
 }
 
 import gtk.IMMulticontext;

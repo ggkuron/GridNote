@@ -3,18 +3,11 @@ module gui.window;
 debug(gui) import std.stdio;
 debug(cmd) import std.stdio;
 import gui.pageview;
-import std.string;
-import std.array;
+import gui.guideview;
 import env;
-import cell.cell;
-import cell.textbox;
-import std.algorithm;
-import shape.shape;
-import shape.drawer;
 
 import gtk.Box;
 
-import gtkc.gdktypes;
 import gtk.MainWindow;
 import gtk.Widget;
 
@@ -22,15 +15,11 @@ import gtk.EventBox;
 import gtk.ImageMenuItem;
 import gtk.AccelGroup;
 
-import gdk.Event;
-
 import gtk.DrawingArea;
 import gtk.Menu;
-import cairo.Surface;
-import cairo.Context;
 
-immutable int start_size_w = 960;
-immutable int start_size_h = 640;
+immutable int start_size_w = 480;
+immutable int start_size_h = 480;
 
 class Window : MainWindow{
     int width = start_size_w;
@@ -43,15 +32,19 @@ class Window : MainWindow{
         auto box = new Box(GtkOrientation.HORIZONTAL,1);
         setEvents(EventMask.ALL_EVENTS_MASK);
         auto page_view = new PageView();
+        auto guide_view = new GuideView();
+        guide_view.setSizeRequest(180,-1);
+        page_view.setSizeRequest(900,-1);
+        box.packStart(guide_view,1,1,0);
         box.packStart(page_view,1,1,0);
 
         add(box);
         // add(page_view);
 
-        page_view.show();
+        // page_view.show();
+        // guide_view.show();
         box.showAll();
         showAll();
     }
 }
-
 

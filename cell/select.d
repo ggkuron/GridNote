@@ -6,6 +6,7 @@ import cell.collection;
 import cell.table;
 import cell.textbox;
 import util.array;
+debug(cell) import std.stdio;
 
 // focus 使わずにbox使ってfocus表現できる。
 final class SelectBOX : Collection{

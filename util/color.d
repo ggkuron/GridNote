@@ -1,4 +1,4 @@
-module misc.color;
+module util.color;
 
 struct Color{
     int r,g,b,a;

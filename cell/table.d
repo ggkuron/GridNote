@@ -61,6 +61,7 @@ private:
         return true;
     }
 package:
+
     Tuple!(string,CellContent)[] get_contents(Cell start,Cell end){
          
         Tuple!(string,CellContent)[] result;
@@ -272,6 +273,18 @@ public:
     }
  
 public:
+    Tuple!(string,CellContent)[] get_all_contents(){
+         
+        Tuple!(string,CellContent)[] result;
+        foreach(k; keys)
+        {
+            if(k==0) continue;
+            assert(k in type_table);
+            assert(k in content_table);
+            result ~=tuple(type_table[k],content_table[k]);
+        }
+        return result;
+    }
     bool is_hold(Cell c){
         foreach(cb ; content_table.values)
             if(cb.is_hold(c)) return true;

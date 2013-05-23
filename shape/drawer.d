@@ -4,7 +4,6 @@ import std.math;
 // import deimos.cairo.cairo;
 // import derelict.sdl2.sdl;
 import shape.shape;
-
 import cairo.Context;
 import cairo.Surface;
 import cairo.ImageSurface;

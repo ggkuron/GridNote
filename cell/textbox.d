@@ -22,7 +22,6 @@ private:
     public Color font_color;
 
     string font_name = "Sans Normal";
-    char[] composition;
     void insert_char(const dchar c){
         text.insert(c);
     }
@@ -34,6 +33,12 @@ public:
     this(BoxTable table,const Cell tl,const int w,const int h){
         super(table,tl,w,h);
         text = new Text();
+    }
+    this(TextBOX tb){
+        text = new Text(tb.text);
+        cursor_pos = tb.cursor_pos;
+        font_color = tb.font_color;
+        super(tb.table);
     }
 
     void insert(string s){
