@@ -81,3 +81,4 @@ immutable return_key = KeyCombine(GdkKeysyms.GDK_Return);
 immutable shift_key = KeyCombine(GdkKeysyms.GDK_Shift_L);
 immutable control_key = KeyCombine(GdkKeysyms.GDK_Control_L);
 immutable escape_key = KeyCombine(GdkKeysyms.GDK_Escape);
+immutable alt_escape = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_bracketleft]);

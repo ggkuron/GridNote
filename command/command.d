@@ -36,6 +36,7 @@ public:
         keys.clear();
     }
 }
+
 interface AtomCMD{
     void execute();
 }
@@ -278,6 +279,9 @@ public:
         regester_key(mode_normal,InputState.normal,escape_key);
         regester_key(mode_normal,InputState.select,escape_key);
         regester_key(mode_normal,InputState.edit,escape_key);
+        regester_key(mode_normal,InputState.normal,alt_escape);
+        regester_key(mode_normal,InputState.select,alt_escape);
+        regester_key(mode_normal,InputState.edit,alt_escape);
 
     }
     bool key_to_cmd(Event event, Widget w)
@@ -326,9 +330,11 @@ public:
     void change_mode_normal(){
         final switch(_input_state){
             case InputState.normal:
+                imm.focusOut();
                 break;
             case InputState.select:
                 _input_state = InputState.normal;
+                imm.focusOut();
                 break;
             case InputState.edit:
                 keyState.clear();
