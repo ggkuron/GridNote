@@ -106,6 +106,10 @@ class Circle : Shape{
         p = x;
         radius = r;
     }
+    this(double[2] x,double r){
+        p = new Point(x[0],x[1]);
+        radius = r;
+    }
 }
 class Arc : Circle{
     double from,to;
@@ -129,5 +133,4 @@ class Image : Shape{
         image = ImageSurface.createFromPng(path);
         frame = f;
     }
-    //  ~this(){ cairo_surface_destroy(image); }
 }

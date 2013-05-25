@@ -73,7 +73,6 @@ immutable default_BOX_DELETE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.
 
 immutable default_MODE_NORMAL = KeyCombine(GdkKeysyms.GDK_Escape);
 immutable default_start_insert = KeyCombine(GdkKeysyms.GDK_i);
-// immutable default_EDIT_TO_NORMAL = KeyCombine(GdkKeysyms.GDK_Escape);
 
 immutable backspace = KeyCombine(GdkKeysyms.GDK_BackSpace);
 immutable delete_key = KeyCombine(GdkKeysyms.GDK_Delete);
@@ -82,3 +81,5 @@ immutable shift_key = KeyCombine(GdkKeysyms.GDK_Shift_L);
 immutable control_key = KeyCombine(GdkKeysyms.GDK_Control_L);
 immutable escape_key = KeyCombine(GdkKeysyms.GDK_Escape);
 immutable alt_escape = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_bracketleft]);
+
+immutable default_ImageOpen= KeyCombine(GdkKeysyms.GDK_I);

@@ -18,10 +18,17 @@ struct Cell
     int row;
     int column;
     public:
-    Cell opBinary(string op)(const Cell rhs)const if(op =="+"){
+    Cell opBinary(string op)(in Cell rhs)const if(op =="+"){
         return  Cell(row + rhs.row, column + rhs.column);
     }
-    Cell opBinary(string op)(const Cell rhs)const if(op =="-"){
+    Cell opBinary(string op)(in int rhs)const if(op =="/"){
+        return  Cell(row/rhs, column/rhs);
+    }
+    Cell opBinary(string op)(in int rhs)const if(op =="*"){
+        return  Cell(row*rhs, column*rhs);
+    }
+
+    Cell opBinary(string op)(in Cell rhs)const if(op =="-"){
         int minus_tobe_zero(int x){
             return x<0?0:x;
         }
@@ -41,7 +48,7 @@ struct Cell
         assert(row >= 0);
         assert(column >= 0);
     }
-    int opCmp(const Cell rhs)const{
+    int opCmp(in Cell rhs)const{
         auto row_result = row - rhs.row;
         auto col_result = column - rhs.column;
         if(!row_result) return col_result;
@@ -74,7 +81,7 @@ unittest{
     auto c = diff(a,b);
     assert(c == Cell(5,5));
 }
-void move(ref Cell cell,const Direct to,int width=1){
+void move(ref Cell cell,in Direct to,int width=1){
     final switch(to){
         case Direct.right: 
             cell.column += width;
@@ -94,7 +101,7 @@ void move(ref Cell cell,const Direct to,int width=1){
             break;
     }
 }
-pure Cell if_moved(const Cell c,const Direct to,int width=1){
+pure Cell if_moved(in Cell c,in Direct to,int width=1){
     Cell result = c;
     final switch(to){
         case Direct.right: 
@@ -118,7 +125,7 @@ pure Cell if_moved(const Cell c,const Direct to,int width=1){
 }
 
 // 矩形しか持たないならいらないかもしれない
-pure int count_lined(const(Cell)[] box,const Cell from,const Direct to){
+pure int count_lined(const(Cell)[] box,in Cell from,in Direct to){
     // debug(cell) writeln("count_lined start");
     int result;
     Cell c = from;
@@ -180,13 +187,13 @@ interface CellStructure{
     @property Cell bottom_left()const;
     @property Cell bottom_right()const;
     @property bool empty()const;
-    void move(const Cell c);
-    void move(const Direct,int pop_cnt=1);
-    void create_in(const Cell);
-    void expand(const Direct,int width=1);
-    void remove(const Direct,int width=1);
+    void move(in Cell c);
+    void move(in Direct,int pop_cnt=1);
+    void create_in(in Cell);
+    void expand(in Direct,int width=1);
+    void remove(in Direct,int width=1);
     void clear();
-    bool is_hold(const Cell c)const;
+    bool is_hold(in Cell c)const;
     const(Cell)[] get_cells()const;
     @property int numof_col()const;
     @property int numof_row()const;
@@ -194,15 +201,14 @@ interface CellStructure{
 
 // 構造をTableに持たせる
 // Table上のCellContentと空間を共有する
-// CellStructureをラップしたもの
 interface CellContent : CellStructure{
     @property int id()const;
     @property const(Cell[][Direct]) edge_line()const;
-    bool require_create_in(const Cell);
-    bool require_move(const Cell);
-    bool require_move(const Direct,int width=1);
-    bool require_expand(const Direct,int width=1);
-    void require_remove(const Direct,int width=1);
+    bool require_create_in(in Cell);
+    bool require_move(in Cell);
+    bool require_move(in Direct,int width=1);
+    bool require_expand(in Direct,int width=1);
+    void require_remove(in Direct,int width=1);
     bool is_to_spoil()const;
     void remove_from_table();
     void set_id(int);

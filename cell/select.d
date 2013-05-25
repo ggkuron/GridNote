@@ -4,7 +4,11 @@ import util.direct;
 import cell.cell;
 import cell.collection;
 import cell.table;
+
+// ContentBOX
 import cell.textbox;
+import cell.imagebox;
+
 import util.array;
 debug(cell) import std.stdio;
 
@@ -96,6 +100,14 @@ public:
         selection_clear();
         debug(cell) writeln("end");
         return tb;
+    }
+    ImageBOX create_ImageBOX(string filepath){
+        debug(cell) writeln("@@@@ create_ImageBOX @@@@");
+        auto ib = new ImageBOX(table,filepath);
+        if(!ib.require_create_in(_focus)) return null;
+        selection_clear();
+        debug(cell) writeln("#### create_ImageBOX ####");
+        return ib;
     }
     void set_pivot(){
         set_pivot(_focus);

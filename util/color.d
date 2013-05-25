@@ -23,7 +23,9 @@ struct Color{
     this(Color color,int alpha){
         this(color.r,color.g,color.b,alpha);
     }
-
+    string color_string(){
+        return "#"~to_hex(r)~to_hex(g)~to_hex(b);
+    }
     void change_alpha(int aa)
         in{
         assert(aa<256);
@@ -54,6 +56,14 @@ pure int from_hex(in char hc){
         default: 
             assert(0);
     }
+}
+
+import std.format;
+import std.range;
+string to_hex(in int i){
+    auto writer = appender!string();
+    formattedWrite(writer, "%X", i);
+    return  writer.data;
 }
 pure int from_hex(string hexstr){
     int result;

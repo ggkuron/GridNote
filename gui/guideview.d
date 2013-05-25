@@ -1,6 +1,7 @@
 module gui.guideview;
 
 debug(guid) import std.stdio;
+import gui.tableview;
 import std.string;
 import std.array;
 import env;
@@ -35,15 +36,24 @@ import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
 
-immutable int start_size_w = 960;
-immutable int start_size_h = 640;
+import cell.cell;
+import cell.contentbox;
+import cell.textbox;
+import cell.imagebox;
+import gui.imagebox;
 
-final class GuideView : DrawingArea{
+final class GuideView : DrawingArea,TableView{
 private:
+    int gridSpace = 32;
     GtkAllocation holding; // この2つの表すのは同じもの
     Rect holding_area;  // 内部処理はこちらを使う
 
     BoxTable table;    // 描画すべき個々のアイテムに対する
+    TextBOX mode_indicator;
+    ImageBOX color_box;
+
+    RenderImage render_image;
+    RenderTextBOX render_text;
 
     ubyte renderdLineWidth = 2;
     Color _back_color = Color(darkcyan,96);
@@ -126,7 +136,7 @@ private:
         return true;
     }
 
-    void renderFillCell(Context cr,const Cell cell,const Color grid_color){
+    void FillCell(Context cr,const Cell cell,const Color grid_color){
         // Rect grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
         // auto grid_drwer = new RectDrawer(grid_rect);
 
@@ -145,7 +155,7 @@ public:
         setProperty("can-focus",0);
 
         table = new BoxTable();
-        holding_area = new Rect(0,0,start_size_w,start_size_h);
+        holding_area = new Rect(0,0,200,200);
 
         addOnFocusIn(&focus_in);
         addOnFocusOut(&focus_out);
@@ -161,13 +171,18 @@ public:
 
     Rect select;
     RectDrawer select_drwer;
-    void renderFillGrids(Context cr,const Cell[] cells,const Color color){
-        foreach(c; cells)
-        {
-            renderFillCell(cr,c,color);
-        }
-    }
+    double get_x(in Cell c)const{ return c.column * gridSpace ; }
+    double get_y(in Cell c)const{ return c.row * gridSpace ; }
+    // Cellの順ではなく、x(column方向),y(row方向)順なのに注意
+    double[2] get_pos(in Cell c)const{ return [get_x(c),get_y(c)]; }
+    // Cellの座標と次のCellの座標、例えば入力Cell(5,5)に対してCell(5,5) とCell(6,6)の中間座標を返す
+    // Cellに対する割り算には切り捨て方向に働きCell(5,5)/2 == Cell(2,2)になる。
+    double[2] get_center_pos(in Cell c)const{ return [get_x(c) + gridSpace/2, get_y(c) + gridSpace/2]; }
+
+
    // アクセサ
-public:
+    int get_gridSize()const{
+        return gridSpace;
+    }
 }
 

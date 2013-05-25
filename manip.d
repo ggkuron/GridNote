@@ -9,6 +9,8 @@ import cell.contentbox;
 import command.command;
 import gui.pageview;
 
+import gtk.FileChooserDialog;
+
 import std.array;
 debug(manip) import std.stdio;
 
@@ -31,7 +33,6 @@ private:
     CellContent[] old_state;
     PageView _pv;
     string box_type;
-
     ManipTextBOX manip_textbox;
 public:
     shared focus_mode mode;
@@ -218,6 +219,22 @@ public:
         box_type = tb.toString();
 
         debug(manip) writeln("end");
+    }
+//    void select_file(){
+//        auto filechooserD = new FileChooserDialog(null);
+//        filechooserD.run();
+//        // filechooserD.getFile();
+//        filechooserD.showAll();
+//    }
+    void create_ImageBOX(string filepath){
+        debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
+        mode = focus_mode.edit;
+        if(focused_table.has(select.focus)) return;
+        auto ib = select.create_ImageBOX(filepath);
+
+        maniped_box = ib;
+        box_type = ib.toString();
+        debug(manip) writeln("#### end create_ImageBOX ####");
     }
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);

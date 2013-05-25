@@ -67,7 +67,7 @@ public:
         // 
         if(box.empty()) return;
         auto box_id = box.id();
-        gridSize = page_view.get_gridSize();
+        gridSize = get_gridSize();
         box_pos[box_id] = get_position(box); // gui.render_box::get_position
         box_pos[box_id].y += gridSize/3;
         fontsize[box_id] = cast(ubyte)box.font_size;    //  !!TextBOXで変更できるように 
@@ -86,7 +86,7 @@ public:
             //    横に圧縮して無理やり入れる
             //    Cellごと縮小して無理やり入れる
             // 
-            // 確定されてBOX はこの処理を通したくない
+            // 確定された(固定化された)BOX はこの処理を通したくない
             // TODO 確定されたBOXの定義
             // auto pre_box = box.get_box_dup();
             if(box_id !in width) return;
@@ -163,8 +163,10 @@ public:
         {
             if(one_line.empty) continue;
             // if(line !in layout) <- IMのpreedit位置が最初の位置にも反映されてしまう
+            int newIndex,newTraing;
             layout[box_id][line] = PgCairo.createLayout(cr);
             layout[box_id][line].setFontDescription(desc[box_id]);
+            // layout[box_id][line].moveCursorVisually(1,0,0,1,newIndex,newTraing);
 
             debug(gui) writeln("write position: ",box_pos[box_id].x," ",box_pos[box_id].y);
             auto fc = fontcolor[box_id];

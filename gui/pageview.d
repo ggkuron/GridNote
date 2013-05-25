@@ -1,7 +1,6 @@
 module gui.pageview;
 
-debug(gui) import std.stdio;
-debug(cmd) import std.stdio;
+import gui.tableview;
 import std.string;
 import std.array;
 import env;
@@ -10,12 +9,12 @@ import cell.table;
 import cell.contentbox;
 import cell.refer;
 import cell.textbox;
-// import cell.rangebox;
 import text.text;
 import manip;
 import util.direct;
 import std.algorithm;
 import gui.textbox;
+import gui.imagebox;
 import shape.shape;
 import shape.drawer;
 
@@ -38,9 +37,8 @@ import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
 
-// 主要なGrid領域
-// view と guiに纏わる操作を分離したい
-final class PageView : DrawingArea{
+// 入力領域
+final class PageView : DrawingArea,TableView{
 private:
     GtkAllocation holding; // この2つの表すのは同じもの
     Rect holding_area;  // 内部処理はこちらを使う
@@ -52,6 +50,7 @@ private:
 
     InputInterpreter interpreter;
     RenderTextBOX render_text ;
+    RenderImage render_image;
     IMMulticontext imm;
 
     ubyte renderdLineWidth = 2;
@@ -226,7 +225,6 @@ private:
         }
         drw_grid = new LinesDrawer(grid);
     }
-
     void renderGrid(Context cr){
         drw_grid.stroke(cr);
     }
@@ -237,65 +235,25 @@ private:
         final switch(manip_table.mode)
         {
             case focus_mode.normal:
-                renderFillCell(cr,manip_table.select.focus,normal_focus_color); 
+                FillCell(cr,manip_table.select.focus,normal_focus_color); 
                 break;
             case focus_mode.select:
-                renderFillCell(cr,manip_table.select.focus,selected_focus_color); 
+                FillCell(cr,manip_table.select.focus,selected_focus_color); 
                 break;
             case focus_mode.edit:
-                // renderFillCell(cr,manip_table.select.focus,selected_focus_color); 
+                // FillCell(cr,manip_table.select.focus,selected_focus_color); 
                 // Text編集中,IMに任せるため
                 break;
         }
     }
     void renderSelection(Context cr){
-        renderGrids(cr,manip_table.select.get_cells(),
+        strokeGrids(cr,manip_table.select.get_cells(),
                 selected_cell_border_color,selectedLineWidth);
-    }
-    void renderFillCell(Context cr,in Cell cell,in Color grid_color){
-        Rect grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
-        auto grid_drwer = new RectDrawer(grid_rect);
-
-        grid_rect.set_color(grid_color);
-        grid_drwer.fill(cr);
     }
     void when_sizeallocate(GdkRectangle* n,Widget w){
         set_holding_area();
         set_view_size();
         setGrid();
-    }
-    Line CellLine(const Cell cell,const Direct dir,Color color,double w){
-        auto startp = new Point();
-        auto endp = new Point();
-        startp.x = get_x(cell);
-        startp.y = get_y(cell);
-        Line result;
-        final switch(dir)
-        {   
-            case Direct.right:
-                startp.x += gridSpace;
-                endp.x = startp.x;
-                endp.y = startp.y + gridSpace;
-                break;
-            case Direct.left:
-                endp.x = startp.x;
-                endp.y = startp.y + gridSpace;
-                break;
-            case Direct.up:
-                endp.x = startp.x + gridSpace;
-                endp.y = startp.y;
-                break;
-            case Direct.down:
-                startp.y += gridSpace;
-                endp.x = startp.x + gridSpace;
-                endp.y = startp.y;
-                break;
-        }
-        result = new Line(startp,endp);
-        result.set_width(w);
-        result.set_color(color);
-
-        return result;
     }
 public:
     this(Cell start_offset = Cell(0,0))
@@ -303,6 +261,7 @@ public:
         assert(table);
         assert(in_view);
         assert(render_text);
+        assert(render_image);
         assert(select);
         assert(select_drwer);
         }
@@ -335,6 +294,7 @@ public:
         init_selecter();
         setGrid();
         render_text = new RenderTextBOX(this);
+        render_image = new RenderImage(this);
 
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
@@ -373,73 +333,14 @@ public:
 
     Rect select;
     RectDrawer select_drwer;
-    void renderFillGrids(Context cr,const Cell[] cells,const Color color){
-        foreach(c; cells)
-        {
-            renderFillCell(cr,c,color);
-        }
-    }
-    void renderGrids(Context cr,const Cell[] cells,const Color color,const ubyte grid_width){
-        bool[Direct] adjacent_info(const Cell[] cells,const Cell searching){
-            if(cells.empty) assert(0);
-            bool[Direct] result;
-            foreach(dir; Direct.min .. Direct.max+1){ result[cast(Direct)dir] = false; }
-
-            foreach(a; cells)
-            {
-                if(a.column == searching.column)
-                {   // adjacent to up or down
-                    if(a.row == searching.row-1)  result[Direct.up] = true; else
-                    if(a.row == searching.row+1)  result[Direct.down] = true;
-                } 
-                if(a.row == searching.row)
-                {
-                    if(a.column == searching.column-1) result[Direct.left] = true; else
-                    if(a.column == searching.column+1) result[Direct.right] = true;
-                }
-            }
-            return result;
-        }
-        if(cells.empty) return;
-
-        Lines perimeters = new Lines;
-        perimeters.set_color(color);
-        perimeters.set_width(selectedLineWidth);
-
-        foreach(c; cells)
-        {
-            const auto ad_info = adjacent_info(cells,c);
-            foreach(n; Direct.min .. Direct.max+1 )
-            {
-                auto dir = cast(Direct)n;
-                if(!ad_info[dir]){ // 隣接してない方向の境界を書く
-                    perimeters.add_line(CellLine(c,dir,selected_cell_border_color,grid_width));
-                }
-            }
-        }
-        LinesDrawer drwer = new LinesDrawer(perimeters);
-        drwer.stroke(cr);
-    }
     double get_x(in Cell c)const{ return (c.column - in_view.offset.column) * gridSpace ; }
     double get_y(in Cell c)const{ return (c.row - in_view.offset.row) * gridSpace ; }
-    Point get_pos(Cell c){ return new Point(get_x(c),get_y(c)); }
+    // Cellの順ではなく、x(column方向),y(row方向)順なのに注意
+    double[2] get_pos(in Cell c)const{ return [get_x(c),get_y(c)]; }
+    // Cellの座標と次のCellの座標、例えば入力Cell(5,5)に対してCell(5,5) とCell(6,6)の中間座標を返す
+    // Cellに対する割り算には切り捨て方向に働きCell(5,5)/2 == Cell(2,2)になる。
+    double[2] get_center_pos(in Cell c)const{ return [get_x(c) + gridSpace/2, get_y(c) + gridSpace/2]; }
 
-    void renderFillBox(Context cr,in ContentBOX rb,const Color grid_color){
-        immutable top_left = rb.top_left();
-        Rect grid_rect = new Rect(get_x(top_left), get_y(top_left), gridSpace*rb.numof_col, gridSpace*rb.numof_row);
-        auto grid_drwer = new RectDrawer(grid_rect);
-
-        grid_rect.set_color(grid_color);
-        grid_drwer.fill(cr);
-    }
-    void renderStrokeBox(Context cr,const ContentBOX rb,const Color grid_color){
-        immutable top_left = rb.top_left();
-        Rect grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
-        auto grid_drwer = new RectDrawer(grid_rect);
-
-        grid_rect.set_color(grid_color);
-        grid_drwer.stroke(cr);
-    }
    // アクセサ
 public:
     ReferTable get_view(){

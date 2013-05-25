@@ -40,7 +40,6 @@ public:
 interface AtomCMD{
     void execute();
 }
-
 COMMAND cmd_template(alias func_body)(InputInterpreter i,ManipTable m,PageView p){
     return new CMD!(func_body)(i,m,p);
 }
@@ -133,6 +132,7 @@ private:
     COMMAND im_focus_in;
     COMMAND im_focus_out;
     COMMAND text_edit;
+    COMMAND open_imagefile;
 
     // combined_COMMAND
     COMMAND edit_to_normal_state; 
@@ -283,6 +283,8 @@ public:
         regester_key(mode_normal,InputState.select,alt_escape);
         regester_key(mode_normal,InputState.edit,alt_escape);
 
+        // open_imagefile = cmd_template!("manip.select_file();")(this,manip,view);
+        // regester_key(open_imagefile,InputState.normal,default_ImageOpen);
     }
     bool key_to_cmd(Event event, Widget w)
         in{
