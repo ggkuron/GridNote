@@ -23,10 +23,10 @@ private:
     const(KeyCombine)[] keys;
 public:
     void execute();
-    final void regester_key(in KeyCombine ckc){
+    final void register_key(in KeyCombine ckc){
         keys ~= ckc;
     }
-    final bool is_regestered(in KeyCombine kc)const{
+    final bool is_registered(in KeyCombine kc)const{
         foreach(k; keys)
             if(k == kc)
                 return true;
@@ -139,10 +139,10 @@ private:
     COMMAND normal_start_edit_text;
     COMMAND normal_edit_textbox;
 
-    void regester_key(COMMAND cmd, InputState state, KeyCombine ckc){
-        cmd.regester_key(ckc);
+    void register_key(COMMAND cmd, InputState state, KeyCombine ckc){
+        cmd.register_key(ckc);
         // 重複してはいけない
-        debug(cmd) writeln("regest ",cmd);
+        debug(cmd) writeln("regist ",cmd);
         debug(cmd) writeln("state ",state);
         debug(cmd) writefln("kc %s \n",ckc);
 
@@ -197,16 +197,16 @@ public:
         move_focus_r = cmd_template!("manip.move_focus(Direct.right);")(this,manip,view);
         move_focus_d = cmd_template!("manip.move_focus(Direct.down);")(this,manip,view);
         move_focus_u = cmd_template!("manip.move_focus(Direct.up);")(this,manip,view);
-        regester_key(move_focus_l,InputState.normal,default_MOVE_FOCUS_L);
-        regester_key(move_focus_r,InputState.normal,default_MOVE_FOCUS_R);
-        regester_key(move_focus_u,InputState.normal,default_MOVE_FOCUS_U);
-        regester_key(move_focus_d,InputState.normal,default_MOVE_FOCUS_D);
+        register_key(move_focus_l,InputState.normal,default_MOVE_FOCUS_L);
+        register_key(move_focus_r,InputState.normal,default_MOVE_FOCUS_R);
+        register_key(move_focus_u,InputState.normal,default_MOVE_FOCUS_U);
+        register_key(move_focus_d,InputState.normal,default_MOVE_FOCUS_D);
 
         expand_select_pivot = cmd_template!("manip.expand_to_focus();")(this,manip,view);
-        regester_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_L);
-        regester_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_R);
-        regester_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_U);
-        regester_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_D);
+        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_L);
+        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_R);
+        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_U);
+        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_D);
 
         // expand_select_l = cmd_template!("manip.expand_if_on_edge(Direct.left);")(this,manip,view);
         // expand_select_r = cmd_template!("manip.expand_if_on_edge(Direct.right);")(this,manip,view);
@@ -214,27 +214,27 @@ public:
         // expand_select_u = cmd_template!("manip.expand_if_on_edge(Direct.up);")(this,manip,view);
 
         toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,manip,view);
-        regester_key(toggle_grid_show,InputState.normal,default_TOGGLE_GRID_RENDER);
-        regester_key(toggle_grid_show,InputState.edit,default_TOGGLE_GRID_RENDER);
+        register_key(toggle_grid_show,InputState.normal,default_TOGGLE_GRID_RENDER);
+        register_key(toggle_grid_show,InputState.edit,default_TOGGLE_GRID_RENDER);
         toggle_boxborder_show = cmd_template!("view.toggle_boxborder_show();")(this,manip,view);
-        regester_key(toggle_boxborder_show,InputState.normal,default_TOGGLE_BOX_BORDER_RENDER);
+        register_key(toggle_boxborder_show,InputState.normal,default_TOGGLE_BOX_BORDER_RENDER);
 
         manip_undo = cmd_template!("manip.undo();")(this,manip,view);
-        regester_key(manip_undo,InputState.edit,default_UNDO);
+        register_key(manip_undo,InputState.edit,default_UNDO);
         delete_selected = cmd_template!("manip.delete_selected();")(this,manip,view);
-        regester_key(delete_selected,InputState.normal,default_BOX_DELETE);
+        register_key(delete_selected,InputState.normal,default_BOX_DELETE);
 
         move_selected_r = cmd_template!("manip.move_selected(Direct.right);")(this,manip,view);
         move_selected_l = cmd_template!("manip.move_selected(Direct.left);")(this,manip,view);
         move_selected_u = cmd_template!("manip.move_selected(Direct.up);")(this,manip,view);
         move_selected_d = cmd_template!("manip.move_selected(Direct.down);")(this,manip,view);
-        regester_key(move_selected_r,InputState.normal,default_MOVE_BOX_R);
-        regester_key(move_selected_l,InputState.normal,default_MOVE_BOX_L);
-        regester_key(move_selected_u,InputState.normal,default_MOVE_BOX_U);
-        regester_key(move_selected_d,InputState.normal,default_MOVE_BOX_D);
+        register_key(move_selected_r,InputState.normal,default_MOVE_BOX_R);
+        register_key(move_selected_l,InputState.normal,default_MOVE_BOX_L);
+        register_key(move_selected_u,InputState.normal,default_MOVE_BOX_U);
+        register_key(move_selected_d,InputState.normal,default_MOVE_BOX_D);
 
         create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,manip,view);
-        // regester_key(manip_start_insert_normal_text,InputState.normal,default_INSERT);
+        // register_key(manip_start_insert_normal_text,InputState.normal,default_INSERT);
         im_focus_out = cmd_template!("inp.imm.focusOut();")(this,manip,view);
 
         // 内部使用
@@ -243,19 +243,19 @@ public:
         input_mode_edit = cmd_template!("inp.change_mode_edit();")(this,manip,view);
         input_mode_normal = cmd_template!("inp.change_mode_normal();")(this,manip,view);
         input_mode_select = cmd_template!("inp.change_mode_select();")(this,manip,view);
-        // regester_key(mode_select,InputState.normal,control_key);
+        // register_key(mode_select,InputState.normal,control_key);
         manip_mode_normal = cmd_template!("manip.change_mode_normal();")(this,manip,view);
         manip_mode_select = cmd_template!("manip.change_mode_select();")(this,manip,view);
         manip_mode_edit = cmd_template!("manip.change_mode_edit();")(this,manip,view);
-        // regester_key(manip_mode_normal,InputState.all,default_MODE_NORMAL);
+        // register_key(manip_mode_normal,InputState.all,default_MODE_NORMAL);
 
         quit = cmd_template!("stdlib.exit(0);")(this,manip,view);
         grab_target = cmd_template!("manip.grab_selectbox();")(this,manip,view);
 
         text_backspace = cmd_template!("manip.backspace();")(this,manip,view);
-        regester_key(text_backspace,InputState.edit,backspace);
+        register_key(text_backspace,InputState.edit,backspace);
         text_feed = cmd_template!("manip.text_feed();")(this,manip,view);
-        regester_key(text_feed,InputState.edit,return_key);
+        register_key(text_feed,InputState.edit,return_key);
         text_edit = cmd_template!("manip.edit_textbox();")(this,manip,view);
         im_focus_in = cmd_template!("inp.imm.focusIn();")(this,manip,view);
         // combined_COMMAND
@@ -267,24 +267,24 @@ public:
         // のでedit_to_normal_state は消して,書きなおすの
         // 明日はここから
         //  つまり、edit_to_normal_state と input_mode_normal を統合
-        // regester_key(edit_to_normal_state,InputState.edit,default_EDIT_TO_NORMAL);
+        // register_key(edit_to_normal_state,InputState.edit,default_EDIT_TO_NORMAL);
         normal_edit_textbox = new combined_COMMAND(grab_target,text_edit,im_focus_in);
-        regester_key(normal_edit_textbox,InputState.normal,default_EDIT);
+        register_key(normal_edit_textbox,InputState.normal,default_EDIT);
         normal_start_edit_text = new combined_COMMAND(input_mode_edit,create_TextBOX,im_focus_in);
-        regester_key(normal_start_edit_text,InputState.normal,default_INSERT);
+        register_key(normal_start_edit_text,InputState.normal,default_INSERT);
 
         mode_normal = new combined_COMMAND(input_mode_normal,manip_mode_normal);
         mode_edit = new combined_COMMAND(input_mode_edit,manip_mode_edit);
         mode_select = new combined_COMMAND(input_mode_select,manip_mode_select);
-        regester_key(mode_normal,InputState.normal,escape_key);
-        regester_key(mode_normal,InputState.select,escape_key);
-        regester_key(mode_normal,InputState.edit,escape_key);
-        regester_key(mode_normal,InputState.normal,alt_escape);
-        regester_key(mode_normal,InputState.select,alt_escape);
-        regester_key(mode_normal,InputState.edit,alt_escape);
+        register_key(mode_normal,InputState.normal,escape_key);
+        register_key(mode_normal,InputState.select,escape_key);
+        register_key(mode_normal,InputState.edit,escape_key);
+        register_key(mode_normal,InputState.normal,alt_escape);
+        register_key(mode_normal,InputState.select,alt_escape);
+        register_key(mode_normal,InputState.edit,alt_escape);
 
         // open_imagefile = cmd_template!("manip.select_file();")(this,manip,view);
-        // regester_key(open_imagefile,InputState.normal,default_ImageOpen);
+        // register_key(open_imagefile,InputState.normal,default_ImageOpen);
     }
     bool key_to_cmd(Event event, Widget w)
         in{

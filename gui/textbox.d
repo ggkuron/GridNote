@@ -33,8 +33,9 @@ class RenderTextBOX : BoxRenderer{
 private:
     alias int BoxId;
     alias int Line;
-    TextBOX render_target; // renderが呼ばれるごとに切り替わる
-    TextBOX im_target; // IM使ってであろうBOX
+    TextBOX render_target; // renderが各BOXごとに呼ばれるので切り替わる
+    TextBOX im_target; // IM使ってるであろうcurrentBOX 
+                       
     int im_target_id;
 
     // stored info to show table
@@ -59,10 +60,9 @@ public:
     }
     
     // 描くだけじゃなく描画域によってBOXを書き換える
-    public void render(Context cr,TextBOX box)
-    body{
+    void render(Context cr,TextBOX box){
         debug(gui) writeln("@@@@ render textbox start @@@@");
-        // 
+        // get info and update class holded one
         if(box.empty()) return;
         auto box_id = box.id();
         gridSize = get_gridSize();
@@ -86,7 +86,6 @@ public:
             // 
             // 確定された(固定化された)BOX はこの処理を通したくない
             // TODO 確定されたBOXの定義
-            // auto pre_box = box.get_box_dup();
             if(box_id !in width) return;
 
             do{

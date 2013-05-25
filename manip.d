@@ -139,16 +139,19 @@ public:
             {   // viewを動かしたあとそれに合わせるためにmoveする
                 // このrequire_moveは必ず通る
                 _pv.move_view(to);
-                // target.require_move(to);
+                target.require_move(to);
+                    move_focus(to);
+
                 if(!view_min.row)
                     select.move(to.reverse);
             }
             else if(target.top_left.column <= view_min.column && to == Direct.left)
             {
                 _pv.move_view(to);
-                // target.require_move(to);
+                target.require_move(to);
+                    move_focus(to);
                 if(!view_min.column)
-                    select.move(to.reverse);
+                     select.move(to.reverse);
             }
             else if(target.bottom_right.row >= view_max.row && to == Direct.down)
             {   // 

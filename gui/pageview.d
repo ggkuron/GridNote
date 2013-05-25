@@ -104,10 +104,11 @@ private:
             // レイアウトのことは投げる
             // IMContextごと
             queueDraw();
+            // DrawにいれてPreeditを描く必要がある
         }
     }
     // ascii mode に切り替わったことを期待してみるようなところ
-    // どうもIMContextの実装依存ぽい
+    // IMContextの実装依存がどの程度なのか
     void preedit_end(IMContext imc){
         if(interpreter.state == InputState.edit)
         {
