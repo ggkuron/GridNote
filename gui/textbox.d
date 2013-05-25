@@ -58,10 +58,8 @@ public:
         super(pv);
     }
     
+    // 描くだけじゃなく描画域によってBOXを書き換える
     public void render(Context cr,TextBOX box)
-        in{
-        // assert(!box.empty);
-        }
     body{
         debug(gui) writeln("@@@@ render textbox start @@@@");
         // 
@@ -131,10 +129,12 @@ public:
             auto fc = fontcolor[box_id]; // 初回のpreeditのため(だけ)に必要
             cr.setSourceRgb(fc.r,fc.g,fc.b);
 
-            cr.moveTo(box_pos[im_target_id].x+width[im_target_id][currentline],box_pos[im_target_id].y+currentline*gridSize);
+            cr.moveTo(box_pos[im_target_id].x + width[im_target_id][currentline],
+                      box_pos[im_target_id].y + currentline*gridSize );
             PgCairo.updateLayout(cr,layout[im_target_id][currentline]);
             PgCairo.showLayout(cr,layout[im_target_id][currentline]);
 
+            debug(text) writeln("preedit text ",preedit);
             set_preeditting(false);
             debug(gui) writeln("#### render textbox end ####");
         }
@@ -188,15 +188,25 @@ public:
 
         if(is_preediting() && im_target_id == box_id)
             render_preedit();
-        if(!strings[box_id].keys.empty) modify_boxsize();
+        if(!strings[box_id].keys.empty)
+            modify_boxsize();
         debug(gui) writeln("text render end");
     }
-    public void prepare_preedit(IMContext imc,CellContent inputted_box){
+    public void prepare_preedit(IMContext imc,CellContent box)
+        out{
+        assert(im_target_id == box.id);
+        }
+    body{
         debug(text) writeln("prepare_preedit start");
-        im_target = cast(TextBOX)inputted_box;
-        assert(im_target !is null);
-        im_target_id = inputted_box.id();
-        imc.getPreeditString(preedit,attrlist[im_target_id],render_target.cursor_pos);
+        im_target = cast(TextBOX)box;
+        auto id = im_target.id();
+        im_target_id = id;
+
+        auto pos = get_window_position(box);
+        auto cursorL = pos.get_struct!(Rectangle)();// Rectangle(im_target.
+        imc.setCursorLocation(cursorL);
+        imc.getPreeditString(preedit,attrlist[id],render_target.cursor_pos);
+
         set_preeditting(true);
         debug(text) writeln("end");
     }

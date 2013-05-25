@@ -135,23 +135,12 @@ private:
         cr.resetClip(); // end of rendering
         return true;
     }
-
-    void FillCell(Context cr,const Cell cell,const Color grid_color){
-        // Rect grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
-        // auto grid_drwer = new RectDrawer(grid_rect);
-
-        // grid_rect.set_color(grid_color);
-        // grid_drwer.fill(cr);
-    }
     void when_sizeallocate(GdkRectangle* n,Widget w){
         set_holding_area();
     }
 
 public:
-    this()
-        out{
-        }
-    body{ 
+    this(){ 
         setProperty("can-focus",0);
 
         table = new BoxTable();
@@ -173,16 +162,13 @@ public:
     RectDrawer select_drwer;
     double get_x(in Cell c)const{ return c.column * gridSpace ; }
     double get_y(in Cell c)const{ return c.row * gridSpace ; }
-    // Cellの順ではなく、x(column方向),y(row方向)順なのに注意
-    double[2] get_pos(in Cell c)const{ return [get_x(c),get_y(c)]; }
-    // Cellの座標と次のCellの座標、例えば入力Cell(5,5)に対してCell(5,5) とCell(6,6)の中間座標を返す
-    // Cellに対する割り算には切り捨て方向に働きCell(5,5)/2 == Cell(2,2)になる。
-    double[2] get_center_pos(in Cell c)const{ return [get_x(c) + gridSpace/2, get_y(c) + gridSpace/2]; }
-
 
    // アクセサ
     int get_gridSize()const{
         return gridSpace;
+    }
+    const(Rect) get_holdingArea()const{
+        return holding_area;
     }
 }
 

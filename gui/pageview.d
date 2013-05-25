@@ -100,13 +100,13 @@ private:
         if(interpreter.state == InputState.edit)
         {
             auto inputted_box = manip_table.get_target();
-            render_text.prepare_preedit(imm,inputted_box);
+            render_text.prepare_preedit(imm,cast(TextBOX)inputted_box);
             // レイアウトのことは投げる
             // IMContextごと
             queueDraw();
         }
     }
-    // ascii mode に切り替わったことを期待してみる
+    // ascii mode に切り替わったことを期待してみるようなところ
     // どうもIMContextの実装依存ぽい
     void preedit_end(IMContext imc){
         if(interpreter.state == InputState.edit)
@@ -184,12 +184,15 @@ private:
                     break;
             }
         }
-
         // render_text 全くふさわしくないけど、これ以外今ない、問題もない
         render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
 
         debug(gui) writeln("#### render table end ####");
     }
+    // renderするだけじゃなく描画域によってCellのサイズを修正する
+    // Pangoしか知り得ないことを迂回して教えるよりはいいかと
+    // BoxSizeの修正くらいならいいだろう
+            // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
     void render(Context cr,TextBOX b){
         render_text.render(cr,b);
     }
@@ -335,11 +338,6 @@ public:
     RectDrawer select_drwer;
     double get_x(in Cell c)const{ return (c.column - in_view.offset.column) * gridSpace ; }
     double get_y(in Cell c)const{ return (c.row - in_view.offset.row) * gridSpace ; }
-    // Cellの順ではなく、x(column方向),y(row方向)順なのに注意
-    double[2] get_pos(in Cell c)const{ return [get_x(c),get_y(c)]; }
-    // Cellの座標と次のCellの座標、例えば入力Cell(5,5)に対してCell(5,5) とCell(6,6)の中間座標を返す
-    // Cellに対する割り算には切り捨て方向に働きCell(5,5)/2 == Cell(2,2)になる。
-    double[2] get_center_pos(in Cell c)const{ return [get_x(c) + gridSpace/2, get_y(c) + gridSpace/2]; }
 
    // アクセサ
 public:
@@ -348,6 +346,9 @@ public:
     }
     int get_gridSize()const{
         return gridSpace;
+    }
+    const(Rect) get_holdingArea()const{
+        return holding_area;
     }
     Cell get_view_max()const{
         return in_view.max_cell();
