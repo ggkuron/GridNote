@@ -31,10 +31,10 @@ class Window : MainWindow{
 
         auto box = new Box(GtkOrientation.HORIZONTAL,1);
         setEvents(EventMask.ALL_EVENTS_MASK);
-        auto page_view = new PageView();
         auto guide_view = new GuideView();
-        guide_view.setSizeRequest(180,-1);
-        page_view.setSizeRequest(900,-1);
+        auto page_view = new PageView(guide_view);
+        guide_view.setSizeRequest(80,-1);
+        page_view.setSizeRequest(600,-1);
         box.packStart(guide_view,1,1,0);
         box.packStart(page_view,1,1,0);
 

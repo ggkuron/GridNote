@@ -61,7 +61,6 @@ private:
         return true;
     }
 package:
-
     Tuple!(string,CellContent)[] get_contents(Cell start,Cell end){
          
         Tuple!(string,CellContent)[] result;
@@ -108,7 +107,8 @@ package:
     // ContentBOXは要求をTableに回す
         // Tableに向かって操作を要求してもいいが、
         // 操作には対象がまず存在するので、
-        // 対象に向かって要求した方がわかりやすいかと
+        // 対象に向かって要求した方がわかりやすいかと思ったから
+        // どうなるか
 public:
     final void remove_content_edge(CellContent box,const Direct dir,const int width=1){
         int w = width;
@@ -189,7 +189,7 @@ public:
     }
  
     // 移動できたらtrue そうでなければfalse
-    // boxの整形は呼び出し側の責任
+    // boxの整形もTableが行う。呼び出し元は成功したとき整形されている。
     final bool try_move(T:CellContent)(T cb,const Direct to,const int width=1){
         immutable id = cb.id();
         int w = width;
@@ -532,6 +532,11 @@ public:
     @property bool empty()const{
         return keys.keys.empty();
     }
+    // RangeCellのopCmpの設計がされてない
+    // @property Cell max_cell()const{
+    //     if(box_keys.keys.empty) return Cell(0,0);
+    //     return box_keys.keys.sort[$].bottom_right;
+    // }
 }
 
 

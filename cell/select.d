@@ -1,9 +1,11 @@
 module cell.select;
 
 import util.direct;
+import util.color;
 import cell.cell;
 import cell.collection;
 import cell.table;
+import gui.tableview;
 
 // ContentBOX
 import cell.textbox;
@@ -101,10 +103,28 @@ public:
         debug(cell) writeln("end");
         return tb;
     }
-    ImageBOX create_ImageBOX(string filepath){
+    // ImageBOX create_ImageBOX(string filepath){
+    //     debug(cell) writeln("@@@@ create_ImageBOX @@@@");
+    //     auto ib = new ImageBOX(table,filepath);
+    //     if(!ib.require_create_in(_focus)) return null;
+    //     selection_clear();
+    //     debug(cell) writeln("#### create_ImageBOX ####");
+    //     return ib;
+    // }
+    ImageBOX create_CircleCell(in Color c ,TableView tv){
         debug(cell) writeln("@@@@ create_ImageBOX @@@@");
-        auto ib = new ImageBOX(table,filepath);
+        auto ib = new ImageBOX(table,tv);
         if(!ib.require_create_in(_focus)) return null;
+        ib.set_circle(c);
+        selection_clear();
+        debug(cell) writeln("#### create_ImageBOX ####");
+        return ib;
+    }
+    ImageBOX create_RectCell(in Color c ,TableView tv){
+        debug(cell) writeln("@@@@ create_ImageBOX @@@@");
+        auto ib = new ImageBOX(table,tv);
+        if(!ib.require_create_in(_focus)) return null;
+        ib.set_rect(c);
         selection_clear();
         debug(cell) writeln("#### create_ImageBOX ####");
         return ib;

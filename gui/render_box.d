@@ -1,7 +1,6 @@
 module gui.render_box;
 
 import gui.tableview;
-import gui.pageview;
 import cell.cell;
 import cell.collection;
 import cell.contentflex;
@@ -17,20 +16,17 @@ debug(gui) import std.stdio;
 
 class BoxRenderer{
     TableView table_view;
-    ReferTable in_view;
     protected:
     int get_gridSize()const{
         return table_view.get_gridSize();
     }
     public:
-    this(PageView pv)
+    this(TableView tv)
         out{
         assert(table_view);
-        assert(in_view);
         }
     body{
-        table_view = pv;
-        in_view = pv.get_view();
+        table_view = tv;
     }
     final Rect get_position(in CellContent b){
         assert(b !is null);

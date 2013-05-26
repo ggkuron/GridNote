@@ -28,8 +28,10 @@ public:
     }
     final bool is_registered(in KeyCombine kc)const{
         foreach(k; keys)
+        {
             if(k == kc)
                 return true;
+        }
         return false;
     }
     final void clear(){
@@ -133,6 +135,7 @@ private:
     COMMAND im_focus_out;
     COMMAND text_edit;
     COMMAND open_imagefile;
+    COMMAND create_circle;
 
     // combined_COMMAND
     COMMAND edit_to_normal_state; 
@@ -236,6 +239,9 @@ public:
         create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,manip,view);
         // register_key(manip_start_insert_normal_text,InputState.normal,default_INSERT);
         im_focus_out = cmd_template!("inp.imm.focusOut();")(this,manip,view);
+        create_circle = cmd_template!("manip.create_RectBOX(util.color.red);")(this,manip,view);
+        register_key(create_circle,InputState.normal,default_ImageOpen);
+
 
         // 内部使用
         // mode遷移はもっと包んだ方が良さそう

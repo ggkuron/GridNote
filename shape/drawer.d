@@ -51,37 +51,36 @@ mixin template drw_imp(T){
                              cast(double)c.g/255,
                              cast(double)c.b/255,
                              cast(double)c.a/255);
-            import std.stdio;
         }
     }
 
     void fill(Context cr){
-        set_color(cr);
         set_width(cr);
         set(cr);
+        set_color(cr);
         cr.fill();
     }
     void fill_p(Context cr){
-        set_color(cr);
         set(cr);
+        set_color(cr);
         cr.fillPreserve();
     }
     void stroke(Context cr){
-        set_color(cr);
         set_width(cr);
         set(cr);
+        set_color(cr);
         cr.stroke();
     }
     void stroke_p(Context cr){
-        set_color(cr);
         set_width(cr);
         set(cr);
+        set_color(cr);
         cr.strokePreserve();
     }
     void clip(Context cr){
-        set_color(cr);
         set(cr);
         cr.clip();
+        set_color(cr);
         cr.newPath();
     }
 }

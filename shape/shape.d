@@ -13,7 +13,7 @@ public import util.color;
 class Shape{
     Color color;
     void attach(ContentBOX box){}
-    void set_color(Color c){
+    void set_color(in Color c){
         color = c;
     }
     void scale(){}

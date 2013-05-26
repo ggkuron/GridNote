@@ -4,14 +4,17 @@ import gui.render_box;
 import cell.cell;
 import shape.shape;
 import shape.drawer;
-import gui.pageview;
+import gui.tableview;
 import cell.imagebox;
 import cairo.Context;
+
+import util.color;
 
 class RenderImage : BoxRenderer{
 private:
     Drawer _drawer;
     Rect _frame;
+    ImageBOX _target;
     PointDrawer point_d;
     CircleDrawer circle_d;
     LineDrawer line_d;
@@ -28,19 +31,25 @@ private:
     }
 public:
     alias _drawer this;
-    this(PageView pv){
-        super(pv);
+    this(TableView tv){
+        super(tv);
     }
-    void setBOX(S:Shape)(ImageBOX ib,S s){
+    void setBOX(S:Shape)(ImageBOX ib){
+        _target = ib;
         _frame = get_position(ib);
-        ib.set_image(_frame,s);
-
-        set_drawer(ib.image);
+        set_drawer(cast(S)ib.image);
     }
     void render(Context cr){
+        // _target.image.set_color(c);
         _drawer.fill(cr);
     }
-    void stroke(Context cr){
+    void render(Context cr,in Color c){
+        _target.image.set_color(c);
+        _drawer.fill(cr);
+    }
+
+    void stroke(Context cr,in Color c){
+        _target.image.set_color(c);
         _drawer.stroke(cr);
     }
 }

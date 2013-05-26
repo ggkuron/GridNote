@@ -1,6 +1,7 @@
 module manip;
 
 import util.direct;
+import util.color;
 import cell.textbox;
 import cell.cell;
 import cell.table;
@@ -229,16 +230,27 @@ public:
 //        // filechooserD.getFile();
 //        filechooserD.showAll();
 //    }
-    void create_ImageBOX(string filepath){
+    void create_CircleBOX(in Color c){
         debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
         mode = focus_mode.edit;
         if(focused_table.has(select.focus)) return;
-        auto ib = select.create_ImageBOX(filepath);
+        auto ib = select.create_CircleCell(c,_pv);
 
         maniped_box = ib;
         box_type = ib.toString();
         debug(manip) writeln("#### end create_ImageBOX ####");
     }
+    void create_RectBOX(in Color c){
+        debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
+        mode = focus_mode.edit;
+        if(focused_table.has(select.focus)) return;
+        auto ib = select.create_RectCell(c,_pv);
+
+        maniped_box = ib;
+        box_type = ib.toString();
+        debug(manip) writeln("#### end create_ImageBOX ####");
+    }
+
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
         if(mode!=focus_mode.edit) return;

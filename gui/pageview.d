@@ -1,12 +1,14 @@
 module gui.pageview;
 
 import gui.tableview;
+import gui.guideview;
 import std.string;
 import std.array;
 import env;
 import cell.cell;
 import cell.table;
 import cell.contentbox;
+import cell.imagebox;
 import cell.refer;
 import cell.textbox;
 import text.text;
@@ -36,6 +38,7 @@ import gtk.DrawingArea;
 import gtk.Menu;
 import cairo.Surface;
 import cairo.Context;
+debug(gui) import std.stdio;
 
 // 入力領域
 final class PageView : DrawingArea,TableView{
@@ -52,6 +55,8 @@ private:
     RenderTextBOX render_text ;
     RenderImage render_image;
     IMMulticontext imm;
+
+    GuideView guide_view;
 
     ubyte renderdLineWidth = 2;
     ubyte selectedLineWidth = 2;
@@ -173,12 +178,18 @@ private:
             {
                 case "cell.textbox.TextBOX":
                     debug(gui) writeln("render textbox");
-                        if(show_contents_border)
-                        {
-                            render_text.render_fill(cr,cast(TextBOX)content_in_view[1],Color(linen,96));
-                            render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
-                        }
-                        render(cr,cast(TextBOX)content_in_view[1]);
+                    if(show_contents_border)
+                    {
+                        render_text.render_fill(cr,cast(TextBOX)content_in_view[1],Color(linen,96));
+                        render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
+                    }
+                    render(cr,cast(TextBOX)content_in_view[1]);
+                    break;
+                case "cell.imagebox.ImageBOX":
+                    debug(gui) writeln("render imagebox");
+                    auto ib = cast(ImageBOX)content_in_view[1];
+                    render_image.setBOX!(Rect)(ib);
+                    render_image.render(cr,orenge);
                     break;
                 default:
                     debug(gui) writeln("something wrong");
@@ -260,7 +271,7 @@ private:
         setGrid();
     }
 public:
-    this(Cell start_offset = Cell(0,0))
+    this(GuideView guide,Cell start_offset = Cell(0,0))
         out{
         assert(table);
         assert(in_view);
@@ -288,6 +299,7 @@ public:
         holding_area = new Rect(0,0,200,200);
 
         in_view = new ReferTable(table,start_offset,1,1);
+        guide_view = guide;
 
         addOnKeyPress(&interpreter.key_to_cmd);
         addOnFocusIn(&focus_in);
@@ -334,7 +346,6 @@ public:
     void toggle_boxborder_show(){
         show_contents_border = !show_contents_border;
     }
-
     Rect select;
     RectDrawer select_drwer;
     double get_x(in Cell c)const{ return (c.column - in_view.offset.column) * gridSpace ; }

@@ -1,6 +1,6 @@
 module gui.textbox;
 
-import gui.pageview;
+import gui.tableview;
 import gui.render_box;
 import cell.textbox;
 import cell.cell;
@@ -54,9 +54,9 @@ private:
     Color[BoxId] fontcolor;
     int gridSize;
 public:
-    this(PageView pv)
+    this(TableView tv)
     body{
-        super(pv);
+        super(tv);
     }
     
     // 描くだけじゃなく描画域によってBOXを書き換える
@@ -74,18 +74,20 @@ public:
         currentline = box.getText().current_line();
             
         void  modify_boxsize()
-        {   // 描画された領域のサイズでBOXを変形させる
-            // フォントの大きさを順守するため
-            // 1Cell1Charモードならここは通るな通すな
+        {   /+
+              描画された領域のサイズでBOXを変形させる
+              フォントの大きさを順守するため
+              1Cell1Charモードならここは通るな通すな
 
-            // 何通りかの挙動が考えられる
-            //    1行目の横幅で自動改行
-            //    自動expnad <= 下の実装
-            //    横に圧縮して無理やり入れる
-            //    Cellごと縮小して無理やり入れる
-            // 
-            // 確定された(固定化された)BOX はこの処理を通したくない
-            // TODO 確定されたBOXの定義
+              何通りかの挙動が考えられる
+                 1行目の横幅で自動改行
+                 自動expnad <= 下の実装
+                 横に圧縮して無理やり入れる
+                 Cellごと縮小して無理やり入れる
+              
+              確定された(固定化された)BOX はこの処理を通したくない
+              TODO 確定されたBOXの定義
+            +/
             if(box_id !in width) return;
 
             do{
