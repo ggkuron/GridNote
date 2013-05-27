@@ -58,7 +58,6 @@ public:
     body{
         super(tv);
     }
-    
     // 描くだけじゃなく描画域によってBOXを書き換える
     void render(Context cr,TextBOX box){
         debug(gui) writeln("@@@@ render textbox start @@@@");
