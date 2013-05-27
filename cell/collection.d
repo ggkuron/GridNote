@@ -257,12 +257,14 @@ public:
         if(min_col_f && min_row_f)
             _edge[up][left] = c;
     }
-    void expand(const Direct dir,int width=1){
-        while(width--)
+    void expand(in Direct dir,in int width=1){
+        int w = width;
+        while(w--)
             expand1(dir);
     }
-    void remove(const Direct dir,int width=1){
-        while(width--)
+    void remove(in Direct dir,in int width=1){
+        int w = width;
+        while(w--)
             remove1(dir);
     }
     void clear(){
@@ -280,18 +282,19 @@ public:
     }
     // 線形探索:要素数は小さいものしか想定してないから
     // box.lenthでアルゴリズム切り分ける必要があるかも
-    bool is_hold(const Cell c){
+    bool is_hold(in Cell c){
         return .is_in(box,c);
     }
     
-    void move(const Cell c){
+    void move(in Cell c){
         if(!c.row)
             move(right,c.row);
         if(!c.column)
             move(down,c.column);
     }
-    void move(const Direct dir,int width=1){
-        while(width--)
+    void move(in Direct dir,in int width=1){
+        int w = width;
+        while(w--)
             move1(dir);
     }
     unittest{
@@ -335,7 +338,7 @@ public:
 
         debug(cell) writeln("#### Collection move unittest end ####");
     }
-    bool is_on_edge(const Cell c)const{
+    bool is_on_edge(in Cell c)const{
             
         foreach(each_edged; edge_line())
         {
@@ -364,7 +367,7 @@ public:
         }
         debug(cell) writeln("####is_on_edge unittest end####");
     }
-    bool is_on_edge(const Cell c,const Direct on)const{
+    bool is_on_edge(in Cell c,in Direct on)const{
         return edge_line[on].is_in(c);
     }
     @property const (Cell[][Direct]) edge_line()const{
@@ -378,7 +381,7 @@ public:
         return box.empty();
     }
     // 初期段階に矩形領域を確保するために使う
-    void hold_tl(const Cell start,int h,int w) // TopLeft
+    void hold_tl(in Cell start,int h,int w) // TopLeft
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -408,7 +411,7 @@ public:
         }
         debug(collec) writeln("hold ",box);
     }
-    void hold_br(const Cell lr,int h,int w) // BottomRight
+    void hold_br(in Cell lr,int h,int w) // BottomRight
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -435,7 +438,7 @@ public:
         assert(cb._numof_col == 3);
         debug(cell) writeln("####hold_br unittest end####");
     }
-    void hold_tr(const Cell ur,int h,int w)
+    void hold_tr(in Cell ur,int h,int w)
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -464,7 +467,7 @@ public:
         assert(cb._numof_col == 3);
         debug(cell) writeln("#### hold_tr unittest start ####");
     }
-    void hold_bl(const Cell ll,int h,int w)
+    void hold_bl(in Cell ll,int h,int w)
         in{
         assert(h >= 0);
         assert(w >= 0);

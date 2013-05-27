@@ -9,9 +9,8 @@ import std.algorithm;
 import std.utf;
 
 debug(text) import std.stdio; // printf dbg
-final class Text
+struct Text
 {   // TextBOX itemBOX その他で使われる文字列表現TextBuffer相当
-    this(){}
     this(Text t){
         _lines = t._lines;
         _caret = t._caret;
@@ -36,7 +35,6 @@ private:
     void set_caret(){
         _caret = Cell(_current_line,_position);
     }
-
 public:
     ulong insert(dchar c){
         _writing[current_line][_position++] = c;
@@ -102,8 +100,6 @@ public:
             insert(dc);
         return true;
     }
-
-
     int right_edge_pos(){
         auto linepos = _writing[_current_line].keys.sort();
         debug(text) writefln("type:%s",typeid(linepos));

@@ -135,7 +135,7 @@ private:
         int cnt_col;
         if(_selected_color)
         {
-            _selected_color.require_create_in(Cell(color_box_row-1,2));
+            _selected_color.require_create_in(Cell(max_row()-2,2));
             render_image.setBOX!(Circle)(_selected_color);
             render_image.render(cr);
         }
@@ -146,7 +146,6 @@ private:
             render_image.render(cr);
         }
     }
-    
     bool draw_callback(Context cr,Widget widget){
         backDesign(cr);
         renderTable(cr);
@@ -163,10 +162,10 @@ private:
         const max_pos = get_pos(Max);
 
         set_holding_area();
-        if(holding_area.w < min_pos[0])
-            setSizeRequest(cast(int)min_pos[0],cast(int)min_pos[1]);
-        else if(holding_area.h > max_pos[0])
-            setSizeRequest(cast(int)max_pos[0],cast(int)max_pos[1]);
+        // if(holding_area.w < min_pos[0])
+        //     setSizeRequest(cast(int)min_pos[0],cast(int)min_pos[1]);
+        // else if(holding_area.h > max_pos[0])
+        //     setSizeRequest(cast(int)max_pos[0],cast(int)max_pos[1]);
     }
     ImageBOX[Color] color_box;
     ImageBOX _selected_color;

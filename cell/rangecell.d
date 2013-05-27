@@ -10,7 +10,7 @@ class RangeCell{
     Range _row;
     Range _col;
 private:
-    Range row_or_col(const Direct dir){
+    ref Range row_or_col(in Direct dir){
         if(dir.is_horizontal)
             return  _col;
         else // (dir.is_vertical)
@@ -18,47 +18,41 @@ private:
     }
 public:
     this(){
-        _row = new Range();
-        _col = new Range();
+       //  _row = new Range();
+       //  _col = new Range();
     }
     this(RangeCell rhs){
         _row = rhs._row;
         _col = rhs._col;
-        rhs._row = null;
-        rhs._col = null;
         rhs.clear();
     }
     void clear(){
         _row.clear();
         _col.clear();
     }
-    void add(const Cell c){ 
+    void add(in Cell c){ 
         _row.add(c.row);
         _col.add(c.column);
         debug(cb) writeln("tl ",top_left);
         debug(cb) writeln("br ",bottom_right);
-
     }
     // Rangeを矩形として扱うのでCollectionで使える場面は限られる
-    void expand(in Direct dir,int width=1)
+    void expand(in Direct dir,in int width=1)
         in{
         assert(!_row.empty());
         assert(!_col.empty());
         assert(width > 0);
         }
     body{
-        auto r_or_c_range = row_or_col(dir);
-
         if(dir.is_negative)
         {       // Rangeでoverrun 訂正期待
-            r_or_c_range.pop_back(width);
+            row_or_col(dir).pop_back(width);
         }
         else // if(dir.is_positive)
-            r_or_c_range.pop_front(width);
+            row_or_col(dir).pop_front(width);
 
         debug(cb) writeln("tl ",top_left);
         debug(cb) writeln("br ",bottom_right);
-
     }
     void remove(in Direct dir,in int width=1)
         in{
@@ -70,23 +64,22 @@ public:
         if(is_a_cell()) // 消し去りたいならclear()
             return;
 
-        Range r_or_c_range = row_or_col(dir);
+        // Range row_or_col(dir) = row_or_col(dir);
         if(dir.is_negative)
-            r_or_c_range.remove_back(width);
+            row_or_col(dir).remove_back(width);
         else // (dir.is_positive)
-            r_or_c_range.remove_front(width);
+            row_or_col(dir).remove_front(width);
         debug(cell) writeln("#### RangeCell.remove end ####");
     }
-    bool is_hold(const Cell c)const{
+    bool is_hold(in Cell c)const{
         return _row.is_hold(c.row)
             && _col.is_hold(c.column);
     }
     // あくまで矩形として扱ったときのedge判定
-    bool is_on_edge(const Cell c)const{
+    bool is_on_edge(in Cell c)const{
         return _row.is_hold(c.row) && _col.is_hold(c.column);
     }
-    bool is_on_edge(const Cell c,const Direct on)const{
-        // 迂回路
+    bool is_on_edge(in Cell c,in Direct on)const{
         final switch(on)
         {
             case Direct.left:
@@ -105,21 +98,20 @@ public:
         return _row.min == _row.max &&
         _row.max == _col.min && _col.min == _col.max;
     }
-    final void move(const Cell c){
+    final void move(in Cell c){
         if(c.row)
             move(down,c.row);
         if(c.column)
             move(right,c.column);
     } 
-    final void move(const Direct dir,int pop_cnt=1){
-        Range r_or_c_range = row_or_col(dir);
+    final void move(in Direct dir,in int pop_cnt=1){
 
         if(dir.is_negative)
         {   // overrunしてもRangeで訂正してくれる（のを期待してる）
-            r_or_c_range.move_back(pop_cnt);
+            row_or_col(dir).move_back(pop_cnt);
         }
         else // (dir.is_positive)
-            r_or_c_range.move_front(pop_cnt);
+            row_or_col(dir).move_front(pop_cnt);
     }
     const(Cell)[] get_cells()const{
         Cell[] result;
@@ -128,19 +120,19 @@ public:
             result ~= Cell(r,c);
         return result;
     }
-    Cell[] all_in_column(const int col)const{
+    Cell[] all_in_column(in int col)const{
         Cell[] result;
         foreach(r; _row.get())
             result ~= Cell(r,col);
         return result;
     }
-    Cell[] all_in_row(const int row)const{
+    Cell[] all_in_row(in int row)const{
         Cell[] result;
         foreach(c; _col.get())
             result ~= Cell(row,c);
         return result;
     }
-    @property Cell[] edge_forward_cells(const Direct dir)const{
+    @property Cell[] edge_forward_cells(in Direct dir)const{
         final switch(dir){
             case Direct.right:
                 return  all_in_column(max_col+1);
@@ -153,13 +145,13 @@ public:
         }
         assert(0);
     }
-    @property Range row(){
+    @property ref Range row(){
         return _row;
     }
-    @property Range col(){
+    @property ref Range col(){
         return _col;
     }
-    @property const (Cell[][Direct]) edge_line()const{
+    @property const(Cell[][Direct]) edge_line()const{
         debug(cell) writefln("min_row %d max_row %d\n min_col %d max_col %d",min_row,max_row,min_col,max_col);
         return  [Direct.right:all_in_column(max_col),
                  Direct.left:all_in_column(min_col),

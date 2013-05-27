@@ -71,7 +71,7 @@ public:
         pivot_bound(_focus);
         debug(cell) writeln("end");
     }
-    override void expand(const Direct dir,int width=1){
+    override void expand(in Direct dir,in int width=1){
         super.expand(dir,width);
     }
     this(BoxTable attach,Cell cursor=Cell(2,2))
@@ -79,20 +79,20 @@ public:
         table = attach;
         _focus = cursor;
     }
-    override void move(const Direct dir,int width=1){
+    override void move(in Direct dir,in int width=1){
         _focus.move(dir,width);
     }
     void create_in(){
         super.create_in(_focus);
         debug(cell)writefln("create in %s",_focus);
     }
-    void add(const Cell c){
+    void add(in Cell c){
         super.add(c);
     }
     bool is_on_edge()const{
         return super.is_on_edge(_focus);
     }
-    bool is_on_edge(Direct dir)const{
+    bool is_on_edge(in Direct dir)const{
         return super.is_on_edge(_focus,dir);
     }
     TextBOX create_TextBOX(){

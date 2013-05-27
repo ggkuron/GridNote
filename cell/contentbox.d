@@ -3,7 +3,6 @@ module cell.contentbox;
 import cell.cell;
 import cell.table;
 import cell.rangecell;
-// import cell.rangebox;
 import util.array;
 import util.direct;
 debug(cb) import std.stdio;
@@ -15,7 +14,6 @@ abstract class ContentBOX : CellContent{
 private:
     RangeCell inner_range_cell;
     int _box_id;
-package:
 protected:
     BoxTable table;
     invariant(){
@@ -35,7 +33,7 @@ public:
     final void set_id(int id){
         _box_id = id;
     }
-    void create_in(const Cell c)
+    void create_in(in Cell c)
         in{
         assert(range.empty);
         }
@@ -43,7 +41,7 @@ public:
         clear(); // <- range.clear()
         add(c);
     }
-    this(BoxTable t,Cell ul,const int cw,const int rw){
+    this(BoxTable t,Cell ul,in int cw,in int rw){
         debug(cell){ 
             writeln("ctor start");
             writefln("rw %d cw %d",cw,rw);
@@ -52,8 +50,7 @@ public:
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
-    this(ContentBOX oldone)
-    body{
+    this(ContentBOX oldone){
         debug(cell) writeln("take after start");
 
         clear();
@@ -61,16 +58,16 @@ public:
         inner_range_cell = new RangeCell(oldone);
         debug(cell) writeln("end");
     }
-    void move(const Cell c){
+    void move(in Cell c){
         inner_range_cell.move(c);
     }
-    void move(const Direct dir,int pop_cnt=1){
+    void move(in Direct dir,in int pop_cnt=1){
         inner_range_cell.move(dir,pop_cnt);
     }
-    void expand(const Direct dir,int width=1){
+    void expand(in Direct dir,in int width=1){
         inner_range_cell.expand(dir,width);
     }
-    void remove(const Direct dir,int width=1){
+    void remove(in Direct dir,in int width=1){
         debug(cell) writeln("@@@@ ContentBOX.remove start @@@@");
 
         if(dir.is_horizontal && numof_col <= 1
@@ -78,7 +75,7 @@ public:
             return;
         inner_range_cell.remove(dir,width);
     }
-    void hold(UpDown ud,LR lr)(const Cell start,const int horizontal_cnt,const int vertical_cnt) // TopLeft
+    void hold(UpDown ud,LR lr)(in Cell start,in int horizontal_cnt,in int vertical_cnt) // TopLeft
         in{
         assert(vertical_cnt >= 1);
         assert(horizontal_cnt >= 1);
@@ -135,7 +132,7 @@ public:
         assert(cb.bottom_right == Cell(3,3));
         debug(cell) writeln("#### hold_tl unittest end ####");
     }
-    bool require_create_in(const Cell c)
+    bool require_create_in(in Cell c)
     {
         if(table.try_create_in(this,c))
         {   // tableから呼ばれる.
@@ -143,7 +140,7 @@ public:
             return true;
         }else return false;
     }
-    bool require_move(const Cell c){
+    bool require_move(in Cell c){
         ubyte result;
         if(c.row)
         if(require_move(down,c.row))
@@ -160,7 +157,7 @@ public:
         if(result == 2) return true;
         else return false;
     }
-    bool require_move(in Direct to,int width=1){
+    bool require_move(in Direct to,in int width=1){
         if(table.try_move(this,to,width))
         {
             return true;
@@ -187,13 +184,13 @@ public:
         debug(cell) writeln("#### TableBOX unittest end ####");
     }
     // 実行できたかどうかは知りたい
-    bool require_expand(in Direct to,int width=1){
+    bool require_expand(in Direct to,in int width=1){
         if(table.try_expand(this,to,width))
         {
             return true;
         }else return false;
     }
-    void require_remove(in Direct dir,int width=1){
+    void require_remove(in Direct dir,in int width=1){
         if(is_a_cell)
             return;
         table.remove_content_edge(this,dir,width);
@@ -207,7 +204,7 @@ public:
     void clear(){
         inner_range_cell.clear();
     }
-    bool is_hold(const Cell c)const{
+    bool is_hold(in Cell c)const{
         return inner_range_cell.is_hold(c);
     }
     // 削除対象かいなか

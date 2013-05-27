@@ -28,17 +28,17 @@ private:
 public:
     this(BoxTable table){ 
         super(table);
-        text = new Text();
+        // text = Text();
     }
     this(BoxTable table,const Cell tl,const int w,const int h){
         super(table,tl,w,h);
-        text = new Text();
+        // text =  Text();
     }
-    this(TextBOX tb){
-        text = new Text(tb.text);
+    this(BoxTable table,TextBOX tb){
+        text = tb.text;
         cursor_pos = tb.cursor_pos;
         font_color = tb.font_color;
-        super(tb.table);
+        super(table);
     }
 
     void insert(string s){

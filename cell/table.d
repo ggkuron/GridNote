@@ -45,7 +45,7 @@ private:
         // 0は欠番にしておく
         c.set_id(++_content_counter);
     }
-    bool cell_forward(ref Cell start,const Cell end){
+    bool cell_forward(ref Cell start,in Cell end){
         if(start.column == end.column)
         {
             if(start.row == end.row)
@@ -61,7 +61,7 @@ private:
         return true;
     }
 package:
-    Tuple!(string,CellContent)[] get_contents(Cell start,Cell end){
+    Tuple!(string,CellContent)[] get_contents(in Cell start,in Cell end){
          
         Tuple!(string,CellContent)[] result;
         auto keys = ranged_keys(start,end);
@@ -75,9 +75,9 @@ package:
         }
         return result;
     }
-    int[] ranged_keys(Cell start,const Cell end)const{
+    int[] ranged_keys(in Cell start,in Cell end)const{
         int[int] ranged_keys;
-        auto itr = start;
+        Cell itr = start;
         auto max_range = end;
         while(1)
         {
@@ -110,7 +110,7 @@ package:
         // 対象に向かって要求した方がわかりやすいかと思ったから
         // どうなるか
 public:
-    final void remove_content_edge(CellContent box,const Direct dir,const int width=1){
+    final void remove_content_edge(CellContent box,in Direct dir,in int width=1){
         int w = width;
         while(w--)
         {
@@ -124,7 +124,7 @@ public:
         }
         // if(box.empty()) throw exception
     }
-    final bool try_expand(ContentBOX cb,const Direct to,const int width=1)
+    final bool try_expand(ContentBOX cb,in Direct to,in int width=1)
         in{
         assert(cb.id in content_table);
         }
@@ -160,7 +160,7 @@ public:
         debug(table) writeln("expanded");
         return true;
     }
-    final bool try_expand(ContentFlex cf,const Direct to,int width=1){
+    final bool try_expand(ContentFlex cf,in Direct to,int width=1){
         debug(move) writeln("expand box start");
         immutable id = cf.id();
         debug(move) writeln("edge ",edge);
@@ -190,7 +190,7 @@ public:
  
     // 移動できたらtrue そうでなければfalse
     // boxの整形もTableが行う。呼び出し元は成功したとき整形されている。
-    final bool try_move(T:CellContent)(T cb,const Direct to,const int width=1){
+    final bool try_move(T:CellContent)(T cb,in Direct to,in int width=1){
         immutable id = cb.id();
         int w = width;
         if(try_expand(cb,to,w))
@@ -231,6 +231,8 @@ public:
         cb.move(Direct.up);
         // 何もしない
         assert(cb.top_left == Cell(0,0));
+        import std.stdio;
+        writeln(cb.numof_col);
         assert(cb.numof_col == 5);
         assert(cb.numof_row == 5);
         assert(cb.bottom_right == Cell(4,4));
@@ -292,7 +294,7 @@ public:
             return true;
         return false;
     }
-    int[] get_boxkeys_first_by_row(const Cell start,const Cell end){
+    int[] get_boxkeys_first_by_row(in Cell start,in Cell end){
         Cell c = start;
         int[int] dupled_result;
         foreach(range,bkey; box_keys)
@@ -305,7 +307,7 @@ public:
         assert(dupled_result.values.empty());
         return dupled_result.values; //empty;
     }
-    int[] get_boxkeys_first_by_col(const Cell start,const Cell end){
+    int[] get_boxkeys_first_by_col(in Cell start,in Cell end){
         Cell c = start;
         int[int] dupled_result;
         foreach(range,bkey; box_keys)
@@ -370,7 +372,7 @@ public:
             writeln("boxes are: ",u.get_box());
         }
     }
-    final bool try_create_in(T:ContentBOX)(T u,const Cell c)
+    final bool try_create_in(T:ContentBOX)(T u,in Cell c)
         in{
         }
     body{
@@ -390,7 +392,7 @@ public:
         u.create_in(c);
         return true;
     }
-    final bool try_create_in(T:ContentFlex)(T u,const Cell c)
+    final bool try_create_in(T:ContentFlex)(T u,in Cell c)
         in{
         }
     body{
@@ -479,7 +481,7 @@ public:
         }
     }
     // 1Cellだけの情報が欲しいとき。入っていなくてもとりあえず欲しい時。
-    Tuple!(string,CellContent) get_content(const Cell c){
+    Tuple!(string,CellContent) get_content(in Cell c){
         int key;
         debug(move) if(c !in keys) writeln("this cell is empty, no content return");
         if(c !in keys)
@@ -491,7 +493,7 @@ public:
     }
     // 見た目的な正方向にだけしかshiftできない
     // table上の全てのcontentのキーと実体を動かす
-   final void shift(const Cell o){
+   final void shift(in Cell o){
         debug(refer) writeln("shift start");
         int[Cell] new_key;
         foreach(c,id; keys)
@@ -523,10 +525,10 @@ public:
         type_table.clear();
         content_table.clear();
     }
-    final bool is_vacant(const Cell c)const{
+    final bool is_vacant(in Cell c)const{
         return cast(bool)(c !in keys);
     }
-    final bool has(const Cell c)const{
+    final bool has(in Cell c)const{
         return cast(bool)(c in keys);
     }
     @property bool empty()const{

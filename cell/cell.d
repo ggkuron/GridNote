@@ -188,10 +188,10 @@ interface CellStructure{
     @property Cell bottom_right()const;
     @property bool empty()const;
     void move(in Cell c);
-    void move(in Direct,int pop_cnt=1);
+    void move(in Direct,in int pop_cnt=1);
     void create_in(in Cell);
-    void expand(in Direct,int width=1);
-    void remove(in Direct,int width=1);
+    void expand(in Direct,in int width=1);
+    void remove(in Direct,in int width=1);
     void clear();
     bool is_hold(in Cell c)const;
     const(Cell)[] get_cells()const;
@@ -206,9 +206,9 @@ interface CellContent : CellStructure{
     @property const(Cell[][Direct]) edge_line()const;
     bool require_create_in(in Cell);
     bool require_move(in Cell);
-    bool require_move(in Direct,int width=1);
-    bool require_expand(in Direct,int width=1);
-    void require_remove(in Direct,int width=1);
+    bool require_move(in Direct,in int width=1);
+    bool require_expand(in Direct,in int width=1);
+    void require_remove(in Direct,in int width=1);
     bool is_to_spoil()const;
     void remove_from_table();
     void set_id(int);

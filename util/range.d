@@ -1,7 +1,7 @@
 module util.range;
 debug(range) import std.stdio;
 
-class Range{
+struct Range{
 private:
     int _min = -1;
     int _max = -1;  // 
@@ -12,11 +12,11 @@ private:
         _min = _min<0? 0:_min;
     }
 public:
-    this()
-    {
-        clear();
-    }
-    void set(int s,int e)
+    // this()
+    // {
+    //     clear();
+    // }
+    void set(in int s,in int e)
         in{
         assert(s >= 0);
         assert(e >= 0);
@@ -27,13 +27,13 @@ public:
         _max = e;
         _empty = false;
     }
-    int opCmp(const int i)const{
+    int opCmp(in int i)const{
         if(_max < i || empty) return -1;
         else if(_min > i ) return 1;
         else if(is_hold(i)) return 0;
         assert(0);
     }
-    bool opEquals(const int rhs)const{
+    bool opEquals(in int rhs)const{
         return is_hold(rhs);
     }
     bool add(in int a){
@@ -56,14 +56,14 @@ public:
         else 
             return false;
     }
-    void pop_front(int n=1)
+    void pop_front(in int n=1)
         in{
         assert(!empty);
         }
     body{
         _max += n;
     }
-    void pop_back(int n=1)
+    void pop_back(in int n=1)
         in{
         assert(!empty);
         }
@@ -71,7 +71,7 @@ public:
         _min -= n;
         check_overrun();
     }
-    void move_front(int n=1)
+    void move_front(in int n=1)
         in{
         assert(!empty);
         }
@@ -79,7 +79,7 @@ public:
         _min += n;
         _max += n;
     }
-    void move_back(int n=1)
+    void move_back(in int n=1)
         in{
         assert(!empty);
         }
@@ -89,7 +89,7 @@ public:
         _max -= n;
         check_overrun();
     }
-    void remove_front(int n=1)
+    void remove_front(in int n=1)
         in{
         assert(!empty);
         }
@@ -97,7 +97,7 @@ public:
         _max -= n;
         check_overrun();
     }
-    void remove_back(int n=1)
+    void remove_back(in int n=1)
         in{
         assert(!empty);
         }
@@ -109,7 +109,7 @@ public:
         return _max - _min + 1;
     }
     // operator == と等価
-    @property bool is_hold(const int v)const{
+    @property bool is_hold(in int v)const{
         return _min <= v && v <= _max;
     }
     int[] get()const{ 
@@ -137,7 +137,7 @@ public:
     }
 }
 unittest{
-    Range r = new Range();
+    Range r; // = new Range();
     assert(r.empty);
     assert(r < 1);
     assert(r < 5);

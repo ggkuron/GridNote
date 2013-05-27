@@ -33,6 +33,8 @@ private:
     CellContent maniped_box;
     CellContent[] old_state;
     PageView _pv;
+
+    Color _selected_color;
     string box_type;
     ManipTextBOX manip_textbox;
 public:
@@ -128,7 +130,6 @@ public:
     }
     void move_selected(Direct to)
         out{
-        // assert(mode==focus_mode.normal);
         }
     body{
         auto target = focused_table.get_content(select.focus)[1];
@@ -189,9 +190,6 @@ public:
         }
     }
     void change_mode_normal()
-        in{
-        // assert(mode==focus_mode.select || mode==focus_mode.edit);
-        }
         out{
         assert(mode == focus_mode.normal);
         }
@@ -230,6 +228,12 @@ public:
 //        // filechooserD.getFile();
 //        filechooserD.showAll();
 //    }
+    void select_color(in Color c){
+        _selected_color = c;
+    }
+    Color get_SelectedColor()const{
+        return _selected_color;
+    }
     void create_CircleBOX(in Color c){
         debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
         mode = focus_mode.edit;
@@ -271,7 +275,7 @@ public:
     }
     void text_feed(){
         auto tb = cast(TextBOX)maniped_box;
-        old_state ~= new TextBOX(tb);
+        old_state ~= new TextBOX(focused_table,tb);
         if(box_type == "cell.textbox.TextBOX")
         manip_textbox.feed(tb);
     }
@@ -283,7 +287,6 @@ public:
         if(!old_state.empty())
         maniped_box = old_state[$-1];
     }
-
 }
 
 import gtk.IMMulticontext;
