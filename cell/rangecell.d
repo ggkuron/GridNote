@@ -5,11 +5,12 @@ import util.direct;
 import util.range;
 debug(cb) import std.stdio;
 
-// Rangeを1つのスケールしたCellとして扱う
-class RangeCell{
+// Rangeによって大きいCellのようにふるまわせる
+// Range!(Cell)とは違う
+struct RangeCell{
+private:
     Range _row;
     Range _col;
-private:
     ref Range row_or_col(in Direct dir){
         if(dir.is_horizontal)
             return  _col;
@@ -17,10 +18,6 @@ private:
             return  _row;
     }
 public:
-    this(){
-       //  _row = new Range();
-       //  _col = new Range();
-    }
     this(RangeCell rhs){
         _row = rhs._row;
         _col = rhs._col;
@@ -45,7 +42,7 @@ public:
         }
     body{
         if(dir.is_negative)
-        {       // Rangeでoverrun 訂正期待
+        {       // Rangeで0境界越訂正期待
             row_or_col(dir).pop_back(width);
         }
         else // if(dir.is_positive)
@@ -63,8 +60,6 @@ public:
 
         if(is_a_cell()) // 消し去りたいならclear()
             return;
-
-        // Range row_or_col(dir) = row_or_col(dir);
         if(dir.is_negative)
             row_or_col(dir).remove_back(width);
         else // (dir.is_positive)
@@ -107,7 +102,7 @@ public:
     final void move(in Direct dir,in int pop_cnt=1){
 
         if(dir.is_negative)
-        {   // overrunしてもRangeで訂正してくれる（のを期待してる）
+        {   // 0境界越はRangeで吸収
             row_or_col(dir).move_back(pop_cnt);
         }
         else // (dir.is_positive)

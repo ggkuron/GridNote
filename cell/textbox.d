@@ -19,6 +19,7 @@ private:
     public int cursor_pos; // 描画側（IM)が教えるために使う
                            // こいつに関してはTextBOXは面倒見ない 
     public int font_size = 32;
+    // 入力される文字色
     public Color font_color;
 
     string font_name = "Sans Normal";
@@ -28,11 +29,9 @@ private:
 public:
     this(BoxTable table){ 
         super(table);
-        // text = Text();
     }
     this(BoxTable table,const Cell tl,const int w,const int h){
         super(table,tl,w,h);
-        // text =  Text();
     }
     this(BoxTable table,TextBOX tb){
         text = tb.text;
@@ -40,7 +39,10 @@ public:
         font_color = tb.font_color;
         super(table);
     }
-
+    void set_color(in Color c){
+        font_color = c;
+        text.set_color(c);
+    }
     void insert(string s){
         foreach(dchar c; s)
             text.insert(c);
@@ -82,5 +84,4 @@ public:
     Text getText(){
         return text;
     }
-
 }

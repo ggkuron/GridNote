@@ -152,7 +152,7 @@ private:
     }
 public:
     this(){
-        _range = new RangeCell();
+        // _range = RangeCell();
     }
     this(Cell ul,int rw,int cw){
         debug(cell){ 

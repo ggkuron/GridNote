@@ -24,8 +24,6 @@ debug(refer) import std.stdio;
 class BoxTable{
 private:
     alias int KEY;
-    alias int ROW;
-    alias int COL;
 
     alias Range RowRange;
     alias Range ColRange;
@@ -122,7 +120,7 @@ public:
             }
             box.remove(dir);
         }
-        // if(box.empty()) throw exception
+        // if(box.empty()) throw exception?
     }
     final bool try_expand(ContentBOX cb,in Direct to,in int width=1)
         in{
@@ -273,8 +271,8 @@ public:
         assert(cb.numof_row == 3);
         assert(cb.bottom_right == Cell(3,3));
     }
- 
 public:
+    // Table全体を返す。これは保存時に使うつもり
     Tuple!(string,CellContent)[] get_all_contents(){
          
         Tuple!(string,CellContent)[] result;
@@ -287,7 +285,7 @@ public:
         }
         return result;
     }
-    bool is_hold(Cell c){
+    bool is_hold(in Cell c){
         foreach(cb ; content_table.values)
             if(cb.is_hold(c)) return true;
         if(c in keys)
@@ -320,8 +318,7 @@ public:
         assert(dupled_result.values.empty());
         return dupled_result.values; //empty;
     }
-    // Table全体を返す。これは保存時に使うつもり
-    Tuple!(string,CellContent) get_content(int key)
+    Tuple!(string,CellContent) get_content(in int key)
         in{
         assert(keys.values.is_in(key));
         assert(key in content_table);

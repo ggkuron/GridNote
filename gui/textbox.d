@@ -79,7 +79,7 @@ public:
               フォントの大きさを順守するため
               1Cell1Charモードならここは通るな通すな
 
-              何通りかの挙動が考えられる
+              他に何通りかの挙動が考えられる
                  1行目の横幅で自動改行
                  自動expnad <= 下の実装
                  横に圧縮して無理やり入れる
@@ -109,6 +109,7 @@ public:
                 {
                     box.require_remove(Direct.right);
                 }
+                // 整形後と前が揺らがず一致したら終了
                 if(pre_box == box.get_cells())
                     break;
 
@@ -118,10 +119,11 @@ public:
         {
             debug(gui) writeln("render preedit start");
             // if(currentline !in layout)  <- 改行後現れなくなる
+            // 固定化されているBOXならここを通らなくていい
             layout[im_target_id][currentline] = PgCairo.createLayout(cr); // 
             layout[im_target_id][currentline].setFontDescription(desc[im_target_id]);
 
-            if( im_target_id !in width || currentline !in width[im_target_id])   // この2つのifまとめられそうだけど精神的衛生上
+            if(im_target_id !in width || currentline !in width[im_target_id])   
                 width[im_target_id][currentline] = 0;
 
             layout[im_target_id][currentline].setAttributes(attrlist[im_target_id]);

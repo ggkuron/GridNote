@@ -7,8 +7,6 @@ import util.array;
 import util.direct;
 debug(cb) import std.stdio;
 
-// ContentBOXは内部のRangeを操作後Tableに伝える
-// TableにあわせたContentBOXの操作
 // ContentBOX
 abstract class ContentBOX : CellContent{
 private:
@@ -27,8 +25,7 @@ public:
         }
     body{
         table = attach;
-        inner_range_cell = new RangeCell();
-        inner_range_cell = new RangeCell();
+        // inner_range_cell = new RangeCell();
     }
     final void set_id(int id){
         _box_id = id;
@@ -41,7 +38,7 @@ public:
         clear(); // <- range.clear()
         add(c);
     }
-    this(BoxTable t,Cell ul,in int cw,in int rw){
+    this(BoxTable t,in Cell ul,in int cw,in int rw){
         debug(cell){ 
             writeln("ctor start");
             writefln("rw %d cw %d",cw,rw);
@@ -55,7 +52,7 @@ public:
 
         clear();
         table = oldone.table;
-        inner_range_cell = new RangeCell(oldone);
+        inner_range_cell = RangeCell(oldone);
         debug(cell) writeln("end");
     }
     void move(in Cell c){

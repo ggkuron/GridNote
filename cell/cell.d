@@ -21,13 +21,6 @@ struct Cell
     Cell opBinary(string op)(in Cell rhs)const if(op =="+"){
         return  Cell(row + rhs.row, column + rhs.column);
     }
-    Cell opBinary(string op)(in int rhs)const if(op =="/"){
-        return  Cell(row/rhs, column/rhs);
-    }
-    Cell opBinary(string op)(in int rhs)const if(op =="*"){
-        return  Cell(row*rhs, column*rhs);
-    }
-
     Cell opBinary(string op)(in Cell rhs)const if(op =="-"){
         int minus_tobe_zero(int x){
             return x<0?0:x;
@@ -35,6 +28,12 @@ struct Cell
         auto r = minus_tobe_zero(row - rhs.row);
         auto c = minus_tobe_zero(column - rhs.column);
         return Cell(r,c);
+    }
+    Cell opBinary(string op)(in int rhs)const if(op =="/"){
+        return  Cell(row/rhs, column/rhs);
+    }
+    Cell opBinary(string op)(in int rhs)const if(op =="*"){
+        return  Cell(row*rhs, column*rhs);
     }
     unittest{
         Cell a = Cell(5,5);
@@ -49,10 +48,10 @@ struct Cell
         assert(column >= 0);
     }
     int opCmp(in Cell rhs)const{
-        auto row_result = row - rhs.row;
-        auto col_result = column - rhs.column;
-        if(!row_result) return col_result;
-        else return row_result;
+        if(row == rhs.row)
+            return column - rhs.column;
+        else
+            return row - rhs.row;
     }
     unittest{
         Cell c = Cell(3,3);

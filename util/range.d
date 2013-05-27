@@ -12,10 +12,6 @@ private:
         _min = _min<0? 0:_min;
     }
 public:
-    // this()
-    // {
-    //     clear();
-    // }
     void set(in int s,in int e)
         in{
         assert(s >= 0);
