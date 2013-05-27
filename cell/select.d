@@ -30,7 +30,7 @@ private:
         super.create_in(_pivot);
         debug(cell) writeln("end");
     }
-    void pivot_bound(const Cell cl){
+    void pivot_bound(in Cell cl){
         debug(cell) writeln("privot_bound start");
         if(_pivot == cl)  hold_tl(_pivot,1,1); else
         if(_pivot < cl) // _pivot.rowの方が小さいブロック

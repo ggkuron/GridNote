@@ -262,8 +262,8 @@ private:
         }
     }
     void renderSelection(Context cr){
-        strokeGrids(cr,manip_table.select.get_cells(),
-                selected_cell_border_color,selectedLineWidth);
+        FillGrids(cr,manip_table.select.get_cells(),
+                selected_cell_border_color);
     }
     void when_sizeallocate(GdkRectangle* n,Widget w){
         set_holding_area();

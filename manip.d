@@ -38,7 +38,7 @@ private:
     string box_type;
     ManipTextBOX manip_textbox;
 public:
-    shared focus_mode mode;
+    focus_mode mode;
     // Selectはここで持つべきか否か
     SelectBOX select;
     this(BoxTable table,PageView p)
@@ -103,14 +103,19 @@ public:
         }
         move_focus(dir);
     }
-    void expand_to_focus()
-        in{
-        assert(mode==focus_mode.select || mode==focus_mode.edit);
-        }
+    // moveとCMD単位で分離したかったが、
+    // 初回の切り分けが複雑になるのでこうなった
+    // 必要ならexpand_to_focus()書いてそれをCMD化すればいい
+    void expand_to_focus(in Direct dir)
         out{
         assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
     body{
+        if(mode == focus_mode.normal)
+        {
+            change_mode_select();
+        }
+        move_focus(dir);
         select.expand_to_focus();
     }
     void expand_select(Direct dir)
@@ -121,6 +126,7 @@ public:
         assert(mode==focus_mode.select || mode==focus_mode.edit);
         }
     body{
+        mode = focus_mode.select;
         select.expand(dir);
     }
     void grab_selectbox(){

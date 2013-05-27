@@ -106,7 +106,10 @@ private:
     COMMAND move_focus_r;
     COMMAND move_focus_d;
     COMMAND move_focus_u;
-    COMMAND expand_select_pivot;
+    COMMAND expand_select_pivot_R;
+    COMMAND expand_select_pivot_L;
+    COMMAND expand_select_pivot_D;
+    COMMAND expand_select_pivot_U;
     COMMAND toggle_grid_show;
     COMMAND toggle_boxborder_show;
 
@@ -205,20 +208,21 @@ public:
         register_key(move_focus_u,InputState.normal,default_MOVE_FOCUS_U);
         register_key(move_focus_d,InputState.normal,default_MOVE_FOCUS_D);
 
-        expand_select_pivot = cmd_template!("manip.expand_to_focus();")(this,manip,view);
-        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_L);
-        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_R);
-        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_U);
-        register_key(expand_select_pivot,InputState.select,default_SELECT_PIVOT_D);
-
-        // expand_select_l = cmd_template!("manip.expand_if_on_edge(Direct.left);")(this,manip,view);
-        // expand_select_r = cmd_template!("manip.expand_if_on_edge(Direct.right);")(this,manip,view);
-        // expand_select_d = cmd_template!("manip.expand_if_on_edge(Direct.down);")(this,manip,view);
-        // expand_select_u = cmd_template!("manip.expand_if_on_edge(Direct.up);")(this,manip,view);
+        expand_select_pivot_R = cmd_template!("manip.expand_to_focus(Direct.right);")(this,manip,view);
+        register_key(expand_select_pivot_R,InputState.normal,default_SELECT_PIVOT_R);
+        register_key(expand_select_pivot_R,InputState.select,default_SELECT_PIVOT_R);
+        expand_select_pivot_U = cmd_template!("manip.expand_to_focus(Direct.up);")(this,manip,view);
+        register_key(expand_select_pivot_U,InputState.select,default_SELECT_PIVOT_U);
+        register_key(expand_select_pivot_U,InputState.normal,default_SELECT_PIVOT_U);
+        expand_select_pivot_L = cmd_template!("manip.expand_to_focus(Direct.left);")(this,manip,view);
+        register_key(expand_select_pivot_L,InputState.normal,default_SELECT_PIVOT_L);
+        register_key(expand_select_pivot_L,InputState.select,default_SELECT_PIVOT_L);
+        expand_select_pivot_D = cmd_template!("manip.expand_to_focus(Direct.down);")(this,manip,view);
+        register_key(expand_select_pivot_D,InputState.normal,default_SELECT_PIVOT_D);
+        register_key(expand_select_pivot_D,InputState.select,default_SELECT_PIVOT_D);
 
         toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,manip,view);
         register_key(toggle_grid_show,InputState.normal,default_TOGGLE_GRID_RENDER);
-        register_key(toggle_grid_show,InputState.edit,default_TOGGLE_GRID_RENDER);
         toggle_boxborder_show = cmd_template!("view.toggle_boxborder_show();")(this,manip,view);
         register_key(toggle_boxborder_show,InputState.normal,default_TOGGLE_BOX_BORDER_RENDER);
 
@@ -241,7 +245,6 @@ public:
         im_focus_out = cmd_template!("inp.imm.focusOut();")(this,manip,view);
         create_circle = cmd_template!("manip.create_RectBOX(util.color.red);")(this,manip,view);
         register_key(create_circle,InputState.normal,default_ImageOpen);
-
 
         // 内部使用
         // mode遷移はもっと包んだ方が良さそう
