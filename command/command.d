@@ -312,7 +312,7 @@ public:
                 im_driven = cast(bool)imm.filterKeypress(ev);
                 debug(cmd) writeln(im_driven);
                 // if(im_driven) return true;
-                // else fall through
+                break;
             case InputState.normal:
             case InputState.select:
                 if(im_driven) imm.focusOut();

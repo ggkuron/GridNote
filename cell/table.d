@@ -2,7 +2,6 @@ module cell.table;
 
 import cell.cell;
 import cell.rangecell;
-// import cell.rangebox;
 import cell.collection;
 import cell.contentbox;
 import cell.contentflex;
