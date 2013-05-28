@@ -8,7 +8,7 @@ immutable UpDown down = UpDown.down;
 immutable LR left = LR.left;
 immutable LR right =  LR.right;
 
-pure Direct reverse(const Direct dir){
+pure Direct reverse(in Direct dir){
     final switch(dir){
         case Direct.left: return Direct.right;
         case Direct.right: return Direct.left;
@@ -18,15 +18,15 @@ pure Direct reverse(const Direct dir){
     assert(0);
 }
 
-pure bool is_horizontal(const Direct dir){
+pure bool is_horizontal(in Direct dir){
     return dir == Direct.right || dir == Direct.left;
 }
-pure bool is_vertical(const Direct dir){
+pure bool is_vertical(in Direct dir){
     return dir == Direct.up || dir == Direct.down;
 }
-pure bool is_negative(const Direct dir){
+pure bool is_negative(in Direct dir){
     return dir == Direct.left || dir == Direct.up;
 }
-pure bool is_positive(const Direct dir){
+pure bool is_positive(in Direct dir){
     return dir == Direct.right || dir == Direct.down;
 }

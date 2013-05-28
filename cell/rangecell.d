@@ -4,6 +4,7 @@ import cell.cell;
 import util.direct;
 import util.range;
 debug(cb) import std.stdio;
+debug(cell) import std.stdio;
 
 // Rangeによって大きいCellのようにふるまわせる
 // Range!(Cell)とは違う
@@ -109,9 +110,12 @@ public:
             row_or_col(dir).move_front(pop_cnt);
     }
     const(Cell)[] get_cells()const{
+        if(empty) return [];
         Cell[] result;
-        foreach(r; _row.get())
-        foreach(c; _col.get())
+        auto rows = _row.get();
+        auto cols = _col.get();
+        foreach(r; rows)
+        foreach(c; cols)
             result ~= Cell(r,c);
         return result;
     }

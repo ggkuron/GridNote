@@ -7,6 +7,7 @@ import util.array;
 import util.range;
 import cell.flex_common;
 debug(collec) import std.stdio;
+debug(cell) import std.stdio;
 
 // 自由変形できる構造
 class Collection : CellStructure{

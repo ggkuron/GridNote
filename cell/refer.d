@@ -60,6 +60,12 @@ public:
     override Tuple!(string,CellContent) get_content(const Cell c){
         return master.get_content(c+offset);
     }
+    override TextBOX[] get_textBoxes(){
+        return master.get_textBoxes(_offset,_max_range);
+    }
+    override ImageBOX[] get_imageBoxes(){
+        return master.get_imageBoxes(_offset,_max_range);
+    }
 
     void set_range(Cell ul,int w,int h)
         in{

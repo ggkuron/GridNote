@@ -115,7 +115,8 @@ public:
         debug(cell) writeln("@@@@ create_ImageBOX @@@@");
         auto ib = new ImageBOX(table,tv);
         if(!ib.require_create_in(_focus)) return null;
-        ib.set_circle(c);
+        ib.set_circle();
+        ib.set_color(c);
         selection_clear();
         debug(cell) writeln("#### create_ImageBOX ####");
         return ib;
@@ -124,7 +125,8 @@ public:
         debug(cell) writeln("@@@@ create_ImageBOX @@@@");
         auto ib = new ImageBOX(table,tv);
         if(!ib.require_create_in(_focus)) return null;
-        ib.set_rect(c);
+        ib.set_rect();
+        ib.set_color(c);
         selection_clear();
         debug(cell) writeln("#### create_ImageBOX ####");
         return ib;

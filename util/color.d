@@ -57,7 +57,6 @@ pure int from_hex(in char hc){
             assert(0);
     }
 }
-
 import std.format;
 import std.range;
 string to_hex(in int i){
@@ -111,7 +110,7 @@ immutable sandybrown = Color("#f4a460");
 immutable peachpuff = Color("#ffdab9");
 immutable peru = Color("#cd853f");
 immutable linen = Color("#faf0e6");
-immutable darkorenge = Color("#ff8c00");
+immutable darkorange = Color("#ff8c00");
 immutable bisque = Color("#ffe4c4");
 immutable tan = Color("#d2b48c");
 immutable burlywood = Color("#deb887");
@@ -122,7 +121,7 @@ immutable moccasin = Color("#ffe4b5");
 immutable papayawhip = Color("#ffefd5");
 immutable wheat = Color("#f5deb3");
 immutable oldlace = Color("#fdf5e6");
-immutable orenge  = Color("#ffa500");
+immutable orange  = Color("#ffa500");
 immutable floralwhite = Color("#fffaf0");
 immutable darkgoldenrod = Color("#b8860b");
 immutable goldenrod = Color("#daa520");
@@ -206,7 +205,7 @@ immutable purple = Color("#800080");
 immutable darkmagenta = Color("#8b008b");
 immutable thistle = Color("#d8bfd8");
 immutable plum = Color("#dda0dd");
-immutable voilet = Color("#ee82ee");
+immutable violet = Color("#ee82ee");
 immutable magenta = Color("#ff00ff");
 immutable fuchsia = Color("#ff00ff");
 immutable orchid = Color("#da70d6");

@@ -6,17 +6,16 @@ import cell.rangecell;
 import util.array;
 import util.direct;
 debug(cb) import std.stdio;
+debug(cell) import std.stdio;
 
 // ContentBOX
 abstract class ContentBOX : CellContent{
 private:
     RangeCell inner_range_cell;
     int _box_id;
+package:
 protected:
     BoxTable table;
-    invariant(){
-    //     assert(table !is null);
-    }
 public:
     alias inner_range_cell this;
     this(BoxTable attach)
@@ -55,6 +54,10 @@ public:
         inner_range_cell = RangeCell(oldone);
         debug(cell) writeln("end");
     }
+    // 構造の実装なので持ちたくはないけど
+    // 描かれるための構造でもあるので
+    // 抽象クラスとしては、描かれるためにフックする部分も必要なわけでもにょる
+    // 実装は具現クラスで委譲させる
     void move(in Cell c){
         inner_range_cell.move(c);
     }
@@ -123,32 +126,32 @@ public:
         assert(cb.top_left == Cell(3,3));
         assert(cb.bottom_right == Cell(7,7));
         cb = new TextBOX(table);
-        // cb.hold_tl(Cell(3,3),0,0);
         cb.create_in(Cell(3,3));
         assert(cb.top_left == Cell(3,3));
         assert(cb.bottom_right == Cell(3,3));
         debug(cell) writeln("#### hold_tl unittest end ####");
     }
+    // これだけはoverrideさせないとTableの特殊化領域に保存されない
+    // このままコピペでいいのにぐぬぬ
+    // 型潰してRTTIで再び付加するのとどっちがいいのか揺らぐ
+    // 二度手間だけどこれのためだけにインターフェースつくるか
+    // 継承関係がぐちゃりそうな確信のない嫌気
+    // mixin-templateで分離するのには各実装ごとに差分存在するようなしないような
+    // 妥協点は、各実装でこれをoverride
     bool require_create_in(in Cell c)
     {
-        if(table.try_create_in(this,c))
-        {   // tableから呼ばれる.
-            // create_in(c);
-            return true;
-        }else return false;
+        return table.try_create_in(this,c);
     }
     bool require_move(in Cell c){
         ubyte result;
         if(c.row)
         if(require_move(down,c.row))
         {
-            // move(down,c.row);
             ++result;
         }
         if(c.column)
         if(require_move(left,c.column))
         {
-            // move(left,c.column);
             ++result;
         }
         if(result == 2) return true;
@@ -195,8 +198,8 @@ public:
     void remove_from_table(){
         spoiled = true;
         auto result = table.try_remove(this);
-        assert(result);
         clear();
+        assert(result && empty);
     }
     void clear(){
         inner_range_cell.clear();

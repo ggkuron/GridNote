@@ -91,7 +91,6 @@ class PointDrawer : Drawer{
 
 class CircleDrawer : Drawer{
     void set(Context cr){
-        // auto c = cast(Circle)shape;
         cr.arc(shape.p.x, shape.p.y, shape.radius, 0, 2 * PI);
     }
     mixin drw_imp!(Circle);
@@ -125,7 +124,6 @@ class LinesDrawer : LineDrawer{
 class RectDrawer : Drawer{
     void set(Context cr){
         cr.rectangle(shape.x,shape.y,shape.w,shape.h);
-        // writefln("r:%f g:%f b:%f",shape.color.r,shape.color.g,shape.color.b);
     }
     mixin drw_imp!(Rect);
 }

@@ -16,7 +16,6 @@ import manip;
 import util.direct;
 import std.algorithm;
 import gui.textbox;
-import gui.imagebox;
 import shape.shape;
 import shape.drawer;
 
@@ -52,8 +51,8 @@ private:
     Menu menu;
 
     InputInterpreter interpreter;
-    RenderTextBOX render_text ;
-    RenderImage render_image;
+    // RenderImage render_image;
+    RenderTextBOX render_text;
     IMMulticontext imm;
 
     GuideView guide_view;
@@ -65,7 +64,7 @@ private:
     Color selected_cell_border_color = Color("#00e4e4",128);
     Color normal_focus_color = Color(cyan,128);
     Color selected_focus_color = Color(cyan,168);
-    Color manip_box_color = Color(darkorenge,128);
+    Color manip_box_color = Color(darkorange,128);
 
     bool grid_show_flg = true;
     Lines grid;
@@ -161,7 +160,7 @@ private:
     RectDrawer backdrw;
     void backDesign(Context cr){
         back = new Rect(0,0,holding_area.w,holding_area.h);
-        back.set_color(orenge);
+        back.set_color(orange);
         backdrw = new RectDrawer(back);
 
         backdrw.clip(cr);
@@ -171,32 +170,28 @@ private:
         debug(gui) writeln("@@@@ render table start @@@@");
         if(in_view.empty) return;
 
-        foreach(content_in_view; in_view.get_contents())
+        foreach(tb; in_view.get_textBoxes())
         {
-            if(content_in_view[1].empty()) continue;
-            switch(content_in_view[0])
-            {
-                case "cell.textbox.TextBOX":
-                    debug(gui) writeln("render textbox");
-                    if(show_contents_border)
-                    {
-                        render_text.render_fill(cr,cast(TextBOX)content_in_view[1],Color(linen,96));
-                        render_text.render_grid(cr,content_in_view[1],Color(gold,128),1);
-                    }
-                    render(cr,cast(TextBOX)content_in_view[1]);
-                    break;
-                case "cell.imagebox.ImageBOX":
-                    debug(gui) writeln("render imagebox");
-                    auto ib = cast(ImageBOX)content_in_view[1];
-                    render_image.setBOX!(Rect)(ib);
-                    render_image.render(cr,orenge);
-                    break;
-                default:
-                    debug(gui) writeln("something wrong");
-                    break;
-            }
+            debug(gui) writeln("render textbox");
+                if(show_contents_border)
+                {
+                    render_text.render_fill(cr,tb,Color(linen,96));
+                    render_text.render_grid(cr,tb,Color(gold,128),1);
+                }
+                    render(cr,tb);
         }
-        // render_text 全くふさわしくないけど、これ以外今ない、問題もない
+        foreach(ib; in_view.get_imageBoxes())
+        {
+            debug(gui) writeln("render textbox");
+                if(show_contents_border)
+                {
+                    render_text.render_grid(cr,ib,Color(gold,128),1);
+                }
+                    ib.set_rect();
+                    ib.fill(cr,orange);
+
+        }
+
         render_text.render_grid(cr,manip_table.get_target(),manip_box_color,manipLineWidth);
 
         debug(gui) writeln("#### render table end ####");
@@ -209,8 +204,6 @@ private:
         render_text.render(cr,b);
     }
     
-    // ascii mode に切り替わったことを期待してみる
-    // どうもIMContextの実装依存のよう
     bool draw_callback(Context cr,Widget widget){
         debug(gui) writeln("draw callback");
         backDesign(cr);
@@ -276,7 +269,7 @@ public:
         assert(table);
         assert(in_view);
         assert(render_text);
-        assert(render_image);
+        // assert(render_image);
         assert(select);
         assert(select_drwer);
         }
@@ -310,7 +303,7 @@ public:
         init_selecter();
         setGrid();
         render_text = new RenderTextBOX(this);
-        render_image = new RenderImage(this);
+        // render_image = new RenderImage(this);
 
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);

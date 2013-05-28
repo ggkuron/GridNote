@@ -38,7 +38,6 @@ import cell.cell;
 import cell.contentbox;
 import cell.textbox;
 import cell.imagebox;
-import gui.imagebox;
 
 import manip;
 
@@ -51,7 +50,7 @@ private:
     BoxTable table;    // 描画すべき個々のアイテムに対する
     TextBOX mode_indicator;
 
-    RenderImage render_image;
+    // RenderImage render_image;
     RenderTextBOX render_text;
 
     ubyte renderdLineWidth = 2;
@@ -110,45 +109,25 @@ private:
         debug(gui) writeln("@@@@ render Guide table start @@@@");
         if(table.empty) return;
 
-        foreach(content; table.get_all_contents())
-        {
-            if(show_contents_border)
-            {
-            }
-
-            switch(content[0])
-            {
-                case "cell.textbox.TextBOX":
-                    debug(gui) writeln("render textbox");
-                    break;
-                case "cell.imagebox.ImageBOX":
-                    debug(gui) writeln("render imagebox");
-                    break;
-                default:
-                    debug(gui) writeln("something wrong");
-                    break;
-            }
-        }
         debug(gui) writeln("#### render table end ####");
     }
     void renderColorBox(Context cr){
         int cnt_col;
         if(_selected_color)
         {
-            _selected_color.require_create_in(Cell(max_row()-2,2));
-            render_image.setBOX!(Circle)(_selected_color);
-            render_image.render(cr);
+            // _selected_color.require_create_in(Cell(max_row()-2,2));
+            _selected_color.set_rect();
+            _selected_color.fill(cr);
         }
         foreach(cb; color_box)
         {
-            cb.require_create_in(Cell(max_row,cnt_col++));
-            render_image.setBOX!(Circle)(cb);
-            render_image.render(cr);
+            // cb.require_create_in(Cell(max_row,cnt_col++));
+            cb.fill(cr);
         }
     }
     bool draw_callback(Context cr,Widget widget){
         backDesign(cr);
-        renderTable(cr);
+        // renderTable(cr);
         renderColorBox(cr);
         cr.resetClip(); // end of rendering
         return true;
@@ -162,10 +141,12 @@ private:
         const max_pos = get_pos(Max);
 
         set_holding_area();
-        // if(holding_area.w < min_pos[0])
-        //     setSizeRequest(cast(int)min_pos[0],cast(int)min_pos[1]);
-        // else if(holding_area.h > max_pos[0])
-        //     setSizeRequest(cast(int)max_pos[0],cast(int)max_pos[1]);
+        set_color_box();
+        if(holding_area.w < min_pos[0])
+            setSizeRequest(cast(int)min_pos[0],cast(int)min_pos[1]);
+        else if(holding_area.h > max_pos[0])
+            setSizeRequest(cast(int)max_pos[0],cast(int)max_pos[1]);
+        debug(gui) writeln("holding w:",holding_area.w, "h:",holding_area.h);
     }
     ImageBOX[Color] color_box;
     ImageBOX _selected_color;
@@ -176,8 +157,9 @@ private:
         static int col;
         if(clear) col = 0;
         auto ib = new ImageBOX(table,this);
-        ib.require_create_in(Cell(max_row()-1,col++));
-        ib.set_circle(c);
+        ib.require_create_in(Cell(max_row(),col++));
+        ib.set_circle();
+        ib.set_color(c);
         color_box[c] = ib;
     }
     void set_color_box(){
@@ -186,10 +168,11 @@ private:
                 c.remove_from_table();
             color_box.clear();
         }
-        // clear();
+        clear();
         color_back_color = new ImageBOX(table,this);
         color_back_color.hold_tl(Cell(max_row()-3,1),2,2);
-        color_back_color.set_rect(oldlace);
+        color_back_color.set_rect();
+        color_back_color.set_color(oldlace);
 
         add_color(black,true);
         add_color(red);
@@ -214,7 +197,7 @@ public:
         table = new BoxTable();
         holding_area = new Rect(0,0,200,200);
         render_text = new RenderTextBOX(this);
-        render_image = new RenderImage(this);
+        // render_image = new RenderImage(this);
 
         set_color_box();
 
@@ -223,9 +206,9 @@ public:
         addOnRealize(&realize);
         addOnUnrealize(&unrealize);
 
+        addOnSizeAllocate(&when_sizeallocated);
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
-        addOnSizeAllocate(&when_sizeallocated);
 
         showAll();
     }

@@ -119,6 +119,7 @@ private:
     COMMAND move_selected_u;
     COMMAND move_selected_d;
     COMMAND delete_selected;
+    COMMAND delete_selected_area;
     COMMAND manip_undo;
     COMMAND manip_mode_normal;
     COMMAND manip_mode_edit;
@@ -160,10 +161,6 @@ private:
     void control_input(){
         debug(cmd) writeln(keyState);
         parse_input();
-
-        // debug(cmd) writefln("table is: \n%s",command_table);
-        // debug(cmd) writeln("parsed ",kc);
-        // interpret(kc);
         execute();
         view.queueDraw();
     }
@@ -220,6 +217,8 @@ public:
         expand_select_pivot_D = cmd_template!("manip.expand_to_focus(Direct.down);")(this,manip,view);
         register_key(expand_select_pivot_D,InputState.normal,default_SELECT_PIVOT_D);
         register_key(expand_select_pivot_D,InputState.select,default_SELECT_PIVOT_D);
+        delete_selected_area = cmd_template!("manip.delete_selected_area();")(this,manip,view);
+        register_key(delete_selected_area,InputState.select,default_BOX_DELETE);
 
         toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,manip,view);
         register_key(toggle_grid_show,InputState.normal,default_TOGGLE_GRID_RENDER);
@@ -316,13 +315,15 @@ public:
                 // else fall through
             case InputState.normal:
             case InputState.select:
-                keyState ~= ev.keyval;
-                modState = ev.state;
-                if(keyState.length > preserve_length)
-                    keyState = keyState[$-preserve_length .. $];
-                control_input();
+                if(im_driven) imm.focusOut();
                 break; // ここで使われる値ではない
         }
+        keyState ~= ev.keyval;
+        modState = ev.state;
+        if(keyState.length > preserve_length)
+            keyState = keyState[$-preserve_length .. $];
+        control_input();
+
         debug(cmd) writeln(keyState);
         return true;
     }
@@ -372,6 +373,7 @@ public:
                 break;
             case InputState.normal:
             case InputState.edit:
+                imm.focusOut();
                 _input_state = InputState.select;
                 add_to_queue(
                 manip_mode_select);

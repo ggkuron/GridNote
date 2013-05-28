@@ -13,9 +13,8 @@ void remove(T)(ref T[] array,T del){
             return;
         }
     }
-    // 空配列は通す
 }
-void remove(T)(ref T[] array,int del_num){
+void remove(T)(ref T[] array,in int del_num){
     foreach(i,a ; array)
     {
         if(i == del_num)
@@ -27,7 +26,7 @@ void remove(T)(ref T[] array,int del_num){
         }
     }
 }
-bool is_in(T)(const T[] array,const T b)
+bool is_in(T)(in T[] array,in T b)
     in{
     assert(!array.empty);
     }
@@ -38,7 +37,7 @@ body{ // some sort of search
     }
     return false;
 }
-T max_in(T)(const T[] array){
+T max_in(T)(in T[] array){
     auto copy = array.dup;
     copy.sort();
     return copy[$-1];

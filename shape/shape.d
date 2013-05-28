@@ -5,7 +5,6 @@ import cell.table;
 import cell.contentbox;
 import std.string;
 import cairo.ImageSurface;
-// import gtkc.gdktypes;
 import gtkc.gtktypes;
 
 public import util.color;

@@ -6,6 +6,8 @@ import cell.rangecell;
 import cell.collection;
 import cell.contentbox;
 import cell.contentflex;
+public import cell.textbox;
+public import cell.imagebox;
 import std.typecons;
 import util.direct;
 import util.array;
@@ -29,6 +31,8 @@ private:
     alias Range ColRange;
 
     CellContent[KEY] content_table;
+    TextBOX[KEY] text_table;
+    ImageBOX[KEY] image_table;
     string[KEY] type_table;
     KEY[Cell] keys;
     KEY[RangeCell] box_keys; // ContentBOXだけcacheしとく
@@ -59,20 +63,7 @@ private:
         return true;
     }
 package:
-    Tuple!(string,CellContent)[] get_contents(in Cell start,in Cell end){
-         
-        Tuple!(string,CellContent)[] result;
-        auto keys = ranged_keys(start,end);
-        debug(table) writeln("ranged keys are ",keys);
-        foreach(k; keys)
-        {
-            if(k==0) continue;
-            assert(k in type_table);
-            assert(k in content_table);
-            result ~=tuple(type_table[k],content_table[k]);
-        }
-        return result;
-    }
+    // 矩形的に取り出す
     int[] ranged_keys(in Cell start,in Cell end)const{
         int[int] ranged_keys;
         Cell itr = start;
@@ -209,17 +200,16 @@ public:
 
         auto content_cells = u.get_cells();
         immutable box_id = u.id();
-        debug(cell) writefln("keys are:%s",keys);
-        debug(cell) writefln("boxes are:%s",content_cells);
+        debug(table) writefln("keys are:%s",keys);
+        debug(table) writefln("boxes are:%s",content_cells);
         foreach(c; content_cells)
         {
-             assert(c in keys);
              keys.remove(c);
         }
         content_table.remove(box_id);
         type_table.remove(box_id);
 
-        assert(keys.keys.empty || !keys.values.is_in(box_id));
+        // assert(keys.keys.empty || !keys.values.is_in(box_id));
         return true;
     }
     unittest{
@@ -272,7 +262,7 @@ public:
         assert(cb.bottom_right == Cell(3,3));
     }
 public:
-    // Table全体を返す。これは保存時に使うつもり
+    // Table全体を返す。
     Tuple!(string,CellContent)[] get_all_contents(){
          
         Tuple!(string,CellContent)[] result;
@@ -285,6 +275,43 @@ public:
         }
         return result;
     }
+    Tuple!(string,CellContent)[] get_contents(in Cell start,in Cell end){
+         
+        Tuple!(string,CellContent)[] result;
+        auto keys = ranged_keys(start,end);
+        debug(table) writeln("ranged keys are ",keys);
+        foreach(k; keys)
+        {
+            if(k==0) continue;
+            assert(k in type_table);
+            assert(k in content_table);
+            result ~=tuple(type_table[k],content_table[k]);
+        }
+        return result;
+    }
+    TextBOX[] get_textBoxes(){
+        return text_table.values;
+    }
+    ImageBOX[] get_imageBoxes(){
+        return image_table.values;
+    }
+    TextBOX[] get_textBoxes(in Cell s,in Cell e){
+        auto keys = ranged_keys(s,e);
+        TextBOX[] result;
+        foreach(k; keys)
+            if(k in text_table)
+            result ~= text_table[k];
+        return result;
+    }
+    ImageBOX[] get_imageBoxes(in Cell s,in Cell e){
+        auto keys = ranged_keys(s,e);
+        ImageBOX[] result;
+        foreach(k; keys)
+            if(k in image_table)
+            result ~= image_table[k];
+        return result;
+    }
+
     bool is_hold(in Cell c){
         foreach(cb ; content_table.values)
             if(cb.is_hold(c)) return true;
@@ -369,9 +396,7 @@ public:
             writeln("boxes are: ",u.get_box());
         }
     }
-    final bool try_create_in(T:ContentBOX)(T u,in Cell c)
-        in{
-        }
+    final bool try_create_in(ContentBOX u,in Cell c)
     body{
         if(c in keys || has(c)) return false;
         if(!u.id()) set_id(u);
@@ -389,9 +414,24 @@ public:
         u.create_in(c);
         return true;
     }
-    final bool try_create_in(T:ContentFlex)(T u,in Cell c)
-        in{
-        }
+    final bool try_create_in(TextBOX u,in Cell c)
+    body{
+        if(try_create_in(cast(ContentBOX)u,c))
+        {
+            text_table[u.id()] = u;
+            return true;
+        }else return false;
+    }
+    final bool try_create_in(ImageBOX u,in Cell c)
+    body{
+        if(try_create_in(cast(ContentBOX)u,c))
+        {
+            image_table[u.id()] = u;
+            return true;
+        }else return false;
+    }
+
+    final bool try_create_in(ContentFlex u,in Cell c)
     body{
         if(c in keys || has(c)) return false;
         if(!u.id()) set_id(u);
@@ -447,7 +487,7 @@ public:
         box_edges[Direct.down] ~= u.all_in_row[u.max_row];
 
         debug(table){
-            writeln("type: ",u.toString);
+           writeln("type: ",u.toString);
             writeln("table key(box_id): ",box_id);
             writeln("boxes are: ",u.get_box());
         }

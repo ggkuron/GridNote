@@ -14,7 +14,6 @@ debug(cell) import std.stdio;
 final class TextBOX : ContentBOX{  
 private:
     Text text;
-
     // このpublicはそのうちどっかに
     public int cursor_pos; // 描画側（IM)が教えるために使う
                            // こいつに関してはTextBOXは面倒見ない 
@@ -38,6 +37,14 @@ public:
         cursor_pos = tb.cursor_pos;
         font_color = tb.font_color;
         super(table);
+    }
+    override bool require_create_in(in Cell c)
+    {
+        if(table.try_create_in(this,c))
+        {   // tableから呼ばれる.
+            // create_in(c);
+            return true;
+        }else return false;
     }
     void set_color(in Color c){
         font_color = c;

@@ -17,10 +17,10 @@ debug(manip) import std.stdio;
 
 enum focus_mode{ normal,select,edit }
 
-// 全てのCMDに対して
-// 全てのCMDを実行するためのハブ
+// Tableに対する操作
 // 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
 // 複合的な操作は現在思いつかないのでこのままにする
+// CMDは指示を投げるだけってことをやるかってこと
 // このコメントを消そうとするときに考える
 
 // Table に関する操作
@@ -129,6 +129,15 @@ public:
         mode = focus_mode.select;
         select.expand(dir);
     }
+    void delete_selected_area(){
+        auto select_min = select.top_left;
+        auto select_max = select.bottom_right;
+        auto selected = focused_table.get_contents(select_min,select_max);
+        foreach(box; selected)
+        {
+            box[1].remove_from_table();
+        }
+    }
     void grab_selectbox(){
         auto target = focused_table.get_content(select.focus);
         box_type = target[0];
@@ -183,10 +192,10 @@ public:
     }
     void delete_selected()
         in{
-        assert(mode==focus_mode.normal);
+        // assert(mode==focus_mode.normal);
         }
         out{
-        assert(mode==focus_mode.normal);
+        // assert(mode==focus_mode.normal);
         }
     body{
         auto target = focused_table.get_content(select.focus);
