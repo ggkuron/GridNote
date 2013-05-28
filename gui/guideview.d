@@ -103,6 +103,11 @@ private:
         shadow.set_color(Color(gray,128));
         backdrw = new RectDrawer(shadow);
         backdrw.fill(cr);
+        shadow = new Rect(holding_area.w-2,0,2,holding_area.h);
+        shadow.set_color(Color(snow,128));
+        backdrw = new RectDrawer(shadow);
+        backdrw = new RectDrawer(shadow);
+        backdrw.fill(cr);
     }
     bool show_contents_border = true;
     void renderTable(Context cr){
