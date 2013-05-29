@@ -7,6 +7,7 @@ import gui.tableview;
 import shape.shape;
 import shape.drawer;
 import cairo.Context;
+import util.direct;
 
 import gui.pageview;
 debug(cell) import std.stdio;
@@ -32,6 +33,7 @@ private:
     CircleDrawer circle_d;
     LineDrawer line_d;
     LinesDrawer lines_d;
+    LinesDrawerEach linesE_d;
     RectDrawer rect_d;
     ImageDrawer image_d;
 public:
@@ -47,13 +49,11 @@ public:
     {
         return table.try_create_in(this,c);
     }
-
     @property Shape image(){
         return _image;
     }
     override bool is_to_spoil(){
         return false || super.is_to_spoil();
-        // tobe implement
     }
     final void fill(Context cr){
         _drawer.fill(cr);
@@ -71,8 +71,19 @@ public:
     }
     // drawerで指定した色を優先するので指定しなくてもいい
     // 版画の版みたいなShapeの使い方を想定して
-    void set_color(in Color c){
+    void set_color(in Color c)
+        in{
+        assert(_image);
+        }
+    body{
         _image.set_color(c);
+    }
+    void set_width(in ubyte w)
+        in{
+        assert(_image);
+        }
+    body{
+        _drawer.set_width(w);
     }
     void set_circle(){
         debug(cell) writeln("sc tl: ",top_left);
@@ -85,14 +96,36 @@ public:
         circle_d = new CircleDrawer(cast(Circle)_image);
         _drawer = circle_d;
     }
-    void set_rect(){
+    void set_rect()
+        out{
+        assert(rect_d);
+        assert(_drawer);
+        assert(_image);
+        }
+    body{
         immutable gridSize = _view.get_gridSize();
         auto tl = _view.get_pos(top_left);
         auto w = numof_col * gridSize;
         auto h = numof_row * gridSize;
         _image = new Rect(tl[0],tl[1],w,h);
-        // _image.set_color(c);
         rect_d = new RectDrawer(cast(Rect)_image);
         _drawer = rect_d;
     }
+    void set_lines(Line[] ls,in double w)
+    {
+        auto lines = new Lines();
+        lines.set_width(w);
+        lines.add_line(ls);
+        line_d = new LinesDrawer(lines);
+        _image = lines;
+        _drawer = line_d;
+    }
+    void set_lines(Line[] ls)
+    {
+        auto lines = new Lines(ls);
+        linesE_d = new LinesDrawerEach(lines);
+        _image = lines;
+        _drawer = linesE_d;
+    }
+
 }

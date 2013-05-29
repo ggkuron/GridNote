@@ -311,7 +311,7 @@ public:
             case InputState.edit:
                 im_driven = cast(bool)imm.filterKeypress(ev);
                 debug(cmd) writeln(im_driven);
-                // if(im_driven) return true;
+                if(im_driven) return true;
                 break;
             case InputState.normal:
             case InputState.select:
@@ -334,10 +334,6 @@ public:
             command_queue ~= cmd;
         }
     }
-    // void change_input_mode(InputState istate){
-    //     _input_state = istate;
-    // }
-
 public:
     void change_mode_normal(){
         final switch(_input_state){

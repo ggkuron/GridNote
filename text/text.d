@@ -95,7 +95,7 @@ private:
     TextRange _opened_range;
 
     dchar[pos][line] _writing;
-    Color[TextRange] color;
+    Color[TextRange] _font_color;
     Underline[TextRange] under_line;
     TextPoint _current;
 
@@ -223,7 +223,7 @@ public:
         _opened_range.set_end(backward_pos());
         _opened_range = TextRange();
         _opened_range.set_start(_current);
-        color[_opened_range] = c;
+        _font_color[_opened_range] = c;
     }
     // アクセサ
     @property int current_line()const{

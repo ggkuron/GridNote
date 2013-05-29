@@ -29,33 +29,32 @@ enum focus_mode{ normal,select,edit }
    // 指示棒をここがもってるから
 final class ManipTable{
 private:
-    BoxTable focused_table;
-    CellContent maniped_box;
-    CellContent[] old_state;
+    BoxTable _focused_table;
+    CellContent _maniped_box;
+    CellContent[] _old_state;
     PageView _pv;
+    SelectBOX _select;
+    focus_mode _mode;
 
     Color _selected_color;
-    string box_type;
-    ManipTextBOX manip_textbox;
+    string _box_type;
+    ManipTextBOX _manip_textbox;
 public:
-    focus_mode mode;
-    // Selectはここで持つべきか否か
-    SelectBOX select;
     this(BoxTable table,PageView p)
         out{
-        assert(focused_table);
-        assert(manip_textbox);
-        assert(select);
+        assert(_focused_table);
+        assert(_manip_textbox);
+        assert(_select);
         }
     body{
-        focused_table = table;
-        select = new SelectBOX(focused_table);
+        _focused_table = table;
+        _select = new SelectBOX(_focused_table);
 
-        manip_textbox = new ManipTextBOX(this);
+        _manip_textbox = new ManipTextBOX(this);
         _pv =  p;
     }
     void move_focus(in Direct dir){
-        immutable focus = select.focus();
+        immutable focus = _select.focus();
         immutable max_view = _pv.get_view_max();
         immutable min_view = _pv.get_view_min();
         if((focus.column <= min_view.column && dir == Direct.left)
@@ -67,37 +66,37 @@ public:
             debug(manip) writeln("max ",max_view);
 
             _pv.move_view(dir);
-            select.move(dir);
+            _select.move(dir);
         }
         else
-            select.move(dir);
-        debug(manip) writefln("focus: %s",select.focus);
+            _select.move(dir);
+        debug(manip) writefln("focus: %s",_select.focus);
     }
     CellContent get_target(){
-        return maniped_box;
+        return _maniped_box;
     }
     void change_mode_select()
         in{
-        assert(mode != focus_mode.select);
+        assert(_mode != focus_mode.select);
         }
         out{
-        assert(mode == focus_mode.select);
+        assert(_mode == focus_mode.select);
         }
     body{
-        mode = focus_mode.select;
-        select.set_pivot();
+        _mode = focus_mode.select;
+        _select.set_pivot();
     }
     @property auto targetbox(){
-        switch(box_type){
+        switch(_box_type){
             case "cell.textbox.TextBOX":
-                return cast(TextBOX)maniped_box;
+                return cast(TextBOX)_maniped_box;
             default:
                 return null;
         }
     }
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
     void expand_if_on_edge(Direct dir){
-        if(select.is_on_edge(dir))
+        if(_select.is_on_edge(dir))
         {
             expand_select(dir);
         }
@@ -108,46 +107,44 @@ public:
     // 必要ならexpand_to_focus()書いてそれをCMD化すればいい
     void expand_to_focus(in Direct dir)
         out{
-        assert(mode==focus_mode.select || mode==focus_mode.edit);
+        assert(_mode==focus_mode.select || _mode==focus_mode.edit);
         }
     body{
-        if(mode == focus_mode.normal)
+        if(_mode == focus_mode.normal)
         {
             change_mode_select();
         }
         move_focus(dir);
-        select.expand_to_focus();
+        _select.expand_to_focus();
     }
     void expand_select(Direct dir)
         in{
-        assert(mode==focus_mode.select || mode==focus_mode.edit);
+        assert(_mode==focus_mode.select || _mode==focus_mode.edit);
         }
         out{
-        assert(mode==focus_mode.select || mode==focus_mode.edit);
+        assert(_mode==focus_mode.select || _mode==focus_mode.edit);
         }
     body{
-        mode = focus_mode.select;
-        select.expand(dir);
+        _mode = focus_mode.select;
+        _select.expand(dir);
     }
     void delete_selected_area(){
-        auto select_min = select.top_left;
-        auto select_max = select.bottom_right;
-        auto selected = focused_table.get_contents(select_min,select_max);
+        auto select_min = _select.top_left;
+        auto select_max = _select.bottom_right;
+        auto selected = _focused_table.get_contents(select_min,select_max);
         foreach(box; selected)
         {
             box[1].remove_from_table();
         }
     }
     void grab_selectbox(){
-        auto target = focused_table.get_content(select.focus);
-        box_type = target[0];
-        maniped_box = target[1];
+        auto target = _focused_table.get_content(_select.focus);
+        _box_type = target[0];
+        _maniped_box = target[1];
     }
-    void move_selected(Direct to)
-        out{
-        }
+    void move_selected(in Direct to)
     body{
-        auto target = focused_table.get_content(select.focus)[1];
+        auto target = _focused_table.get_content(_select.focus)[1];
         immutable view_min = _pv.get_view_min();
         immutable view_max = _pv.get_view_max();
         if(target is null) return;
@@ -158,9 +155,8 @@ public:
                 _pv.move_view(to);
                 target.require_move(to);
                     move_focus(to);
-
                 if(!view_min.row)
-                    select.move(to.reverse);
+                    _select.move(to.reverse);
             }
             else if(target.top_left.column <= view_min.column && to == Direct.left)
             {
@@ -168,37 +164,29 @@ public:
                 target.require_move(to);
                     move_focus(to);
                 if(!view_min.column)
-                     select.move(to.reverse);
+                     _select.move(to.reverse);
             }
             else if(target.bottom_right.row >= view_max.row && to == Direct.down)
             {   // 
                 _pv.move_view(to);
-                // target.require_move(to);
                 if(target.require_move(to))
                     move_focus(to);
             }
             else if(target.bottom_right.column >= view_max.column && to==Direct.right)
             {
                 _pv.move_view(to);
-                // target.require_move(to);
                 if(target.require_move(to))
                     move_focus(to);
             }
             else if(target.require_move(to)
                  || target.top_left.column == view_min.column && to == Direct.left
                  || target.top_left.row == view_min.row && to == Direct.up)
-               select.move(to);
+               _select.move(to);
         }
     }
     void delete_selected()
-        in{
-        // assert(mode==focus_mode.normal);
-        }
-        out{
-        // assert(mode==focus_mode.normal);
-        }
     body{
-        auto target = focused_table.get_content(select.focus);
+        auto target = _focused_table.get_content(_select.focus);
         if(target[1] is null) return;
         else{
             target[1].remove_from_table();
@@ -206,34 +194,34 @@ public:
     }
     void change_mode_normal()
         out{
-        assert(mode == focus_mode.normal);
+        assert(_mode == focus_mode.normal);
         }
     body{
         debug(manip) writeln("return to normal start");
-        mode = focus_mode.normal;
-        if(maniped_box !is null)
-        {   // maniped_box.is_to_spoil == false なら削除されない
-            focused_table.try_remove(maniped_box);
+        _mode = focus_mode.normal;
+        if(_maniped_box !is null)
+        {   // _maniped_box.is_to_spoil == false なら削除されない
+            _focused_table.try_remove(_maniped_box);
         }
-        select.selection_clear();
+        _select.selection_clear();
         debug(manip) writeln("returned");
     }
     void change_mode_edit()
         out{
-        assert(mode == focus_mode.edit);
+        assert(_mode == focus_mode.edit);
         }
     body{
-        mode = focus_mode.edit;
+        _mode = focus_mode.edit;
     }
     void create_TextBOX(){
         debug(manip) writeln("start_insert_normal_text");
-        mode = focus_mode.edit;
-        if(focused_table.has(select.focus)) return;
-        auto tb = select.create_TextBOX();
+        _mode = focus_mode.edit;
+        if(_focused_table.has(_select.focus)) return;
+        auto tb = _select.create_TextBOX();
 
-        maniped_box = tb;
+        _maniped_box = tb;
         debug(manip) writeln("type in: ",tb.toString());
-        box_type = tb.toString();
+        _box_type = tb.toString();
 
         debug(manip) writeln("end");
     }
@@ -251,56 +239,62 @@ public:
     }
     void create_CircleBOX(in Color c){
         debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
-        mode = focus_mode.edit;
-        if(focused_table.has(select.focus)) return;
-        auto ib = select.create_CircleCell(c,_pv);
+        _mode = focus_mode.edit;
+        if(_focused_table.has(_select.focus)) return;
+        auto ib = _select.create_CircleCell(c,_pv);
 
-        maniped_box = ib;
-        box_type = ib.toString();
+        _maniped_box = ib;
+        _box_type = ib.toString();
         debug(manip) writeln("#### end create_ImageBOX ####");
     }
     void create_RectBOX(in Color c){
         debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
-        mode = focus_mode.edit;
-        if(focused_table.has(select.focus)) return;
-        auto ib = select.create_RectCell(c,_pv);
+        _mode = focus_mode.edit;
+        if(_focused_table.has(_select.focus)) return;
+        auto ib = _select.create_RectCell(c,_pv);
 
-        maniped_box = ib;
-        box_type = ib.toString();
+        _maniped_box = ib;
+        _box_type = ib.toString();
         debug(manip) writeln("#### end create_ImageBOX ####");
     }
-
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
-        if(mode!=focus_mode.edit) return;
+        if(_mode!=focus_mode.edit) return;
         
-        old_state ~= maniped_box;
-        manip_textbox.with_commit(str,targetbox);
+        _old_state ~= _maniped_box;
+        _manip_textbox.with_commit(str,targetbox);
     }
     void backspace(){
         debug(manip) writeln("back space start");
-        old_state ~= maniped_box;
-        switch(box_type){
+        _old_state ~= _maniped_box;
+        switch(_box_type){
             case "cell.textbox.TextBOX":
-                manip_textbox.backspace(cast(TextBOX)maniped_box);
+                _manip_textbox.backspace(cast(TextBOX)_maniped_box);
                 return;
             default:
-                break;
+                return;
         }
     }
     void text_feed(){
-        auto tb = cast(TextBOX)maniped_box;
-        old_state ~= new TextBOX(focused_table,tb);
-        if(box_type == "cell.textbox.TextBOX")
-        manip_textbox.feed(tb);
+        auto tb = cast(TextBOX)_maniped_box;
+        _old_state ~= new TextBOX(_focused_table,tb);
+        if(_box_type == "cell.textbox.TextBOX")
+        _manip_textbox.feed(tb);
     }
     void edit_textbox(){
-        old_state ~= maniped_box;
-        if(box_type != "cell.textbox.TextBOX") return;
+        _old_state ~= _maniped_box;
+        if(_box_type != "cell.textbox.TextBOX") return;
     }
     void undo(){
-        if(!old_state.empty())
-        maniped_box = old_state[$-1];
+        if(!_old_state.empty())
+        _maniped_box = _old_state[$-1];
+    }
+    // アクセサ
+    const(SelectBOX) select()const{
+        return _select;
+    }
+    focus_mode mode()const{
+        return _mode;
     }
 }
 
@@ -308,25 +302,27 @@ import gtk.IMMulticontext;
 import gtk.IMContext;
 
 final class ManipTextBOX {
-    ManipTable manip_table;
-    IMMulticontext imm;
+    // ManipTable _manip_table;
+    // IMMulticontext _imm;
+    // 上2つ使ってないかもしれない
+    // manip_table渡してしまったらどうして分離してるのかわからない
     this(ManipTable mt){
-        manip_table = mt;
+        //_manip_table = mt;
     }
     void move_caret(TextBOX box, Direct dir){
         final switch(dir){
             case Direct.right:
                 box.move_caretR(); return;
-                break;
+                return;
             case Direct.left:
                 box.move_caretL(); return;
-                break;
+                return;
             case Direct.up:
                 box.move_caretU(); return;
-                break;
+                return;
             case Direct.down:
                 box.move_caretD(); return;
-                break;
+                return;
         }
         assert(0);
     }

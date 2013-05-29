@@ -4,12 +4,13 @@ import cell.cell;
 import cell.table;
 import cell.contentbox;
 import std.string;
+import std.array;
 import cairo.ImageSurface;
 import gtkc.gtktypes;
 
 public import util.color;
 
-class Shape{
+abstract class Shape{
     Color color;
     void attach(ContentBOX box){}
     void set_color(in Color c){
@@ -18,7 +19,7 @@ class Shape{
     void scale(){}
 }
 
-class Point : Shape{
+final class Point : Shape{
     double x,y;
     this(double xx=0, double yy=0){
         x = xx;
@@ -29,13 +30,17 @@ class Point : Shape{
         y = yy;
     }
 }
-class Line : Shape{
+final class Line : Shape{
     Point start,end;
     double width;
     this(){}
     this(Point p1,Point p2){
         start = p1;
         end = p2;
+    }
+    this(double[2] p1,double[2] p2){
+        start = new Point(p1[0],p1[1]);
+        end = new Point(p2[0],p2[1]);
     }
     this(Point p1,Point p2,double w){
         this(p1,p2);
@@ -45,26 +50,42 @@ class Line : Shape{
         width = w;
     }
 }
-        
-class Lines : Line{
+final class Lines : Shape{
     Line[] lines;
     double width;
     this(){}
-    Lines* opAssign(const Lines ls){ 
+    this(double[2][2][] lines...){
+        foreach(l; lines)
+        {
+            auto ll = new Line(l[0],l[1]);
+            add_line(ll);
+        }
+    }
+    this(Line[] ls){
+        add_line(ls);
+    }
+    Lines* opAssign(in Lines ls){ 
         lines = cast(Line[])ls.lines;
         width = ls.width;
         return cast(Lines*)this;
     }
-    void set_width(double d){
+    void set_width(double d=1){
         width = d;
     }
-    void add_line(Line l){
-        if(width != double.nan) l.set_width(width);
-        l.set_color(color);
-        lines ~= l;
+    // add_lineの前にset_widthが必要
+    // 個々のlineの特性を殺すわけじゃない
+    void add_line(Line[] ls...){
+        foreach(l; ls)
+        {
+            if(width == double.nan) l.set_width(width);
+            lines ~= l;
+        }
+    }
+    @property bool empty()const{
+        return lines.empty();
     }
 }
-class Rect : Shape{
+final class Rect : Shape{
     double x,y,w,h;
     this(double xx=0,double yy=0,double ww=0,double hh=0){
         x = xx;
@@ -110,7 +131,7 @@ class Circle : Shape{
         radius = r;
     }
 }
-class Arc : Circle{
+final class Arc : Circle{
     double from,to;
     this(Point x,double r,double angle1,double angle2){
         super(x,r);

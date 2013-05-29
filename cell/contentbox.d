@@ -77,8 +77,8 @@ public:
     }
     void hold(UpDown ud,LR lr)(in Cell start,in int horizontal_cnt,in int vertical_cnt) // TopLeft
         in{
-        assert(vertical_cnt >= 1);
-        assert(horizontal_cnt >= 1);
+        // assert(vertical_cnt >= 1);
+        // assert(horizontal_cnt >= 1);
         }
     body{
         int w = horizontal_cnt;
