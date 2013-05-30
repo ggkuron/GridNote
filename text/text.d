@@ -36,6 +36,11 @@ struct TextRange{
 private:
     TextPoint _min ;
     TextPoint _max ;  // 
+    ubyte _set_flg;
+    enum ubyte
+      not_set = 0,
+      one_hand_set = 1,
+      set_finish = 2;      
 public:
     void set(in TextPoint s,in TextPoint e)
         in{
@@ -44,12 +49,21 @@ public:
     body{
         _min = s;
         _max = e;
+        _set_flg = set_finish;
     }
     void set_start(in TextPoint s){
         _min = s;
+        if(_set_flg == one_hand_set)
+            _set_flg = set_finish;
+        else if(_set_flg == not_set)
+            _set_flg = one_hand_set;
     }
     void set_end(in TextPoint e){
         _max = e;
+        if(_set_flg == one_hand_set)
+            _set_flg = set_finish;
+        else if(_set_flg == not_set)
+            _set_flg = one_hand_set;
     }
     int opCmp(in TextPoint i)const{
         if(_max < i) return -1;
@@ -73,6 +87,12 @@ public:
     @property TextPoint max()const{
         return _max;
     }
+    bool is_set()const{
+        return _set_flg == set_finish;
+    }
+    bool is_opened()const{
+        return _set_flg == one_hand_set;
+    }
 }
 
 struct Text
@@ -92,17 +112,18 @@ private:
     alias int line;
     alias PangoUnderline Underline;
     // 設定されるために開かれたRange
-    TextRange _opened_range;
+    TextRange _current_range;
+    TextRange _current_font_color_range;
 
     dchar[pos][line] _writing;
     Color[TextRange] _font_color;
-    Underline[TextRange] under_line;
+    Underline[TextRange] _under_line;
     TextPoint _current;
 
     invariant(){
         assert(_current.line < _lines);
     }
-    void deleteChar(int pos){
+    void deleteChar(in int pos){
         _writing[current_line].remove(pos);
     }
     void set_caret(){
@@ -118,7 +139,7 @@ private:
         else return TextPoint(_current.line,_current.pos-1);
     }
 public:
-    ulong insert(dchar c){
+    ulong insert(in dchar c){
         _writing[current_line][_current.pos++] = c;
         _caret.move(Direct.right);
         debug(text) writef("insert : %s\n",writing[current_line]);
@@ -220,10 +241,13 @@ public:
         else return false;
     }
     void set_color(in Color c){
-        _opened_range.set_end(backward_pos());
-        _opened_range = TextRange();
-        _opened_range.set_start(_current);
-        _font_color[_opened_range] = c;
+        if(_current_font_color_range.is_opened)
+        {
+            _current_font_color_range.set_end(backward_pos());
+            _font_color[_current_font_color_range] = c;
+        }
+        _current_font_color_range = TextRange();
+        _current_font_color_range.set_start(_current);
     }
     // アクセサ
     @property int current_line()const{

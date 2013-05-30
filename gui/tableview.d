@@ -30,14 +30,26 @@ final:
         immutable gridSpace = get_gridSize;
         return [get_x(c) + gridSpace/2, get_y(c) + gridSpace/2]; 
     }
-
     void FillCell(Context cr,in Cell cell,in Color grid_color){
         immutable gridSpace = get_gridSize();
-        Rect grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
-        auto grid_drwer = new RectDrawer(grid_rect);
+        scope grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
+        scope grid_drwer = new RectDrawer(grid_rect);
 
         grid_rect.set_color(grid_color);
         grid_drwer.fill(cr);
+    }
+    void PointCell(Context cr,in Cell cell,in Color c){
+        immutable gridSpace = get_gridSize();
+        const pos = get_pos(cell);
+        scope point = new Circle(pos,3);
+        scope pdrw = new CircleDrawer(point);
+
+        point.set_color(orange);
+        pdrw.fill(cr);
+        pdrw.set_width(3);
+        point.replace(pos,8);
+        point.set_color(Color(red,196));
+        pdrw.stroke(cr);
     }
     void strokeGrids(Context cr,in Cell[] cells,in Color color,in ubyte grid_width){
         bool[Direct] adjacent_info(in Cell[] cells,in Cell searching){
@@ -62,25 +74,25 @@ final:
         }
         if(cells.empty) return;
 
-        Lines perimeters = new Lines;
+        scope perimeters = new Lines;
         perimeters.set_color(color);
         perimeters.set_width(grid_width);
 
         foreach(c; cells)
         {
-            const auto ad_info = adjacent_info(cells,c);
+            const ad_info = adjacent_info(cells,c);
             foreach(n; Direct.min .. Direct.max+1 )
             {
-                auto dir = cast(Direct)n;
+                const dir = cast(Direct)n;
                 if(!ad_info[dir]){ // 隣接してない方向の境界を書く
                     perimeters.add_line(CellLine(c,dir,color,grid_width));
                 }
             }
         }
-        LinesDrawer drwer = new LinesDrawer(perimeters);
+        scope drwer = new LinesDrawer(perimeters);
         drwer.stroke(cr);
     }
-    Line CellLine(in Cell cell,in Direct dir,in Color color,double w){
+    Line CellLine(in Cell cell,in Direct dir,in Color color,in double w){
         immutable gridSpace = get_gridSize();
         auto startp = new Point();
         auto endp = new Point();
@@ -123,20 +135,19 @@ final:
     void FillBox(Context cr,in ContentBOX rb,in Color color){
         immutable top_left = rb.top_left();
         immutable gridSpace = get_gridSize();
-        Rect grid_rect = new Rect(get_x(top_left), get_y(top_left), gridSpace*rb.numof_col, gridSpace*rb.numof_row);
-        auto grid_drwer = new RectDrawer(grid_rect);
+        scope grid_rect = new Rect(get_x(top_left), get_y(top_left), gridSpace*rb.numof_col, gridSpace*rb.numof_row);
+        scope grid_drwer = new RectDrawer(grid_rect);
 
         grid_rect.set_color(color);
         grid_drwer.fill(cr);
     }
-    void StrokeBox(Context cr,const ContentBOX rb,const Color grid_color){
+    void StrokeBox(Context cr,in ContentBOX rb,in Color grid_color){
         immutable top_left = rb.top_left();
         immutable gridSpace = get_gridSize();
-        Rect grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
-        auto grid_drwer = new RectDrawer(grid_rect);
+        scope grid_rect = new Rect(get_x(top_left),get_y(top_left),gridSpace*rb.numof_col,gridSpace*rb.numof_row);
+        scope grid_drwer = new RectDrawer(grid_rect);
 
         grid_rect.set_color(grid_color);
         grid_drwer.stroke(cr);
     }
-
 }

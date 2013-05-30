@@ -15,11 +15,10 @@ import gtk.FileChooserDialog;
 import std.array;
 debug(manip) import std.stdio;
 
-enum focus_mode{ normal,select,edit }
+enum FocusMode{ normal,select,edit,point }
 
 // Tableに対する操作
 // 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
-// 複合的な操作は現在思いつかないのでこのままにする
 // CMDは指示を投げるだけってことをやるかってこと
 // このコメントを消そうとするときに考える
 
@@ -34,10 +33,11 @@ private:
     CellContent[] _old_state;
     PageView _pv;
     SelectBOX _select;
-    focus_mode _mode;
+    FocusMode _mode;
 
     Color _selected_color;
     string _box_type;
+    bool _box_use_im;
     ManipTextBOX _manip_textbox;
 public:
     this(BoxTable table,PageView p)
@@ -77,13 +77,13 @@ public:
     }
     void change_mode_select()
         in{
-        assert(_mode != focus_mode.select);
+        assert(_mode != FocusMode.select);
         }
         out{
-        assert(_mode == focus_mode.select);
+        assert(_mode == FocusMode.select);
         }
     body{
-        _mode = focus_mode.select;
+        _mode = FocusMode.select;
         _select.set_pivot();
     }
     @property auto targetbox(){
@@ -95,7 +95,7 @@ public:
         }
     }
     // 端点にfocusがあればexpand, そうでなくてもfocusは動く
-    void expand_if_on_edge(Direct dir){
+    void expand_if_on_edge(in Direct dir){
         if(_select.is_on_edge(dir))
         {
             expand_select(dir);
@@ -104,28 +104,28 @@ public:
     }
     // moveとCMD単位で分離したかったが、
     // 初回の切り分けが複雑になるのでこうなった
-    // 必要ならexpand_to_focus()書いてそれをCMD化すればいい
+    // 必要ならexpand_to_focus(no args)書いてそれをCMD化すればいい
     void expand_to_focus(in Direct dir)
         out{
-        assert(_mode==focus_mode.select || _mode==focus_mode.edit);
+        assert(_mode==FocusMode.select || _mode==FocusMode.edit);
         }
     body{
-        if(_mode == focus_mode.normal)
+        if(_mode == FocusMode.normal)
         {
             change_mode_select();
         }
         move_focus(dir);
         _select.expand_to_focus();
     }
-    void expand_select(Direct dir)
+    void expand_select(in Direct dir)
         in{
-        assert(_mode==focus_mode.select || _mode==focus_mode.edit);
+        assert(_mode==FocusMode.select || _mode==FocusMode.edit);
         }
         out{
-        assert(_mode==focus_mode.select || _mode==focus_mode.edit);
+        assert(_mode==FocusMode.select || _mode==FocusMode.edit);
         }
     body{
-        _mode = focus_mode.select;
+        _mode = FocusMode.select;
         _select.expand(dir);
     }
     void delete_selected_area(){
@@ -141,6 +141,8 @@ public:
         auto target = _focused_table.get_content(_select.focus);
         _box_type = target[0];
         _maniped_box = target[1];
+        if(_box_type == "cell.textbox.TextBOX")
+            _box_use_im = true;
     }
     void move_selected(in Direct to)
     body{
@@ -179,8 +181,8 @@ public:
                     move_focus(to);
             }
             else if(target.require_move(to)
-                 || target.top_left.column == view_min.column && to == Direct.left
-                 || target.top_left.row == view_min.row && to == Direct.up)
+                 ||(target.top_left.column == view_min.column && to == Direct.left)
+                 ||(target.top_left.row == view_min.row && to == Direct.up))
                _select.move(to);
         }
     }
@@ -194,35 +196,41 @@ public:
     }
     void change_mode_normal()
         out{
-        assert(_mode == focus_mode.normal);
+        assert(_mode == FocusMode.normal);
         }
     body{
         debug(manip) writeln("return to normal start");
-        _mode = focus_mode.normal;
+        _mode = FocusMode.normal;
         if(_maniped_box !is null)
         {   // _maniped_box.is_to_spoil == false なら削除されない
             _focused_table.try_remove(_maniped_box);
         }
         _select.selection_clear();
+        _box_use_im = false;
         debug(manip) writeln("returned");
+    }
+    void change_mode_point(){
+        change_mode_normal();
+        _mode = FocusMode.point;
     }
     void change_mode_edit()
         out{
-        assert(_mode == focus_mode.edit);
+        assert(_mode == FocusMode.edit);
         }
     body{
-        _mode = focus_mode.edit;
+        _mode = FocusMode.edit;
     }
     void create_TextBOX(){
         debug(manip) writeln("start_insert_normal_text");
-        _mode = focus_mode.edit;
+        _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
         auto tb = _select.create_TextBOX();
+        tb.set_font_color(_selected_color);
 
         _maniped_box = tb;
-        debug(manip) writeln("type in: ",tb.toString());
         _box_type = tb.toString();
-
+        _box_use_im = true;
+        debug(manip) writeln("type in: ",tb.toString());
         debug(manip) writeln("end");
     }
 //    void select_file(){
@@ -231,38 +239,54 @@ public:
 //        // filechooserD.getFile();
 //        filechooserD.showAll();
 //    }
+    void select_color(in Direct dir){
+        _pv.guide_view.select_color(dir);
+        _selected_color = get_selectedColor();
+    }
     void select_color(in Color c){
-        _selected_color = c;
+        // add_colorをどうにかするいまのままじゃいかん
+        // _pv.guide_view.display_color(c);
     }
-    Color get_SelectedColor()const{
-        return _selected_color;
+    Color get_selectedColor(){
+        return _pv.guide_view.get_selectedColor();
     }
-    void create_CircleBOX(in Color c){
+    void create_CircleBOX(){
         debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
-        _mode = focus_mode.edit;
+        _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
-        auto ib = _select.create_CircleCell(c,_pv);
+        auto ib = _select.create_CircleCell(_selected_color,_pv);
 
         _maniped_box = ib;
         _box_type = ib.toString();
+        _box_use_im = false;
         debug(manip) writeln("#### end create_ImageBOX ####");
     }
-    void create_RectBOX(in Color c){
+    void create_RectBOX(){
         debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
-        _mode = focus_mode.edit;
+        _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
-        auto ib = _select.create_RectCell(c,_pv);
+        auto ib = _select.create_RectCell(_selected_color,_pv);
 
         _maniped_box = ib;
         _box_type = ib.toString();
+        _box_use_im = false;
         debug(manip) writeln("#### end create_ImageBOX ####");
     }
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
-        if(_mode!=focus_mode.edit) return;
-        
-        _old_state ~= _maniped_box;
-        _manip_textbox.with_commit(str,targetbox);
+        if(_mode!=FocusMode.edit)
+        {   // 本当はこんな状態になってるのがおかしいわけで
+            _pv.IM_FocusOut();
+            return;
+        }
+        switch(_box_type){
+           case "cell.textbox.TextBOX":
+                _old_state ~= new TextBOX(_focused_table,cast(TextBOX)_maniped_box);
+                _manip_textbox.with_commit(str,targetbox);
+               return;
+           default:
+               return;
+        }
     }
     void backspace(){
         debug(manip) writeln("back space start");
@@ -282,6 +306,8 @@ public:
         _manip_textbox.feed(tb);
     }
     void edit_textbox(){
+        if(_box_type != "cell.textbox.TextBOX") 
+            return;
         _old_state ~= _maniped_box;
         if(_box_type != "cell.textbox.TextBOX") return;
     }
@@ -293,7 +319,7 @@ public:
     const(SelectBOX) select()const{
         return _select;
     }
-    focus_mode mode()const{
+    FocusMode mode()const{
         return _mode;
     }
 }
@@ -309,7 +335,7 @@ final class ManipTextBOX {
     this(ManipTable mt){
         //_manip_table = mt;
     }
-    void move_caret(TextBOX box, Direct dir){
+    void move_caret(TextBOX box, in Direct dir){
         final switch(dir){
             case Direct.right:
                 box.move_caretR(); return;
@@ -342,4 +368,8 @@ final class ManipTextBOX {
     void feed(TextBOX box){
         box.move_caretD();
     }
+    void set_font_color(TextBOX box,in Color c){
+        box.set_font_color(c);
+    }
 }
+

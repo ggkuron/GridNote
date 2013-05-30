@@ -46,11 +46,11 @@ public:
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
-    this(ContentBOX oldone){
+    this(BoxTable t,ContentBOX oldone){
         debug(cell) writeln("take after start");
 
         clear();
-        table = oldone.table;
+        table = t;
         inner_range_cell = RangeCell(oldone);
         debug(cell) writeln("end");
     }
@@ -140,6 +140,8 @@ public:
     // 妥協点は、各実装でこれをoverride
     bool require_create_in(in Cell c)
     {
+        if(is_registered())
+            remove_from_table();
         return table.try_create_in(this,c);
     }
     bool require_move(in Cell c){
@@ -213,6 +215,9 @@ public:
         debug(cell) writeln(spoiled, empty());
         return spoiled ||empty();
     };
+    bool is_registered()const{
+        return id != 0;
+    }
     @property int id()const{
         return _box_id;
     }

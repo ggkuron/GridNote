@@ -15,64 +15,68 @@ import cairo.Context;
 debug(gui) import std.stdio;
 
 class BoxRenderer{
-    TableView table_view;
-    protected:
+private:
+    TableView _table_view;
+protected:
     int get_gridSize()const{
-        return table_view.get_gridSize();
+        return _table_view.get_gridSize();
     }
-    public:
+public:
     this(TableView tv)
         out{
-        assert(table_view);
+        assert(_table_view);
         }
     body{
-        table_view = tv;
+        _table_view = tv;
     }
-    final Rect get_position(in CellContent b){
-        assert(b !is null);
-
-        auto cp = b.top_left;
-        debug(gui) writefln("cp : %s",cp);
-        auto xy = table_view.get_pos(cp);
-        auto grid = table_view.get_gridSize;
-
-        int w = grid * b.numof_col();
-        int h = grid * b.numof_row();
-
-        auto result =  new Rect(xy[0],xy[1],w,h);
-        debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
-        return result;
-    }
-    final Rect get_window_position(in CellContent b){
-        assert(b !is null);
-
-        auto cp = b.top_left;
-        debug(gui) writefln("cp : %s",cp);
-        auto xy = table_view.get_window_pos(cp);
-
-        auto grid = table_view.get_gridSize;
-
-        int w = grid * b.numof_col();
-        int h = grid * b.numof_row();
-
-        auto result =  new Rect(xy[0],xy[1],w,h);
-        debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
-        return result;
-    }
-
-public:
 final:
+    Rect get_position(in CellContent b)
+        in{
+        assert(b !is null);
+        }
+    body{
+        auto cp = b.top_left;
+        debug(gui) writefln("cp : %s",cp);
+        auto xy = _table_view.get_pos(cp);
+        auto grid = _table_view.get_gridSize;
+
+        int w = grid * b.numof_col();
+        int h = grid * b.numof_row();
+
+        auto result =  new Rect(xy[0],xy[1],w,h);
+        debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
+        return result;
+    }
+    Rect get_window_position(in CellContent b)
+        in{
+        assert(b !is null);
+        }
+    body{
+
+        auto cp = b.top_left;
+        debug(gui) writefln("cp : %s",cp);
+        auto xy = _table_view.get_window_pos(cp);
+
+        auto grid = _table_view.get_gridSize;
+
+        int w = grid * b.numof_col();
+        int h = grid * b.numof_row();
+
+        auto result =  new Rect(xy[0],xy[1],w,h);
+        debug(gui) writefln("result is %f %f %f %f",result.x,result.y,result.w,result.h);
+        return result;
+    }
     void render_grid(Context cr,in CellContent b,in Color color,in ubyte width){
-        table_view.strokeGrids(cr,b.get_cells(),color,width);
+        _table_view.strokeGrids(cr,b.get_cells(),color,width);
     }
     void render_fill(Context cr,in ContentFlex b,in Color color){
-        table_view.FillGrids(cr,b.get_cells(),color);
+        _table_view.FillGrids(cr,b.get_cells(),color);
     }
     void render_fill(Context cr,in ContentBOX b,in Color color){
-        table_view.FillBox(cr,b,color);
+        _table_view.FillBox(cr,b,color);
     }
     double[2] get_center(in ContentBOX b)const{
         const center_cell = (b.top_left + b.bottom_right)/2;
-        return table_view.get_center_pos(center_cell);
+        return _table_view.get_center_pos(center_cell);
     }
 }

@@ -31,7 +31,6 @@ struct KeyCombine{
         hash = (hash * 9) + k + mod*25;
         return hash;
     }
-
 }                            
 unittest{
     assert(default_MOVE_FOCUS_L == default_MOVE_FOCUS_L);
@@ -43,6 +42,9 @@ unittest{
 
 // table 上に登録しない値として
 immutable INVALID = KeyCombine();
+
+immutable default_ZOOM_IN = KeyCombine(GdkKeysyms.GDK_1);
+immutable default_ZOOM_OUT = KeyCombine(GdkKeysyms.GDK_2);
 
 immutable default_EXIT = KeyCombine(GdkKeysyms.GDK_w);
 immutable default_DELETE = KeyCombine(GdkKeysyms.GDK_x);
@@ -83,3 +85,6 @@ immutable escape_key = KeyCombine(GdkKeysyms.GDK_Escape);
 immutable alt_escape = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_bracketleft]);
 
 immutable default_ImageOpen= KeyCombine(GdkKeysyms.GDK_I);
+immutable default_Point= KeyCombine(GdkKeysyms.GDK_p);
+
+immutable default_MODE_COLOR = KeyCombine(GdkKeysyms.GDK_C);

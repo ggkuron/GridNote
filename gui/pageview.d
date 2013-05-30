@@ -51,7 +51,7 @@ private:
     RenderTextBOX _render_text;
     IMMulticontext _imm;
 
-    GuideView guide_view;
+    GuideView _guide_view;
 
     ubyte renderdLineWidth = 2;
     ubyte selectedLineWidth = 2;
@@ -63,7 +63,7 @@ private:
     Color manip_box_color = Color(darkorange,128);
 
     bool _grid_show_flg = true;
-    ImageBOX _grids;
+    LinesBOX _grids;
 
     int _gridSpace =32; // □の1辺長
     ubyte _grid_width = 1;
@@ -90,14 +90,14 @@ private:
         return false;
     }
     void commit(string str,IMContext imc){
-        if(_interpreter.state == InputState.edit)
+        if(_interpreter.state == InputState.Edit)
         {
             _manip_table.im_commit_to_box(str);
             queueDraw();
         }
     }
     void preedit_changed(IMContext imc){
-        if(_interpreter.state == InputState.edit)
+        if(_interpreter.state == InputState.Edit)
         {
             auto inputted_box = _manip_table.get_target();
             _render_text.prepare_preedit(_imm,cast(TextBOX)inputted_box);
@@ -109,7 +109,7 @@ private:
     }
     // ascii mode に切り替わったことを期待してみるようなところ
     void preedit_end(IMContext imc){
-        if(_interpreter.state == InputState.edit)
+        if(_interpreter.state == InputState.Edit)
         {
         }
     }
@@ -130,6 +130,7 @@ private:
     }
     void realize(Widget w){
         _imm.setClientWindow(getParentWindow());
+        _imm.focusOut();
     }
     void unrealize(Widget w){
         _imm.setClientWindow(null);
@@ -151,15 +152,9 @@ private:
                 cast(int)(_holding_area.w/_gridSpace),
                 cast(int)(_holding_area.h/_gridSpace));
     }
-    Rect back;
-    RectDrawer backdrw;
     void backDesign(Context cr){
-        back = new Rect(0,0,_holding_area.w,_holding_area.h);
-        back.set_color(orange);
-        backdrw = new RectDrawer(back);
-
-        backdrw.clip(cr);
     }
+
     bool show_contents_border = true;
     void renderTable(Context cr){
         debug(gui) writeln("@@@@ render table start @@@@");
@@ -182,8 +177,7 @@ private:
                 {
                     _render_text.render_grid(cr,ib,Color(gold,128),1);
                 }
-                    ib.set_rect();
-                    ib.fill(cr,orange);
+                    ib.fill(cr);
         }
 
         _render_text.render_grid(cr,_manip_table.get_target(),manip_box_color,manipLineWidth);
@@ -223,9 +217,9 @@ private:
             auto end = new Point(x, _holding_area.h);
             lines ~= new Line(start,end,_grid_width);
         }
-        _grids = new ImageBOX(_table,this);
+        _grids = new LinesBOX(_table,this);
 
-        _grids.set_lines(lines,_grid_width);
+        _grids.set_drawer(lines,_grid_width);
         _grids.set_color(_grid_color);
     }
     void renderGrid(Context cr){
@@ -237,16 +231,19 @@ private:
         // e.g. cell内部色を変えるとか（透過させるとか
         final switch(_manip_table.mode)
         {
-            case focus_mode.normal:
+            case FocusMode.normal:
                 FillCell(cr,_manip_table.select.focus,normal_focus_color); 
                 break;
-            case focus_mode.select:
+            case FocusMode.select:
                 FillCell(cr,_manip_table.select.focus,selected_focus_color); 
                 break;
-            case focus_mode.edit:
+            case FocusMode.edit:
                 // FillCell(cr,_manip_table.select.focus,selected_focus_color); 
                 // Text編集中,IMに任せるため
                 // editモード細分化する?
+                break;
+            case FocusMode.point:
+                PointCell(cr,_manip_table.select.focus,green);
                 break;
         }
     }
@@ -265,12 +262,12 @@ public:
         assert(_table);
         assert(_in_view);
         assert(_render_text);
+        assert(_guide_view);
         }
     body{ 
         void set_view_offset(){
             // TODO: set start_offset 
         }
-
         setProperty("can-focus",1);
 
         _imm = new IMMulticontext();
@@ -281,14 +278,13 @@ public:
         _holding_area = new Rect(0,0,200,200);
 
         _in_view = new ReferTable(_table,start_offset,1,1);
-        guide_view = guide;
+        _guide_view = guide;
 
         addOnKeyPress(&_interpreter.key_to_cmd);
         addOnFocusIn(&focus_in);
         addOnFocusOut(&focus_out);
         addOnRealize(&realize);
         addOnUnrealize(&unrealize);
-
 
         setGrid();
         _render_text = new RenderTextBOX(this);
@@ -309,6 +305,7 @@ public:
         _imm.appendMenuitems(_menu);
 
         _menu.attachToWidget(this, null);
+        _manip_table.select_color(black);
 
         showAll();
     }
@@ -317,9 +314,20 @@ public:
     }
     void zoom_in(){
         ++_gridSpace;
+        setGrid();
+        queueDraw();
+        import std.stdio;
+        writeln(_gridSpace);
     }
     void zoom_out(){
-        if(_gridSpace)  --_gridSpace;
+        if(_gridSpace>15)  --_gridSpace;
+        setGrid();
+        queueDraw();
+        import std.stdio;
+        writeln(_gridSpace);
+    }
+    void IM_FocusOut(){
+        _imm.focusOut();
     }
     void toggle_grid_show(){
         _grid_show_flg = !_grid_show_flg;
@@ -346,6 +354,10 @@ public:
     }
     Cell get_view_min()const{
         return _in_view.min_cell();
+    }
+    // アクセサにする意味ないかもしれません
+    @property GuideView guide_view(){
+        return _guide_view;
     }
 }
 

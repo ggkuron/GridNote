@@ -1,5 +1,7 @@
 module util.color;
 
+import std.string;
+
 struct Color{
     int r,g,b,a;
     // 指定なしで赤色なのは見落とし防止の為
@@ -28,8 +30,8 @@ struct Color{
     }
     void change_alpha(int aa)
         in{
-        assert(aa<256);
-        assert(aa>=0);
+        assert(aa < 256);
+        assert(aa >= 0);
         }
     body{
         a = aa;
@@ -57,12 +59,11 @@ pure int from_hex(in char hc){
             assert(0);
     }
 }
-import std.format;
-import std.range;
 string to_hex(in int i){
-    auto writer = appender!string();
-    formattedWrite(writer, "%X", i);
-    return  writer.data;
+    return std.string.format("%x",i);
+}
+string to_Hex(in int i){
+    return std.string.format("%X",i);
 }
 pure int from_hex(string hexstr){
     int result;
@@ -80,20 +81,30 @@ unittest{
     assert(from_hex("A") == 10);
     assert(from_hex("F") == 15);
     assert(from_hex("FF") == 255);
+    assert(from_hex("ff") == 255);
     assert(from_hex("20") == 32);
     assert(from_hex("10") == 16);
+    assert("ff" == to_hex(255));
+    assert("FF" == to_Hex(255));
 }
 
-// 140 Color 
-// 1色足りない気がする…
-immutable maroon  = Color("#800000");
+import cairo.Context;
+void set_color(Context cr,in Color c)
+{
+    cr.setSourceRgba(cast(double)c.r/255,
+                     cast(double)c.g/255,
+                     cast(double)c.b/255,
+                     cast(double)c.a/255);
+}
+
+immutable maroon = Color("#800000");
 immutable darkred = Color("#8b0000");
-immutable brown   = Color("#a52a2a");
+immutable brown = Color("#a52a2a");
 immutable firebrick = Color("#b22222");
 immutable rosybrown = Color("#bc8f8f");
 immutable indianred = Color("#cd5c5c");
 immutable lightcoral = Color("#f08080");
-immutable red     = Color("#ff0000");
+immutable red = Color("#ff0000");
 immutable snow = Color("#fffafa");
 immutable salmon = Color("#fa8072");
 immutable mistyrose = Color("#ffe4e1");
@@ -121,7 +132,7 @@ immutable moccasin = Color("#ffe4b5");
 immutable papayawhip = Color("#ffefd5");
 immutable wheat = Color("#f5deb3");
 immutable oldlace = Color("#fdf5e6");
-immutable orange  = Color("#ffa500");
+immutable orange = Color("#ffa500");
 immutable floralwhite = Color("#fffaf0");
 immutable darkgoldenrod = Color("#b8860b");
 immutable goldenrod = Color("#daa520");
@@ -136,7 +147,7 @@ immutable beige = Color("#f5f5dc");
 immutable lightgoldenrodyellow = Color("#fafad2");
 immutable ivory = Color("#fffff0");
 immutable lightyellow = Color("#ffffe0");
-immutable yellow  = Color("#ffff00");
+immutable yellow = Color("#ffff00");
 immutable olivedrab = Color("#6b8e23");
 immutable yellowgreen = Color("#9acd32");
 immutable darkolivegreen = Color("#556b2f");
@@ -217,7 +228,7 @@ immutable lavenderblush = Color("#fff0f5");
 immutable crimson = Color("#dc143c");
 immutable pink = Color("#ffc0cb");
 immutable lightpink = Color("#ffb6c1");
-immutable black   = Color("#000000");
+immutable black = Color("#000000");
 immutable dimgray = Color("#696969");
 immutable gray = Color("#808080");
 immutable darkgray = Color("#a9a9a9");
@@ -225,4 +236,148 @@ immutable silver = Color("#c0c0c0");
 immutable lightgray = Color("#d3d3d3");
 immutable gainsboro = Color("#dcdcdc");
 immutable whitesmoke = Color("#f5f5f5");
-immutable white   = Color("#ffffff");
+immutable white = Color("#ffffff");
+
+
+immutable Color[140] AllColors = 
+[
+maroon,
+darkred,
+brown,
+firebrick,
+rosybrown,
+indianred,
+lightcoral,
+red,
+snow,
+salmon,
+mistyrose,
+tomato, 
+darksalmon, 
+orangered, 
+coral, 
+lightsalmon,
+sienna,
+seashell, 
+saddlebrown, 
+chocolate, 
+sandybrown, 
+peachpuff, 
+peru, 
+linen, 
+darkorange, 
+bisque, 
+tan, 
+burlywood, 
+antiquewhite, 
+navajowhite, 
+blanchedalmond, 
+moccasin, 
+papayawhip, 
+wheat, 
+oldlace, 
+orange , 
+floralwhite, 
+darkgoldenrod, 
+goldenrod, 
+cornsilk, 
+gold, 
+palegoldenrod, 
+khaki, 
+lemonchiffon, 
+darkkhaki, 
+olive, 
+beige, 
+lightgoldenrodyellow, 
+ivory, 
+lightyellow, 
+yellow , 
+olivedrab, 
+yellowgreen, 
+darkolivegreen, 
+greenyellow, 
+lawngreen, 
+chartreuse, 
+darkgreen, 
+green, 
+lime, 
+forestgreen, 
+limegreen, 
+darkseagreen, 
+lightgreen, 
+palegreen, 
+honeydew, 
+seagreen, 
+mediumseagreen, 
+springgreen, 
+mintcream, 
+mediumspringgreen, 
+mediumaqumarine, 
+aquamarine, 
+turquoise, 
+lightseagreen, 
+mediumtourquoise, 
+teal, 
+darkcyan, 
+cyan, 
+aqua, 
+darkslategray, 
+paleturquoise, 
+lightcyan, 
+azure, 
+darkturquoise, 
+cadetblue, 
+powderblue, 
+deepskyblue, 
+lightblue, 
+skyblue, 
+lightskyblue, 
+steelblue, 
+aliceblue, 
+dodgerblue, 
+slategray, 
+lightslategray, 
+lightsteelblue, 
+cornflowerblue, 
+royalblue, 
+blue, 
+mediumblue, 
+darkblue, 
+navy, 
+midnightbule, 
+lavender, 
+ghostwhite, 
+darkslateblue, 
+slateblue, 
+mediumslateblue, 
+mediumpurple, 
+blueviolet, 
+indigo, 
+darkorchid, 
+darkviolet, 
+mediumorchid, 
+purple, 
+darkmagenta, 
+thistle, 
+plum, 
+violet, 
+magenta, 
+fuchsia, 
+orchid, 
+mediumvoiletred, 
+deeppink, 
+hotpink, 
+palevioletred, 
+lavenderblush, 
+crimson, 
+pink, 
+lightpink, 
+black, 
+dimgray, 
+gray, 
+darkgray, 
+silver, 
+lightgray, 
+gainsboro, 
+whitesmoke, 
+white ];

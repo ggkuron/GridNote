@@ -9,9 +9,11 @@ import cell.collection;
 import cell.table;
 import text.text;
 import util.direct;
+import util.color;
 import std.array;
 import std.string;
 import std.typecons;
+import std.stdio;
 
 import gtk.IMContext;
 
@@ -26,18 +28,17 @@ import pango.PgLayout;
 import pango.PgFontDescription;
 import pango.PgAttributeList;
 
-import std.stdio;
 import shape.shape;
 
 class RenderTextBOX : BoxRenderer{
-private:
-    alias int BoxId;
+private: 
     alias int Line;
     TextBOX _render_target; // renderが各BOXごとに呼ばれるので切り替わる
     TextBOX _im_target; // IM使ってるであろうcurrentBOX 
     int _im_target_id;
 
     // stored info to show table
+    alias int BoxId;
     Rect[BoxId] _box_pos;
     PgLayout[Line][BoxId] _layout;
     PgFontDescription[BoxId] _desc;
@@ -66,7 +67,7 @@ public:
         _gridSize = get_gridSize();
         _box_pos[box_id] = get_position(box); // gui.render_box::get_position
         _box_pos[box_id].y += _gridSize/3;
-        _fontsize[box_id] = cast(ubyte)box.font_size;    //  !!TextBOXで変更できるように 
+        _fontsize[box_id] = box.font_size;    //  !!TextBOXで変更できるように 
         _fontcolor[box_id] = box.font_color;             //  !!なったら変更 
         auto numof_lines = box.getText().numof_lines();
         _currentline = box.getText().current_line();
@@ -127,9 +128,7 @@ public:
             _layout[_im_target_id][_currentline].setAttributes(_attrilst[_im_target_id]);
             _layout[_im_target_id][_currentline].setText(_preedit);
 
-            auto fc = _fontcolor[box_id]; // 初回のpreeditのため(だけ)に必要
-            cr.setSourceRgb(fc.r,fc.g,fc.b);
-
+            cr.set_color(_fontcolor[box_id]);  // 初回のpreeditのため(だけ)に必要
             cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
                       _box_pos[_im_target_id].y + _currentline*_gridSize );
             PgCairo.updateLayout(cr,_layout[_im_target_id][_currentline]);
@@ -150,8 +149,7 @@ public:
                 _layout[box_id][0] = PgCairo.createLayout(cr);
                 _layout[box_id][0].setFontDescription(_desc[box_id]);
 
-                auto fc = _fontcolor[box_id];
-                cr.setSourceRgb(fc.r,fc.g,fc.b);
+                cr.set_color(_fontcolor[box_id]);
             }
             debug(gui) writeln("end");
         }
@@ -167,11 +165,9 @@ public:
             int newIndex,newTraing;
             _layout[box_id][line] = PgCairo.createLayout(cr);
             _layout[box_id][line].setFontDescription(_desc[box_id]);
-            // _layout[box_id][line].moveCursorVisually(1,0,0,1,newIndex,newTraing);
 
             debug(gui) writeln("write position: ",_box_pos[box_id].x," ",_box_pos[box_id].y);
-            auto fc = _fontcolor[box_id];
-            cr.setSourceRgb(fc.r,fc.g,fc.b);
+            cr.set_color(_fontcolor[box_id]);
 
             auto lines_y = _box_pos[box_id].y + _gridSize * line;
             cr.moveTo(_box_pos[box_id].x,lines_y);
@@ -193,14 +189,14 @@ public:
             modify_boxsize();
         debug(gui) writeln("text render end");
     }
-    public void prepare_preedit(IMContext imc,CellContent box)
+    public void prepare_preedit(IMContext imc,TextBOX box)
         out{
         assert(_im_target_id == box.id);
         }
     body{
         debug(text) writeln("prepare_preedit start");
-        _im_target = cast(TextBOX)box;
-        auto id = _im_target.id();
+        _im_target = box;
+        immutable id = _im_target.id();
         _im_target_id = id;
 
         auto pos = get_window_position(box);
@@ -219,7 +215,7 @@ public:
     private bool is_preediting(){
         return _preeditting;
     }
-    private void set_preeditting(bool b){
+    private void set_preeditting(in bool b){
         _preeditting = b;
     }
     public auto get_surrounding(){

@@ -479,7 +479,6 @@ public:
             foreach(edge; box_edges)
                 assert(edge.empty());
         }
-
         box_edges[Direct.right] ~= u.all_in_col[u.max_col];
         box_edges[Direct.left] ~= u.all_in_col[u.min_col];
         box_edges[Direct.up] ~= u.all_in_row[u.min_row];
