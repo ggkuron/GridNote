@@ -11,13 +11,13 @@ debug(cell) import std.stdio;
 // ContentBOX
 abstract class ContentBOX : CellContent{
 private:
-    RangeCell inner_range_cell;
     int _box_id;
 package:
 protected:
     BoxTable table;
 public:
-    alias inner_range_cell this;
+    RangeCell _inner_range_cell;
+    alias _inner_range_cell this;
     this(BoxTable attach)
         out{
         assert(table !is null);
@@ -51,7 +51,7 @@ public:
 
         clear();
         table = t;
-        inner_range_cell = RangeCell(oldone);
+        _inner_range_cell = RangeCell(oldone);
         debug(cell) writeln("end");
     }
     // 構造の実装なので持ちたくはないけど
@@ -59,13 +59,13 @@ public:
     // 抽象クラスとしては、描かれるためにフックする部分も必要なわけでもにょる
     // 実装は具現クラスで委譲させる
     void move(in Cell c){
-        inner_range_cell.move(c);
+        _inner_range_cell.move(c);
     }
     void move(in Direct dir,in int pop_cnt=1){
-        inner_range_cell.move(dir,pop_cnt);
+        _inner_range_cell.move(dir,pop_cnt);
     }
     void expand(in Direct dir,in int width=1){
-        inner_range_cell.expand(dir,width);
+        _inner_range_cell.expand(dir,width);
     }
     void remove(in Direct dir,in int width=1){
         debug(cell) writeln("@@@@ ContentBOX.remove start @@@@");
@@ -73,7 +73,7 @@ public:
         if(dir.is_horizontal && numof_col <= 1
         || dir.is_vertical && numof_row <= 1 )
             return;
-        inner_range_cell.remove(dir,width);
+        _inner_range_cell.remove(dir,width);
     }
     void hold(UpDown ud,LR lr)(in Cell start,in int horizontal_cnt,in int vertical_cnt) // TopLeft
         in{
@@ -83,7 +83,7 @@ public:
     body{
         int w = horizontal_cnt;
         int h = vertical_cnt;
-        inner_range_cell.clear();
+        _inner_range_cell.clear();
         create_in(start);
         --w;
         --h;
@@ -141,7 +141,10 @@ public:
     bool require_create_in(in Cell c)
     {
         if(is_registered())
+        {
             remove_from_table();
+            clear();
+        }
         return table.try_create_in(this,c);
     }
     bool require_move(in Cell c){
@@ -160,10 +163,7 @@ public:
         else return false;
     }
     bool require_move(in Direct to,in int width=1){
-        if(table.try_move(this,to,width))
-        {
-            return true;
-        }else return false;
+        return (table.try_move(this,to,width));
     }
     unittest{
         debug(cell) writeln("@@@@ TableBOX unittest start @@@@");
@@ -187,36 +187,32 @@ public:
     }
     // 実行できたかどうかは知りたい
     bool require_expand(in Direct to,in int width=1){
-        if(table.try_expand(this,to,width))
-        {
-            return true;
-        }else return false;
+        return (table.try_expand(this,to,width));
     }
     void require_remove(in Direct dir,in int width=1){
-        if(is_a_cell)
-            return;
+        if(!is_a_cell)
         table.remove_content_edge(this,dir,width);
     }
     void remove_from_table(){
-        spoiled = true;
+        _spoiled = true;
         auto result = table.try_remove(this);
         clear();
         assert(result && empty);
     }
     void clear(){
-        inner_range_cell.clear();
+        _inner_range_cell.clear();
     }
     bool is_hold(in Cell c)const{
-        return inner_range_cell.is_hold(c);
+        return _inner_range_cell.is_hold(c);
     }
     // 削除対象かいなか
-    private bool spoiled;
+    private bool _spoiled;
     bool is_to_spoil()const{
-        debug(cell) writeln(spoiled, empty());
-        return spoiled ||empty();
+        debug(cell) writeln(_spoiled, empty());
+        return _spoiled ||empty();
     };
     bool is_registered()const{
-        return id != 0;
+        return _box_id != 0;
     }
     @property int id()const{
         return _box_id;
@@ -232,49 +228,49 @@ public:
         return this;
     }
     const(Cell)[] get_cells()const{
-        return inner_range_cell.get_cells();
+        return _inner_range_cell.get_cells();
     }
     @property int min_row()const{
-        return inner_range_cell.min_row;
+        return _inner_range_cell.min_row;
     }
     @property int max_row()const{
-        return inner_range_cell.max_row;
+        return _inner_range_cell.max_row;
     }
     @property int min_col()const{
-        return inner_range_cell.min_col;
+        return _inner_range_cell.min_col;
     }
     @property int max_col()const{
-        return inner_range_cell.max_col;
+        return _inner_range_cell.max_col;
     }
     @property Cell top_left()const{
-        return inner_range_cell.top_left;
+        return _inner_range_cell.top_left;
     }
     @property Cell bottom_right()const{
-        return inner_range_cell.bottom_right;
+        return _inner_range_cell.bottom_right;
     }
     @property Cell top_right()const{
-        return inner_range_cell.top_right;
+        return _inner_range_cell.top_right;
     }
     @property Cell bottom_left()const{
-        return inner_range_cell.bottom_left;
+        return _inner_range_cell.bottom_left;
     }
     @property int numof_row()const{
-        return inner_range_cell.numof_row;
+        return _inner_range_cell.numof_row;
     }
     @property int numof_col()const{
-        return inner_range_cell.numof_col;
+        return _inner_range_cell.numof_col;
     }
     bool is_on_edge(const Cell c)const{
-        return inner_range_cell.is_on_edge(c);
+        return _inner_range_cell.is_on_edge(c);
     }
     bool is_on_edge(const Cell c,const Direct on)const{
-        return inner_range_cell.is_on_edge(c,on);
+        return _inner_range_cell.is_on_edge(c,on);
     }
     @property bool empty()const{
-        return inner_range_cell.empty();
+        return _inner_range_cell.empty();
     }
     @property Cell[] edge_forward_cells(const Direct dir)const{
-        return inner_range_cell.edge_forward_cells(dir);
+        return _inner_range_cell.edge_forward_cells(dir);
     }
 }
     unittest{

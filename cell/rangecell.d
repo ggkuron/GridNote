@@ -2,17 +2,17 @@ module cell.rangecell;
 
 import cell.cell;
 import util.direct;
-import util.range;
+import util.span;
 debug(cb) import std.stdio;
 debug(cell) import std.stdio;
 
-// Rangeによって大きいCellのようにふるまわせる
-// Range!(Cell)とは違う
+// Spanによって大きいCellのようにふるまわせる
+// Span!(Cell)とは違う
 struct RangeCell{
 private:
-    Range _row;
-    Range _col;
-    ref Range row_or_col(in Direct dir){
+    Span _row;
+    Span _col;
+    ref Span row_or_col(in Direct dir){
         if(dir.is_horizontal)
             return  _col;
         else // (dir.is_vertical)
@@ -34,7 +34,7 @@ public:
         debug(cb) writeln("tl ",top_left);
         debug(cb) writeln("br ",bottom_right);
     }
-    // Rangeを矩形として扱うのでCollectionで使える場面は限られる
+    // Spanを矩形として扱うのでCollectionで使える場面は限られる
     void expand(in Direct dir,in int width=1)
         in{
         assert(!_row.empty());
@@ -43,7 +43,7 @@ public:
         }
     body{
         if(dir.is_negative)
-        {       // Rangeで0境界越訂正期待
+        {       // Spanで0境界越訂正期待
             row_or_col(dir).pop_back(width);
         }
         else // if(dir.is_positive)
@@ -103,7 +103,7 @@ public:
     final void move(in Direct dir,in int pop_cnt=1){
 
         if(dir.is_negative)
-        {   // 0境界越はRangeで吸収
+        {   // 0境界越はSpanで吸収
             row_or_col(dir).move_back(pop_cnt);
         }
         else // (dir.is_positive)
@@ -144,10 +144,10 @@ public:
         }
         assert(0);
     }
-    @property ref Range row(){
+    @property ref Span row(){
         return _row;
     }
-    @property ref Range col(){
+    @property ref Span col(){
         return _col;
     }
     @property const(Cell[][Direct]) edge_line()const{

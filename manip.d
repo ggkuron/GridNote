@@ -233,12 +233,6 @@ public:
         debug(manip) writeln("type in: ",tb.toString());
         debug(manip) writeln("end");
     }
-//    void select_file(){
-//        auto filechooserD = new FileChooserDialog(null);
-//        filechooserD.run();
-//        // filechooserD.getFile();
-//        filechooserD.showAll();
-//    }
     void select_color(in Direct dir){
         _pv.guide_view.select_color(dir);
         _selected_color = get_selectedColor();
@@ -283,8 +277,8 @@ public:
         }
         switch(_box_type){
            case "cell.textbox.TextBOX":
-                _old_state ~= new TextBOX(_focused_table,cast(TextBOX)_maniped_box);
-                _manip_textbox.with_commit(str,targetbox);
+               _old_state ~= new TextBOX(_focused_table,cast(TextBOX)_maniped_box);
+               _manip_textbox.with_commit(str,targetbox);
                return;
            default:
                return;

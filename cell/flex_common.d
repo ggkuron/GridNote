@@ -4,7 +4,7 @@ import cell.cell;
 public import cell.rangecell;
 import util.direct;
 import util.array;
-import util.range;
+// import util.range;
 
 // 自由変形できる構造
 mixin template flex_common(alias box_body){

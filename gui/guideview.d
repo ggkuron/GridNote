@@ -280,7 +280,6 @@ public:
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
 
-        // display_color();
         showAll();
     }
     void select_color(in Direct dir){

@@ -5,7 +5,7 @@ import std.array;
 import util.array;
 import util.direct;
 import util.color;
-import util.range;
+import util.span;
 import gtkc.pangotypes;
 import std.string;
 import std.algorithm;
@@ -29,10 +29,10 @@ struct TextPoint{
     }
 }
 
-// Range!(int)のような操作は提供しない
+// Span!(int)のような操作は提供しない
 // lineの持つpos幅を知る必要があるため
 // 範囲を特定するためのマーカーとしてTextが使う
-struct TextRange{
+struct TextSpan{
 private:
     TextPoint _min ;
     TextPoint _max ;  // 
@@ -74,7 +74,7 @@ public:
     bool opEquals(in TextPoint rhs)const{
         return is_hold(rhs);
     }
-    bool opEquals(in TextRange rhs)const{
+    bool opEquals(in TextSpan rhs)const{
         return _min == rhs._min && _max == rhs._max;
     }
     // operator == と等価
@@ -111,13 +111,13 @@ private:
     alias int pos;
     alias int line;
     alias PangoUnderline Underline;
-    // 設定されるために開かれたRange
-    TextRange _current_range;
-    TextRange _current_font_color_range;
+    // 設定されるために開かれたSpan
+    TextSpan _current_range;
+    TextSpan _current_font_color_range;
 
     dchar[pos][line] _writing;
-    Color[TextRange] _font_color;
-    Underline[TextRange] _under_line;
+    Color[TextSpan] _font_color;
+    Underline[TextSpan] _under_line;
     TextPoint _current;
 
     invariant(){
@@ -246,7 +246,7 @@ public:
             _current_font_color_range.set_end(backward_pos());
             _font_color[_current_font_color_range] = c;
         }
-        _current_font_color_range = TextRange();
+        _current_font_color_range = TextSpan();
         _current_font_color_range.set_start(_current);
     }
     // アクセサ

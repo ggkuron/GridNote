@@ -61,7 +61,8 @@ public:
     // 描くだけじゃなく描画域によってBOXを書き換える
     void render(Context cr,TextBOX box){
         debug(gui) writeln("@@@@ render textbox start @@@@");
-        // get info and update class holded one
+
+        // get info and update class holded info
         if(box.empty()) return;
         const box_id = box.id();
         _gridSize = get_gridSize();
@@ -69,8 +70,8 @@ public:
         _box_pos[box_id].y += _gridSize/3;
         _fontsize[box_id] = cast(ubyte)_gridSize; // box.font_size;    //  !!TextBOXで変更できるように 
         _fontcolor[box_id] = box.font_color;             //  !!なったら変更 
-        auto numof_lines = box.getText().numof_lines();
         _currentline = box.getText().current_line();
+        const numof_lines = box.getText().numof_lines();
             
         void  modify_boxsize()
         {   /+
@@ -90,11 +91,13 @@ public:
             if(box_id !in _width) return;
 
             do{
-                auto pre_box = box.get_cells();
+                const cells_snap = box.get_cells();
 
                 auto box_width = _gridSize * box.numof_col();
                 debug(gui) writefln("box width %d",box_width);
 
+                import std.stdio;
+                writeln("1");
                 auto sorted_width = _width[box_id].values.sort;
                 auto max_width = sorted_width[$-1];
                 // auto min_width = sorted_width[0];
@@ -109,7 +112,7 @@ public:
                     box.require_remove(Direct.right);
                 }
                 // 整形後と前が揺らがず一致したら終了
-                if(pre_box == box.get_cells())
+                if(cells_snap == box.get_cells())
                     break;
 
             }while(true);
@@ -130,7 +133,7 @@ public:
 
             cr.set_color(_fontcolor[box_id]);  // 初回のpreeditのため(だけ)に必要
             cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
-                      _box_pos[_im_target_id].y + _currentline*_gridSize );
+                    _box_pos[_im_target_id].y + _currentline*_gridSize );
             PgCairo.updateLayout(cr,_layout[_im_target_id][_currentline]);
             PgCairo.showLayout(cr,_layout[_im_target_id][_currentline]);
 
@@ -153,7 +156,7 @@ public:
             }
             debug(gui) writeln("end");
         }
-        
+
         checkBOX(box);
         _strings[box_id] = box.getText().strings;
         debug(text) writeln("strings are ",_strings[box_id]);
@@ -177,12 +180,13 @@ public:
 
             // get real ocupied width and height
             // render_preedit より前に取得する必要がある
+            _width[box_id][line] = int.init;
+            _height[box_id][line] = int.init;
             _layout[box_id][line].getPixelSize(_width[box_id][line],_height[box_id][line]);
             debug(gui) writefln("_layout width %d",_width[box_id][line]);
 
             debug(gui) writefln("wt %s",one_line);
         }
-
         if(is_preediting() && _im_target_id == box_id)
             render_preedit();
         if(!_strings[box_id].keys.empty)
@@ -191,22 +195,24 @@ public:
     }
     public void prepare_preedit(IMContext imc,TextBOX box)
         out{
-        assert(_im_target_id == box.id);
+            assert(_im_target_id == box.id);
         }
     body{
         debug(text) writeln("prepare_preedit start");
+        import std.stdio;
         _im_target = box;
         immutable id = _im_target.id();
         _im_target_id = id;
 
-        auto pos = get_window_position(box);
-        auto cursorL = pos.get_struct!(Rectangle)();// Rectangle(_im_target.
-        int cursor_pos;
-        imc.setCursorLocation(cursorL);
-        imc.getPreeditString(_preedit,_attrilst[id],cursor_pos);
-        _render_target.set_cursor_pos(cursor_pos);
+        writeln("1"); auto pos = get_window_position(box);
+        writeln("2"); auto cursorL = pos.get_struct!(Rectangle)();// Rectangle(_im_target.
+        writeln("3"); int cursor_pos;
+        writeln("4"); imc.setCursorLocation(cursorL);
+        _attrilst[id] = PgAttributeList.init;
+        writeln("5"); imc.getPreeditString(_preedit,_attrilst[id],cursor_pos);
+        writeln("6"); _im_target.set_cursor_pos(cursor_pos);
 
-        set_preeditting(true);
+        writeln("7"); set_preeditting(true);
         debug(text) writeln("end");
     }
     public void retrieve_surrouding(IMContext imc){

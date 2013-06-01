@@ -7,7 +7,7 @@ import cell.table;
 
 import util.direct;
 import util.array;
-import util.range;
+// import util.range;
 debug(table) import std.stdio;
 debug(cell) import std.stdio;
 

@@ -99,8 +99,9 @@ private:
     void preedit_changed(IMContext imc){
         if(_interpreter.state == InputState.Edit)
         {
-            auto inputted_box = _manip_table.get_target();
-            _render_text.prepare_preedit(_imm,cast(TextBOX)inputted_box);
+            auto inputted_box = cast(TextBOX)_manip_table.get_target();
+            assert(inputted_box !is null);
+            _render_text.prepare_preedit(_imm,inputted_box);
             // レイアウトのことは投げる
             // IMContextごと
             queueDraw();
@@ -152,8 +153,8 @@ private:
                 cast(int)(_holding_area.w/_gridSpace),
                 cast(int)(_holding_area.h/_gridSpace));
     }
-    void backDesign(Context cr){
-    }
+    // void backDesign(Context cr){
+    // }
     bool _show_contents_border = true;
     void renderTable(Context cr){
         debug(gui) writeln("@@@@ render table start @@@@");
@@ -167,7 +168,7 @@ private:
                     _render_text.render_fill(cr,tb,Color(linen,96));
                     _render_text.render_grid(cr,tb,Color(gold,128),1);
                 }
-                    render(cr,tb);
+                render(cr,tb);
         }
         foreach(ib; _in_view.get_imageBoxes())
         {
@@ -188,12 +189,14 @@ private:
     // BoxSizeの修正くらいならいいだろう
             // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
     void render(Context cr,TextBOX b){
+        import std.stdio;
+        writeln("ok");
         _render_text.render(cr,b);
     }
     
     bool draw_callback(Context cr,Widget widget){
         debug(gui) writeln("draw callback");
-        backDesign(cr);
+        // backDesign(cr);
         if(_grid_show_flg) renderGrid(cr);
         renderTable(cr);
         renderSelection(cr);
@@ -256,6 +259,7 @@ private:
         setGrid();
     }
 public:
+    // ConfigFileから読むようにしたい
     void init_color_select(){
         _manip_table.select_color(black);
         _guide_view.add_color(black);
@@ -270,6 +274,7 @@ public:
         _guide_view.add_color(darkgoldenrod);
         _guide_view.add_color(lemonchiffon);
         _guide_view.add_color(forestgreen);
+        _guide_view.display_color();
     }
     this(GuideView guide,Cell start_offset = Cell(0,0))
         out{

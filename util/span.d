@@ -1,7 +1,7 @@
-module util.range;
+module util.span;
 debug(range) import std.stdio;
 
-struct Range{
+struct Span{
 private:
     int _min = -1;
     int _max = -1;  // 
@@ -133,7 +133,7 @@ public:
     }
 }
 unittest{
-    Range r; // = new Range();
+    Span r; // = new Span();
     assert(r.empty);
     assert(r < 1);
     assert(r < 5);

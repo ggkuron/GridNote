@@ -37,7 +37,7 @@ public:
     }
     override bool require_create_in(in Cell c)
     {
-        return table.try_create_in(this,c);
+        return table.try_create_in!(TextBOX)(this,c);
     }
     void set_font_color(in Color c){
         _font_color = c;

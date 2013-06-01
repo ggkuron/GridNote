@@ -10,7 +10,7 @@ public import cell.imagebox;
 import std.typecons;
 import util.direct;
 import util.array;
-import util.range;
+import util.span;
 import cell.contentbox;
 import cell.collection;
 
@@ -26,16 +26,16 @@ class BoxTable{
 private:
     alias int KEY;
 
-    alias Range RowRange;
-    alias Range ColRange;
+    alias Span RowSpan;
+    alias Span ColSpan;
 
-    CellContent[KEY] content_table;
-    TextBOX[KEY] text_table;
-    ImageBOX[KEY] image_table;
-    string[KEY] type_table;
-    KEY[Cell] keys;
-    KEY[RangeCell] box_keys; // ContentBOXだけcacheしとく
-    Cell[][Direct][KEY] box_edges;
+    CellContent[KEY] _content_table;
+    TextBOX[KEY] _text_table;
+    ImageBOX[KEY] _image_table;
+    string[KEY] _type_table;
+    KEY[Cell] _keys;
+    KEY[RangeCell] _box_keys; // ContentBOXだけcacheしとく
+    Cell[][Direct][KEY] _box_edges;
 
     int _content_counter;
     void set_id(CellContent c){
@@ -69,9 +69,9 @@ package:
         auto max_range = end;
         while(1)
         {
-            if(itr in keys)
+            if(itr in _keys)
             {
-                auto cells_key = keys[itr];
+                auto cells_key = _keys[itr];
                 ranged_keys[cells_key] = cells_key; // 重複を避けるため
             }
             if(itr.column < max_range.column)
@@ -89,7 +89,7 @@ package:
     }
 
     // CellContentからの要求でのみ行う操作
-    // ContentBOXは形状RangeBOXを
+    // ContentBOXは形状SpanBOXを
     // ContentFlexは形状Cell[]をTableに保存するので
     // 形状操作はContentBOXに向かって発行されるが
     // ContentBOXは要求をTableに回す
@@ -105,8 +105,8 @@ public:
             auto edge = box.edge_line[dir];
             foreach(c; edge)
             {
-                // assert(c in keys); // <- 1マスCellが引っかかる
-                keys.remove(c);
+                // assert(c in _keys); // <- 1マスCellが引っかかる
+                _keys.remove(c);
             }
             box.remove(dir);
         }
@@ -114,7 +114,7 @@ public:
     }
     final bool try_expand(ContentBOX cb,in Direct to,in int width=1)
         in{
-        assert(cb.id in content_table);
+        assert(cb.id in _content_table);
         }
     body{
         if(to == Direct.left && cb.min_col==0
@@ -131,7 +131,7 @@ public:
             auto edge = cb.edge_forward_cells(to);
             foreach(c; edge) // just check
             {
-                if(c in keys)
+                if(c in _keys)
                 { 
                     debug(move) writeln("not expanded");
                     return false;
@@ -141,7 +141,7 @@ public:
         }
         foreach(c; added_cells)
         {
-            keys[c] = id;
+            _keys[c] = id;
         }
 
         cb.expand(to,width);
@@ -159,7 +159,7 @@ public:
         {
             auto the_cell = c.if_moved(to);
             tobe_expanded ~= the_cell;
-            if(the_cell in keys)
+            if(the_cell in _keys)
             { 
                 debug(move) writeln("not expanded");
                 return false;
@@ -167,7 +167,7 @@ public:
         }
         foreach(c; tobe_expanded)
         {
-            keys[c] = id;
+            _keys[c] = id;
         }
 
         cf.expand(to,width);
@@ -186,7 +186,7 @@ public:
             while(w--)
             {
                 foreach(c; cb.edge_line[reverse(to)])
-                    keys.remove(c);
+                    _keys.remove(c);
             }
             cb.remove(to.reverse,width);
             return true;
@@ -199,14 +199,14 @@ public:
 
         auto content_cells = u.get_cells();
         immutable box_id = u.id();
-        debug(table) writefln("keys are:%s",keys);
+        debug(table) writefln("keys are:%s",_keys);
         debug(table) writefln("boxes are:%s",content_cells);
         foreach(c; content_cells)
         {
-             keys.remove(c);
+             _keys.remove(c);
         }
-        content_table.remove(box_id);
-        type_table.remove(box_id);
+        _content_table.remove(box_id);
+        _type_table.remove(box_id);
 
         // assert(keys.keys.empty || !keys.values.is_in(box_id));
         return true;
@@ -265,63 +265,63 @@ public:
     Tuple!(string,CellContent)[] get_all_contents(){
          
         Tuple!(string,CellContent)[] result;
-        foreach(k; keys)
+        foreach(k; _keys)
         {
             if(k==0) continue;
-            assert(k in type_table);
-            assert(k in content_table);
-            result ~=tuple(type_table[k],content_table[k]);
+            assert(k in _type_table);
+            assert(k in _content_table);
+            result ~=tuple(_type_table[k],_content_table[k]);
         }
         return result;
     }
     Tuple!(string,CellContent)[] get_contents(in Cell start,in Cell end){
          
         Tuple!(string,CellContent)[] result;
-        auto keys = ranged_keys(start,end);
-        debug(table) writeln("ranged keys are ",keys);
-        foreach(k; keys)
+        auto _keys = ranged_keys(start,end);
+        debug(table) writeln("ranged _keys are ",_keys);
+        foreach(k; _keys)
         {
             if(k==0) continue;
-            assert(k in type_table);
-            assert(k in content_table);
-            result ~=tuple(type_table[k],content_table[k]);
+            assert(k in _type_table);
+            assert(k in _content_table);
+            result ~=tuple(_type_table[k],_content_table[k]);
         }
         return result;
     }
     TextBOX[] get_textBoxes(){
-        return text_table.values;
+        return _text_table.values;
     }
     ImageBOX[] get_imageBoxes(){
-        return image_table.values;
+        return _image_table.values;
     }
     TextBOX[] get_textBoxes(in Cell s,in Cell e){
-        auto keys = ranged_keys(s,e);
+        auto _keys = ranged_keys(s,e);
         TextBOX[] result;
-        foreach(k; keys)
-            if(k in text_table)
-            result ~= text_table[k];
+        foreach(k; _keys)
+            if(k in _text_table)
+            result ~= _text_table[k];
         return result;
     }
     ImageBOX[] get_imageBoxes(in Cell s,in Cell e){
-        auto keys = ranged_keys(s,e);
+        auto _keys = ranged_keys(s,e);
         ImageBOX[] result;
-        foreach(k; keys)
-            if(k in image_table)
-            result ~= image_table[k];
+        foreach(k; _keys)
+            if(k in _image_table)
+            result ~= _image_table[k];
         return result;
     }
 
     bool is_hold(in Cell c){
-        foreach(cb ; content_table.values)
+        foreach(cb ; _content_table.values)
             if(cb.is_hold(c)) return true;
-        if(c in keys)
+        if(c in _keys)
             return true;
         return false;
     }
     int[] get_boxkeys_first_by_row(in Cell start,in Cell end){
         Cell c = start;
         int[int] dupled_result;
-        foreach(range,bkey; box_keys)
+        foreach(range,bkey; _box_keys)
         {
             if(range.is_hold(c))
                 dupled_result[bkey] = bkey;
@@ -334,7 +334,7 @@ public:
     int[] get_boxkeys_first_by_col(in Cell start,in Cell end){
         Cell c = start;
         int[int] dupled_result;
-        foreach(range,bkey; box_keys)
+        foreach(range,bkey; _box_keys)
         {
             if(range.is_hold(c))
                 dupled_result[bkey] = bkey;
@@ -346,25 +346,25 @@ public:
     }
     Tuple!(string,CellContent) get_content(in int key)
         in{
-        assert(keys.values.is_in(key));
-        assert(key in content_table);
+        assert(_keys.values.is_in(key));
+        assert(key in _content_table);
         }
     body{
-        return tuple(type_table[key],content_table[key]);
+        return tuple(_type_table[key],_content_table[key]);
     }
     this(){
-        content_table[0] = null;
-        type_table[0] = "none";
+        _content_table[0] = null;
+        _type_table[0] = "none";
     }
     this(BoxTable r){
-        content_table = r.content_table;
-        type_table = r.type_table;
-        keys = r.keys;
+        _content_table = r._content_table;
+        _type_table = r._type_table;
+        _keys = r._keys;
         this();
     }
     invariant(){
-        assert(content_table[0] is null);
-        assert(type_table[0] == "none");
+        assert(_content_table[0] is null);
+        assert(_type_table[0] == "none");
     }
     // content_box[0] にはnullが入っている
     // 他のkeyにはnullは入れない
@@ -382,69 +382,60 @@ public:
         auto box = u.get_box();
         foreach(c; box)
         {
-            keys[c] = box_id;
+            _keys[c] = box_id;
         }
-        type_table[box_id] = u.toString;
-        content_table[box_id] = u;
+        _type_table[box_id] = u.toString;
+        _content_table[box_id] = u;
 
-        assert(box_id in content_table);
-        assert(box_id in type_table);
+        assert(box_id in _content_table);
+        assert(box_id in _type_table);
         debug(table){
             writeln("type: ",u.toString);
             writeln("table key(box_id): ",box_id);
             writeln("boxes are: ",u.get_box());
         }
     }
-    final bool try_create_in(ContentBOX u,in Cell c)
+    final bool try_create_in(T:ContentBOX)(T u,in Cell c)
     body{
-        if(c in keys || has(c)) return false;
-        if(!u.id()) set_id(u);
+        if(has(c)) return false;
+        if(!u.is_registered()) set_id(u);
         immutable box_id = u.id();
 
-        keys[c] = box_id;
-        type_table[box_id] = u.toString;
-        box_keys[u.grab_range()] = box_id;
+        _keys[c] = box_id;
+        _type_table[box_id] = u.toString;
+        _box_keys[u.grab_range()] = box_id;
         foreach(i; Direct.min .. Direct.max+1)
         {
-            box_edges[box_id][cast(Direct)i] ~= c;
+            _box_edges[box_id][cast(Direct)i] ~= c;
         }
 
-        content_table[box_id] = u;
+        _content_table[box_id] = u;
+        static if(is(T == TextBOX)) _text_table[box_id] = u;
+        else 
+        static if(is(T == ImageBOX)) _image_table[box_id] = u;
         u.create_in(c);
+        writeln("table:",_content_table.values);
+        writeln("text:",_text_table.values);
+        writeln("image:",_image_table.values);
+
         return true;
     }
-    final bool try_create_in(TextBOX u,in Cell c)
-    body{
-        if(try_create_in(cast(ContentBOX)u,c))
-        {
-            text_table[u.id()] = u;
-            return true;
-        }else return false;
-    }
-    final bool try_create_in(ImageBOX u,in Cell c)
-    body{
-        if(try_create_in(cast(ContentBOX)u,c))
-        {
-            image_table[u.id()] = u;
-            return true;
-        }else return false;
-    }
 
-    final bool try_create_in(ContentFlex u,in Cell c)
+    final bool try_create_in(T:ContentFlex)(T u,in Cell c)
     body{
-        if(c in keys || has(c)) return false;
-        if(!u.id()) set_id(u);
+        if(has(c)) return false;
+        if(!u.id) set_id(u);
         immutable box_id = u.id();
 
-        keys[c] = box_id;
-        type_table[box_id] = u.toString;
-        content_table[box_id] = u;
+        _keys[c] = box_id;
+        _type_table[box_id] = u.toString;
+        _content_table[box_id] = u;
         foreach(i; Direct.min .. Direct.max+1)
         {
-            box_edges[box_id][cast(Direct)i] ~= c;
+            _box_edges[box_id][cast(Direct)i] ~= c;
         }
-
         u.create_in(c);
+        import std.stdio;
         return true;
     }
 
@@ -456,9 +447,9 @@ public:
         assert(!u.get_box().empty);
         }
         out{
-        assert(u.id in content_table);
-        assert(u.id in type_table);
-        assert(u.id in box_keys);
+        assert(u.id in _content_table);
+        assert(u.id in _type_table);
+        assert(u.id in _box_keys);
         }
     body{
         debug(move) writeln("add_box start");
@@ -468,21 +459,21 @@ public:
         foreach(r; box[0].get())
         foreach(c; box[1].get())
         {
-            keys[Cell(r,c)] = box_id;
+            _keys[Cell(r,c)] = box_id;
         }
-        box_keys[u.get_range()] = box_id;
-        type_table[box_id] = u.toString;
+        _box_keys[u.get_range()] = box_id;
+        _type_table[box_id] = u.toString;
         collection_table[box_id] = u;
 
         debug(table)
         {
-            foreach(edge; box_edges)
+            foreach(edge; _box_edges)
                 assert(edge.empty());
         }
-        box_edges[Direct.right] ~= u.all_in_col[u.max_col];
-        box_edges[Direct.left] ~= u.all_in_col[u.min_col];
-        box_edges[Direct.up] ~= u.all_in_row[u.min_row];
-        box_edges[Direct.down] ~= u.all_in_row[u.max_row];
+        _box_edges[Direct.right] ~= u.all_in_col[u.max_col];
+        _box_edges[Direct.left] ~= u.all_in_col[u.min_col];
+        _box_edges[Direct.up] ~= u.all_in_row[u.min_row];
+        _box_edges[Direct.down] ~= u.all_in_row[u.max_row];
 
         debug(table){
            writeln("type: ",u.toString);
@@ -503,13 +494,13 @@ public:
         auto box = u.get_cells();
         foreach(c; box)
         {
-            keys[c] = box_id;
+            _keys[c] = box_id;
         }
-        type_table[box_id] = u.toString;
-        content_table[box_id] = u;
+        _type_table[box_id] = u.toString;
+        _content_table[box_id] = u;
 
-        assert(box_id in content_table);
-        assert(box_id in type_table);
+        assert(box_id in _content_table);
+        assert(box_id in _type_table);
         debug(table){
             writeln("type: ",u.toString);
             writeln("table key(box_id): ",box_id);
@@ -518,12 +509,12 @@ public:
     // 1Cellだけの情報が欲しいとき。入っていなくてもとりあえず欲しい時。
     Tuple!(string,CellContent) get_content(in Cell c){
         int key;
-        debug(move) if(c !in keys) writeln("this cell is empty, no content return");
-        if(c !in keys)
-            return tuple("none",content_table[0]);
+        debug(move) if(c !in _keys) writeln("this cell is empty, no content return");
+        if(c !in _keys)
+            return tuple("none",_content_table[0]);
         else
-            key = keys[c];
-        assert(key in content_table);
+            key = _keys[c];
+        assert(key in _content_table);
         return get_content(key);
     }
     // 見た目的な正方向にだけしかshiftできない
@@ -531,16 +522,16 @@ public:
    final void shift(in Cell o){
         debug(refer) writeln("shift start");
         int[Cell] new_key;
-        foreach(c,id; keys)
+        foreach(c,id; _keys)
         {
-            assert(id in content_table);
+            assert(id in _content_table);
             new_key[c+o] = id;
         }
-        keys = new_key;
-        foreach(content; content_table)
+        _keys = new_key;
+        foreach(content; _content_table)
         {
             if(content is null
-                    || content.empty()) continue; // content_table[0]
+                    || content.empty()) continue; // _content_table[0]
             content.move(o);
         }
         debug(refer) writeln("shift end");
@@ -556,23 +547,23 @@ public:
             shift(Cell(1,0));
     }
     final void clear(){
-        keys.clear();
-        type_table.clear();
-        content_table.clear();
+        _keys.clear();
+        _type_table.clear();
+        _content_table.clear();
     }
     final bool is_vacant(in Cell c)const{
-        return cast(bool)(c !in keys);
+        return cast(bool)(c !in _keys);
     }
     final bool has(in Cell c)const{
-        return cast(bool)(c in keys);
+        return cast(bool)(c in _keys);
     }
     @property bool empty()const{
-        return keys.keys.empty();
+        return _keys.keys.empty();
     }
     // RangeCellのopCmpの設計がされてない
     // @property Cell max_cell()const{
-    //     if(box_keys.keys.empty) return Cell(0,0);
-    //     return box_keys.keys.sort[$].bottom_right;
+    //     if(_box_keys.keys.empty) return Cell(0,0);
+    //     return _box_keys.keys.sort[$].bottom_right;
     // }
 }
 

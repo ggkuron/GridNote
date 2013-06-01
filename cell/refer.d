@@ -16,15 +16,15 @@ debug(refer) import std.stdio;
 // Tableの切り出しはTable自体でやる。Tableの外でするには干渉しすぎる。
 class ReferTable : BoxTable{
 private:
-    BoxTable master; // almost all manipulation acts on this table
+    BoxTable _master; // almost all manipulation acts on this table
     Cell _offset;
-    Cell _max_range; // table(master)の座標での取りうる最大値
+    Cell _max_range; // table(_master)の座標での取りうる最大値
 
-    bool check_range(const Cell c)const{
+    bool check_range(in Cell c)const{
         return  (c <=  _max_range);
     }
 public:
-    this(BoxTable attach, Cell ul,int w,int h)
+    this(BoxTable attach,in Cell ul,in int w,in int h)
         in{
         assert(attach !is null);
         assert(h>0);
@@ -32,7 +32,7 @@ public:
         }
     body{
         super();
-        master = attach; // manipulating ReferBOX acts on attached Table
+        _master = attach; // manipulating ReferBOX acts on attached Table
         set_range(ul,w,h);
     }
     unittest{
@@ -55,19 +55,20 @@ public:
         tb2.require_create_in(Cell(6,6));
     }
     auto get_contents(){
-        return master.get_contents(_offset,_max_range);
+        return _master.get_contents(_offset,_max_range);
     }
     override Tuple!(string,CellContent) get_content(const Cell c){
-        return master.get_content(c+offset);
+        return _master.get_content(c+offset);
     }
     override TextBOX[] get_textBoxes(){
-        return master.get_textBoxes(_offset,_max_range);
+        import std.stdio;
+        writeln("called!!");
+        return _master.get_textBoxes(_offset,_max_range);
     }
     override ImageBOX[] get_imageBoxes(){
-        return master.get_imageBoxes(_offset,_max_range);
+        return _master.get_imageBoxes(_offset,_max_range);
     }
-
-    void set_range(Cell ul,int w,int h)
+    void set_range(in Cell ul,in int w,in int h)
         in{
         assert(h>0);
         assert(w>0);
@@ -83,11 +84,11 @@ public:
     // Contentの型情報はさらに落ちる
     override void add_box(T)(T u)
         in{
-        assert(u.table == master);
+        assert(u.table == _master);
         }
     body{
         if(!check_range) assert(0);
-        master.add_box(u+_offset);
+        _master.add_box(u+_offset);
     }
     // 
     override void shift(in Direct to){
@@ -102,10 +103,9 @@ public:
         assert(!b.empty());
         return b.top_left - _offset;
     }
-    alias BoxTable.empty empty;
-    // bool empty(){
-    //     return master.empty();
-    // }
+    override @property bool empty()const{
+        return _master.empty();
+    }
 
     // content（tableの中身）の移動方向で指定
     void move_area(in Direct dir){
@@ -114,7 +114,7 @@ public:
             if(_offset.row == 0 && dir == Direct.up
             || _offset.column == 0 && dir == Direct.left)
             {
-                master.shift(dir.reverse);
+                _master.shift(dir.reverse);
             }
             else // 既に広げたエリアでviewを移動
                 shift(dir);

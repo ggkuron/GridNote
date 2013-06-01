@@ -4,7 +4,7 @@ import cell.cell;
 import cell.rangecell;
 import util.direct;
 import util.array;
-import util.range;
+import util.span;
 import cell.flex_common;
 debug(collec) import std.stdio;
 debug(cell) import std.stdio;
