@@ -90,7 +90,7 @@ public:
         master.add_box(u+_offset);
     }
     // 
-    void shift(in Direct to){
+    override void shift(in Direct to){
         _offset.move(to);
         _max_range.move(to);
     }
@@ -102,9 +102,10 @@ public:
         assert(!b.empty());
         return b.top_left - _offset;
     }
-    bool empty(){
-        return master.empty();
-    }
+    alias BoxTable.empty empty;
+    // bool empty(){
+    //     return master.empty();
+    // }
 
     // content（tableの中身）の移動方向で指定
     void move_area(in Direct dir){

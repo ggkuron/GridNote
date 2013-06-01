@@ -96,7 +96,7 @@ public:
 }
 
 struct Text
-{   // TextBOX itemBOX その他で使われる文字列表現TextBuffer相当
+{   // TextBOX itemBOX で使われる文字列表現
     this(Text t){
         _lines = t._lines;
         _caret = t._caret;

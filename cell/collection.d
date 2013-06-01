@@ -283,7 +283,7 @@ public:
     }
     // 線形探索:要素数は小さいものしか想定してないから
     // box.lenthでアルゴリズム切り分ける必要があるかも
-    bool is_hold(in Cell c){
+    bool is_hold(in Cell c)const{
         return .is_in(box,c);
     }
     

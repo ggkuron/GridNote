@@ -35,6 +35,8 @@ private:
     string _filename;
     Drawer _drawer;
     void delegate() set_shape;
+protected:
+    bool _set_shaped;
 public:
     this(BoxTable table,TableView tv)
         out{
@@ -43,7 +45,7 @@ public:
     body{
         super(table);
         _view = tv;
-    }
+   }
     void reshape(){
         set_shape();
     }
@@ -55,22 +57,34 @@ public:
         return _image;
     }
     final void fill(Context cr){
-        set_shape();
-        _drawer.fill(cr);
+        if(_set_shaped)
+        {
+            set_shape();
+            _drawer.fill(cr);
+        }
     }
     final void stroke(Context cr){
-        set_shape();
-        _drawer.stroke(cr);
+        if(_set_shaped)
+        {
+            set_shape();
+            _drawer.stroke(cr);
+        }
     }
     final void fill(Context cr,in Color c){
-        set_shape();
-        _image.set_color(c);
-        _drawer.fill(cr);
+        if(_set_shaped)
+        {
+            set_shape();
+            _image.set_color(c);
+            _drawer.fill(cr);
+        }
     }
     final void stroke(Context cr,in Color c){
-        set_shape();
-        _image.set_color(c);
-        _drawer.stroke(cr);
+        if(_set_shaped)
+        {
+            set_shape();
+            _image.set_color(c);
+            _drawer.stroke(cr);
+        }
     }
     // drawerで指定した色を優先するので指定しなくてもいい
     // 版画の版みたいなShapeの使い方を想定して
@@ -133,6 +147,7 @@ class RectBOX : ImageBOX{
         _image = new Rect(tl[0],tl[1],w,h);
         _rect_d = new RectDrawer(cast(Rect)_image);
         _drawer = _rect_d;
+        _set_shaped = true;
         set_shape = &reflesh_rect;
     }
     void reflesh_rect(){
@@ -154,6 +169,7 @@ class PointBOX : ImageBOX{
         _image = new Point(tl);
         _point_d = new PointDrawer(cast(Point)_image);
         _drawer = _point_d;
+        _set_shaped = true;
         set_shape = &reflesh_point;
     }
     void reflesh_point(){
@@ -177,6 +193,7 @@ class CircleBOX : ImageBOX{
         _image = new Circle(center,radius/2);
         _circle_d = new CircleDrawer(cast(Circle)_image);
         _drawer = _circle_d;
+        _set_shaped = true;
         set_shape = &reflesh_circle;
     }
     void reflesh_circle(){
@@ -203,6 +220,7 @@ class LinesBOX : ImageBOX{
         _lines_d = new LinesDrawer(lines);
         _image = lines;
         _drawer = _lines_d;
+        _set_shaped = true;
         set_shape = delegate(){};
     }
     void set_drawer(Line[] ls)
@@ -211,6 +229,7 @@ class LinesBOX : ImageBOX{
         _linesE_d = new LinesDrawerEach(lines);
         _image = lines;
         _drawer = _linesE_d;
+        _set_shaped = true;
         set_shape = delegate(){};
     }
 }

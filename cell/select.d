@@ -89,7 +89,7 @@ public:
         super.create_in(_focus);
         debug(cell)writefln("create in %s",_focus);
     }
-    void add(in Cell c){
+    override void add(in Cell c){
         super.add(c);
     }
     bool is_on_edge()const{

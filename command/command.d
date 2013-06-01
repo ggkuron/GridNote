@@ -57,7 +57,7 @@ public:
         manip = m;
         view = p;
     }
-    final void execute(){
+    final override void execute(){
         mixin (func_body);
     }
 }
@@ -78,7 +78,7 @@ final class combined_COMMAND : COMMAND,AtomCMD{
             }
         }
     }
-    void execute(){
+    override void execute(){
         foreach(cmd; commands)
         {
             debug(cmd) writeln("exec: ",cmd);
@@ -90,17 +90,10 @@ final class combined_COMMAND : COMMAND,AtomCMD{
 enum InputState{Normal,Edit,CellSelect,ColorSelect};
 final class InputInterpreter{
 immutable preserve_length = 1;
-private:
-    InputState _input_state = InputState.Normal;
-    ManipTable manip;
-    PageView view;
-    IMMulticontext imm;
+public:
+//  内部使用
 
-    uint[] keyState;
-    uint modState;
-    bool im_driven;
-    COMMAND[KeyCombine][InputState] command_table;
-
+//  ユーザー入力に対する
     COMMAND zoom_in;
     COMMAND zoom_out;
 
@@ -155,6 +148,18 @@ private:
     COMMAND normal_start_edit_text;
     COMMAND normal_edit_textbox;
 
+
+private:
+    InputState _input_state = InputState.Normal;
+    ManipTable manip;
+    PageView view;
+    IMMulticontext imm;
+
+    uint[] keyState;
+    uint modState;
+    bool im_driven;
+    COMMAND[KeyCombine][InputState] command_table;
+
     void register_key(COMMAND cmd, InputState state, in KeyCombine ckc){
         cmd.register_key(ckc);
         // 重複してはいけない
@@ -205,6 +210,8 @@ public:
         imm = im;
         view = pv;
 
+        // 内部使用
+        // ユーザー入力
         zoom_in = cmd_template!("view.zoom_in();")(this,manip,view);
         zoom_out = cmd_template!("view.zoom_out();")(this,manip,view);
         register_key(zoom_in,InputState.Normal,default_ZOOM_IN);

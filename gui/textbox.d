@@ -63,11 +63,11 @@ public:
         debug(gui) writeln("@@@@ render textbox start @@@@");
         // get info and update class holded one
         if(box.empty()) return;
-        auto box_id = box.id();
+        const box_id = box.id();
         _gridSize = get_gridSize();
         _box_pos[box_id] = get_position(box); // gui.render_box::get_position
         _box_pos[box_id].y += _gridSize/3;
-        _fontsize[box_id] = box.font_size;    //  !!TextBOXで変更できるように 
+        _fontsize[box_id] = cast(ubyte)_gridSize; // box.font_size;    //  !!TextBOXで変更できるように 
         _fontcolor[box_id] = box.font_color;             //  !!なったら変更 
         auto numof_lines = box.getText().numof_lines();
         _currentline = box.getText().current_line();
@@ -220,7 +220,7 @@ public:
     }
     public auto get_surrounding(){
         debug(gui) writeln("get surrounding start");
-        // _im_target.cursor_pos = _im_target.getText.caret().column;
+        // _im_target.set_cursor_pos(_im_target.getText.caret().column);
         writeln("cursor_pos: ",_im_target.cursor_pos); 
         return tuple(_strings[_im_target_id][_currentline],_im_target.cursor_pos);
         debug(gui) writeln("end");

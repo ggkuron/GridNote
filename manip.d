@@ -35,7 +35,7 @@ private:
     SelectBOX _select;
     FocusMode _mode;
 
-    Color _selected_color;
+    Color _selected_color ;
     string _box_type;
     bool _box_use_im;
     ManipTextBOX _manip_textbox;
@@ -244,10 +244,12 @@ public:
         _selected_color = get_selectedColor();
     }
     void select_color(in Color c){
+        _selected_color = c;
         // add_colorをどうにかするいまのままじゃいかん
+        // 
         // _pv.guide_view.display_color(c);
     }
-    Color get_selectedColor(){
+    const(Color) get_selectedColor(){
         return _pv.guide_view.get_selectedColor();
     }
     void create_CircleBOX(){

@@ -237,7 +237,7 @@ final class ImageDrawer : Drawer{
 final class ArrowDrawer : Drawer{
     Arrow _shape;
     final class ArrowOpen : ArrowHead{
-        void draw(Context cr,in Point s,in Point e){
+        override void draw(Context cr,in Point s,in Point e){
             calc_vertexes(s,e);
             
             cr.set_color(this.outer._shape.color);

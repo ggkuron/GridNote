@@ -37,11 +37,7 @@ public:
     }
     override bool require_create_in(in Cell c)
     {
-        if(table.try_create_in(this,c))
-        {   // tableから呼ばれる.
-            // create_in(c);
-            return true;
-        }else return false;
+        return table.try_create_in(this,c);
     }
     void set_font_color(in Color c){
         _font_color = c;

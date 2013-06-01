@@ -105,27 +105,27 @@ private:
 
         _color_box_back.fill(cr);
     }
-    void renderTable(Context cr){
-        debug(gui) writeln("@@@@ render Guide _table start @@@@");
-        if(_table.empty) return;
+    // void renderTable(Context cr){
+    //     debug(gui) writeln("@@@@ render Guide _table start @@@@");
+    //     if(_table.empty) return;
 
-        debug(gui) writeln("#### render _table end ####");
-    }
+    //     debug(gui) writeln("#### render _table end ####");
+    // }
     void renderColorBox(Context cr){
         _selected_color_box.set_color(_selected_color);
-        // _color_selector.render(cr);
         if(_selected_color in _color_box)
         {
             _selected_color_box.fill(cr);
             _color_box[_selected_color].set_width(6);        
             _color_box[_selected_color].stroke(cr);       
         }
-        foreach(c; _color_priority)
+        foreach(b; _color_box)
         {
-            _color_box[c].fill(cr);
+            b.fill(cr);
         }
     }
     bool draw_callback(Context cr,Widget widget){
+        if(!_c_cnt) return false;
         backDesign(cr);
         renderColorBox(cr);
         cr.resetClip(); // end of rendering
@@ -133,7 +133,7 @@ private:
     }
     void when_sizeallocated(GdkRectangle* n,Widget w){
         set_holding_area();
-        set_color_box();
+        reset_color_box();
         auto start_row = max_row()/2;
         _selected_color_box.hold_tl(Cell(start_row-3,1),2,2);
         _selected_color_box.set_drawer();
@@ -146,6 +146,7 @@ private:
     }
     CircleBOX[Color] _color_box;
     Color[int] _color_priority;
+    int[Color] _priority_color;
     RectBOX _selected_color_box;
     RectDrawer _color_back;
     RectBOX _color_box_back;
@@ -168,7 +169,6 @@ private:
             _drwer = new CircleBOX(_selector_table,this.outer);
             _drwer.require_create_in(_focus);
             _drwer.set_drawer();
-            _drwer.set_color(color);
         }
         // 間違ってるしouter側で処理するのが簡単
         // 
@@ -216,29 +216,33 @@ private:
     @property int colorbox_turn_column()const{
         return max_col();
     }
-    void set_color_box(){
-        static int row,col,cnt;
-        void add_color(in Color c){
-           if(col == colorbox_turn_column())
-            {
-                ++row;
-                col = 0;
-            }
+    static int _c_row,_c_col,_c_cnt;
+    public void add_color(in Color c){
+        int priority;
+        if(c !in _color_box)
+        {
+            priority = _c_cnt++;
+            _color_priority[priority] = c;
+            _priority_color[c] = priority;
             auto ib = new CircleBOX(_table,this);
-            ib.require_create_in(Cell(row,col++));
-            ib.set_drawer();
-            ib.set_color(c);
             _color_box[c] = ib;
-            _color_priority[cnt++] = c;
-        }
-        void clear(){
-            foreach(c; _color_box)
-                c.remove_from_table();
+        }else
+            priority = _priority_color[c];
 
-            auto start_pos = colorbox_start_pos();
-            row = start_pos.row;
-            col = start_pos.column;
-            cnt = 0;
+        auto cb = _color_box[c];
+        cb.require_create_in(calc_colorpos(priority));
+        cb.set_drawer();
+        cb.set_color(c);
+    }
+    private Cell calc_colorpos(in int priority)const{
+        auto row = (priority) / colorbox_turn_column;
+        auto col = (priority) % colorbox_turn_column;
+        return Cell(row,col) + colorbox_start_pos;
+    }
+    private void reset_color_box(){
+        void clear(){
+            foreach(b; _color_box)
+                b.remove_from_table();
         }
         clear();
         _color_box_back = new RectBOX(_table,this);
@@ -246,18 +250,8 @@ private:
         _color_box_back.set_drawer();
         _color_box_back.set_color(Color(blue,50));
 
-        add_color(darkorange);
-        add_color(violet);
-        add_color(plum);
-        add_color(cadetblue);
-        add_color(cyan);
-        add_color(firebrick);
-        add_color(peachpuff);
-        add_color(linen);
-        add_color(darkgoldenrod);
-        add_color(lemonchiffon);
-        add_color(forestgreen);
-        add_color(black);
+        foreach(c; _color_priority)
+            add_color(c);
     }
     Color _selected_color;
     int max_row()const{
@@ -277,18 +271,16 @@ public:
         _selected_color_box = new RectBOX(_table,this);
         _back_color = new RectBOX(_table,this);
 
-        set_color_box();
+        reset_color_box();
 
         // set_color_box()の後でないと初回の規定色得られなくて
         _color_selector = new ColorSelector();
-
-
 
         addOnSizeAllocate(&when_sizeallocated);
         addOnDraw(&draw_callback);
         addOnButtonPress(&onButtonPress);
 
-        display_color();
+        // display_color();
         showAll();
     }
     void select_color(in Direct dir){

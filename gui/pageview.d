@@ -154,8 +154,7 @@ private:
     }
     void backDesign(Context cr){
     }
-
-    bool show_contents_border = true;
+    bool _show_contents_border = true;
     void renderTable(Context cr){
         debug(gui) writeln("@@@@ render table start @@@@");
         if(_in_view.empty) return;
@@ -163,7 +162,7 @@ private:
         foreach(tb; _in_view.get_textBoxes())
         {
             debug(gui) writeln("render textbox");
-                if(show_contents_border)
+                if(_show_contents_border)
                 {
                     _render_text.render_fill(cr,tb,Color(linen,96));
                     _render_text.render_grid(cr,tb,Color(gold,128),1);
@@ -173,7 +172,7 @@ private:
         foreach(ib; _in_view.get_imageBoxes())
         {
             debug(gui) writeln("render textbox");
-                if(show_contents_border)
+                if(_show_contents_border)
                 {
                     _render_text.render_grid(cr,ib,Color(gold,128),1);
                 }
@@ -257,6 +256,21 @@ private:
         setGrid();
     }
 public:
+    void init_color_select(){
+        _manip_table.select_color(black);
+        _guide_view.add_color(black);
+        _guide_view.add_color(darkorange);
+        _guide_view.add_color(violet);
+        _guide_view.add_color(plum);
+        _guide_view.add_color(cadetblue);
+        _guide_view.add_color(cyan);
+        _guide_view.add_color(firebrick);
+        _guide_view.add_color(peachpuff);
+        _guide_view.add_color(linen);
+        _guide_view.add_color(darkgoldenrod);
+        _guide_view.add_color(lemonchiffon);
+        _guide_view.add_color(forestgreen);
+    }
     this(GuideView guide,Cell start_offset = Cell(0,0))
         out{
         assert(_table);
@@ -279,6 +293,7 @@ public:
 
         _in_view = new ReferTable(_table,start_offset,1,1);
         _guide_view = guide;
+        init_color_select();
 
         addOnKeyPress(&_interpreter.key_to_cmd);
         addOnFocusIn(&focus_in);
@@ -305,11 +320,11 @@ public:
         _imm.appendMenuitems(_menu);
 
         _menu.attachToWidget(this, null);
-        _manip_table.select_color(black);
 
         showAll();
     }
     void move_view(in Direct dir){
+
         _in_view.move_area(dir);
     }
     void zoom_in(){
@@ -333,7 +348,7 @@ public:
         _grid_show_flg = !_grid_show_flg;
     }
     void toggle_boxborder_show(){
-        show_contents_border = !show_contents_border;
+        _show_contents_border = !_show_contents_border;
     }
     double get_x(in Cell c)const{ return (c.column - _in_view.offset.column) * _gridSpace ; }
     double get_y(in Cell c)const{ return (c.row - _in_view.offset.row) * _gridSpace ; }

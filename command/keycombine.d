@@ -16,7 +16,7 @@ struct KeyCombine{
         mod = m;
         keys = k;
     }
-    bool opEquals(ref const KeyCombine kc)const{
+    bool opEquals(const KeyCombine kc)const{
         if(use_mod || kc.use_mod)
             return (mod & kc.mod) && (keys == kc.keys);
         else return keys == kc.keys;

@@ -103,11 +103,11 @@ final class Lines : Shape{
     this(Line[] ls){
         add_line(ls);
     }
-    Lines* opAssign(in Lines ls){ 
-        lines = cast(Line[])ls.lines;
-        width = ls.width;
-        return cast(Lines*)this;
-    }
+    // Lines* opAssign(in Lines ls){ 
+    //     lines = cast(Line[])ls.lines;
+    //     width = ls.width;
+    //     return cast(Lines*)this;
+    // }
     void set_width(in double d=1){
         width = d;
     }
@@ -141,9 +141,9 @@ final class Rect : Shape{
         w = cast(double)u.width;
         h = cast(double)u.height;
     }
-    this(Rect r){
-        this = r;
-    }
+    // this(Rect r){
+    //     this = r;
+    // }
     this(GtkAllocation ga){
         set_gen(ga);
     }
