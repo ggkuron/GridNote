@@ -1,5 +1,6 @@
 module gui.tableview;
 
+import std.traits;
 import cell.cell;
 import cell.contentbox;
 import cairo.Context;
@@ -55,7 +56,8 @@ final:
         bool[Direct] adjacent_info(in Cell[] cells,in Cell searching){
             if(cells.empty) assert(0);
             bool[Direct] result;
-            foreach(dir; Direct.min .. Direct.max+1){ result[cast(Direct)dir] = false; }
+            foreach(dir; EnumMembers!Direct)
+                result[dir] = false; 
 
             foreach(a; cells)
             {
@@ -81,9 +83,8 @@ final:
         foreach(c; cells)
         {
             const ad_info = adjacent_info(cells,c);
-            foreach(n; Direct.min .. Direct.max+1 )
+            foreach(dir; EnumMembers!Direct)
             {
-                const dir = cast(Direct)n;
                 if(!ad_info[dir]){ // 隣接してない方向の境界を書く
                     perimeters.add_line(CellLine(c,dir,color,grid_width));
                 }

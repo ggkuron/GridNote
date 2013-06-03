@@ -3,8 +3,10 @@ module cell.contentbox;
 import cell.cell;
 import cell.table;
 import cell.rangecell;
+import std.traits;
 import util.array;
 import util.direct;
+import util.color;
 debug(cb) import std.stdio;
 debug(cell) import std.stdio;
 
@@ -272,6 +274,8 @@ public:
     @property Cell[] edge_forward_cells(const Direct dir)const{
         return _inner_range_cell.edge_forward_cells(dir);
     }
+
+    void set_color(in Color c){}
 }
     unittest{
         import cell.textbox;
@@ -350,9 +354,8 @@ public:
         auto c = Cell(3,3);
         cb.create_in(c);
         assert(cb.is_on_edge(c));
-        foreach(idir; Direct.min .. Direct.max+1)
+        foreach(dir; EnumMembers!Direct)
         {   // 最終的に各方向に1Cell分拡大
-            auto dir = cast(Direct)idir;
             cb.expand(dir);
             assert(cb.is_on_edge(cb.top_left));
             assert(cb.is_on_edge(cb.bottom_right));

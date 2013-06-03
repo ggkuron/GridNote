@@ -87,6 +87,13 @@ final class combined_COMMAND : COMMAND,AtomCMD{
     }
 }
 
+/+
+    TODO
+    状態遷移でコマンドが
+    埋まってきてしまったので
+    分離する
++/
+
 enum InputState{Normal,Edit,CellSelect,ColorSelect};
 final class InputInterpreter{
 immutable preserve_length = 1;
@@ -147,11 +154,11 @@ public:
     COMMAND edit_to_normal_state; 
     COMMAND normal_start_edit_text;
     COMMAND normal_edit_textbox;
-
-
+    COMMAND mode_edit_from_color_select;
+    COMMAND mode_cell_select_from_color_select;
 private:
     InputState _input_state = InputState.Normal;
-    ManipTable manip;
+    ManipTable _manip;
     PageView view;
     IMMulticontext imm;
 
@@ -163,13 +170,17 @@ private:
     void register_key(COMMAND cmd, InputState state, in KeyCombine ckc){
         cmd.register_key(ckc);
         // 重複してはいけない
-        debug(cmd) writeln("regist ",cmd);
-        debug(cmd) writeln("state ",state);
-        debug(cmd) writefln("kc %s \n",ckc);
+        import std.stdio;
+        writeln("regist ",cmd);
+        writeln("state ",state);
+        writefln("kc %s \n",ckc);
 
-        assert(command_table.keys.empty || state !in command_table 
-                || command_table[state].keys.empty 
-                || ckc !in command_table[state]); // <- KeyConfig実装するときにException飛ばす,もしくは上書きするためにtableから現在のKeyCombineを消して
+        // 同一のキーバインドを許さない
+        if(!command_table.keys.empty 
+                && state in command_table 
+                && !command_table[state].keys.empty 
+                && ckc in command_table[state]) // <- KeyConfig実装するときにException飛ばす,もしくは上書きするためにtableから現在のKeyCombineを消して
+            throw new Exception("alredy used this keycombined");
         command_table[state][ckc] = cmd;
     }
     void control_input(){
@@ -206,100 +217,101 @@ private:
     }
 public:
     this(ManipTable m,PageView pv,IMMulticontext im){
-        manip = m;
+        _manip = m;
         imm = im;
         view = pv;
 
         // 内部使用
         // ユーザー入力
-        zoom_in = cmd_template!("view.zoom_in();")(this,manip,view);
-        zoom_out = cmd_template!("view.zoom_out();")(this,manip,view);
+        zoom_in = cmd_template!("view.zoom_in();")(this,_manip,view);
+        zoom_out = cmd_template!("view.zoom_out();")(this,_manip,view);
         register_key(zoom_in,InputState.Normal,default_ZOOM_IN);
         register_key(zoom_out,InputState.Normal,default_ZOOM_OUT);
 
-        move_focus_l = cmd_template!("manip.move_focus(Direct.left);")(this,manip,view);
-        move_focus_r = cmd_template!("manip.move_focus(Direct.right);")(this,manip,view);
-        move_focus_d = cmd_template!("manip.move_focus(Direct.down);")(this,manip,view);
-        move_focus_u = cmd_template!("manip.move_focus(Direct.up);")(this,manip,view);
+        move_focus_l = cmd_template!("manip.move_focus(Direct.left);")(this,_manip,view);
+        move_focus_r = cmd_template!("manip.move_focus(Direct.right);")(this,_manip,view);
+        move_focus_d = cmd_template!("manip.move_focus(Direct.down);")(this,_manip,view);
+        move_focus_u = cmd_template!("manip.move_focus(Direct.up);")(this,_manip,view);
         register_key(move_focus_l,InputState.Normal,default_MOVE_FOCUS_L);
         register_key(move_focus_r,InputState.Normal,default_MOVE_FOCUS_R);
         register_key(move_focus_u,InputState.Normal,default_MOVE_FOCUS_U);
         register_key(move_focus_d,InputState.Normal,default_MOVE_FOCUS_D);
 
-        expand_select_pivot_R = cmd_template!("manip.expand_to_focus(Direct.right);")(this,manip,view);
+        expand_select_pivot_R = cmd_template!("manip.expand_to_focus(Direct.right);")(this,_manip,view);
         register_key(expand_select_pivot_R,InputState.Normal,default_SELECT_PIVOT_R);
         register_key(expand_select_pivot_R,InputState.CellSelect,default_SELECT_PIVOT_R);
-        expand_select_pivot_U = cmd_template!("manip.expand_to_focus(Direct.up);")(this,manip,view);
+        expand_select_pivot_U = cmd_template!("manip.expand_to_focus(Direct.up);")(this,_manip,view);
         register_key(expand_select_pivot_U,InputState.CellSelect,default_SELECT_PIVOT_U);
         register_key(expand_select_pivot_U,InputState.Normal,default_SELECT_PIVOT_U);
-        expand_select_pivot_L = cmd_template!("manip.expand_to_focus(Direct.left);")(this,manip,view);
+        expand_select_pivot_L = cmd_template!("manip.expand_to_focus(Direct.left);")(this,_manip,view);
         register_key(expand_select_pivot_L,InputState.Normal,default_SELECT_PIVOT_L);
         register_key(expand_select_pivot_L,InputState.CellSelect,default_SELECT_PIVOT_L);
-        expand_select_pivot_D = cmd_template!("manip.expand_to_focus(Direct.down);")(this,manip,view);
+        expand_select_pivot_D = cmd_template!("manip.expand_to_focus(Direct.down);")(this,_manip,view);
         register_key(expand_select_pivot_D,InputState.Normal,default_SELECT_PIVOT_D);
         register_key(expand_select_pivot_D,InputState.CellSelect,default_SELECT_PIVOT_D);
-        delete_selected_area = cmd_template!("manip.delete_selected_area();")(this,manip,view);
+        delete_selected_area = cmd_template!("manip.delete_selected_area();")(this,_manip,view);
         register_key(delete_selected_area,InputState.CellSelect,default_BOX_DELETE);
 
-        toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,manip,view);
+        toggle_grid_show = cmd_template!("view.toggle_grid_show();")(this,_manip,view);
         register_key(toggle_grid_show,InputState.Normal,default_TOGGLE_GRID_RENDER);
-        toggle_boxborder_show = cmd_template!("view.toggle_boxborder_show();")(this,manip,view);
+        toggle_boxborder_show = cmd_template!("view.toggle_boxborder_show();")(this,_manip,view);
         register_key(toggle_boxborder_show,InputState.Normal,default_TOGGLE_BOX_BORDER_RENDER);
 
-        manip_undo = cmd_template!("manip.undo();")(this,manip,view);
+        manip_undo = cmd_template!("manip.undo();")(this,_manip,view);
         register_key(manip_undo,InputState.Edit,default_UNDO);
-        delete_selected = cmd_template!("manip.delete_selected();")(this,manip,view);
+        delete_selected = cmd_template!("manip.delete_selected();")(this,_manip,view);
         register_key(delete_selected,InputState.Normal,default_BOX_DELETE);
 
-        move_selected_r = cmd_template!("manip.move_selected(Direct.right);")(this,manip,view);
-        move_selected_l = cmd_template!("manip.move_selected(Direct.left);")(this,manip,view);
-        move_selected_u = cmd_template!("manip.move_selected(Direct.up);")(this,manip,view);
-        move_selected_d = cmd_template!("manip.move_selected(Direct.down);")(this,manip,view);
+        move_selected_r = cmd_template!("manip.move_selected(Direct.right);")(this,_manip,view);
+        move_selected_l = cmd_template!("manip.move_selected(Direct.left);")(this,_manip,view);
+        move_selected_u = cmd_template!("manip.move_selected(Direct.up);")(this,_manip,view);
+        move_selected_d = cmd_template!("manip.move_selected(Direct.down);")(this,_manip,view);
         register_key(move_selected_r,InputState.Normal,default_MOVE_BOX_R);
         register_key(move_selected_l,InputState.Normal,default_MOVE_BOX_L);
         register_key(move_selected_u,InputState.Normal,default_MOVE_BOX_U);
         register_key(move_selected_d,InputState.Normal,default_MOVE_BOX_D);
 
-        create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,manip,view);
-        im_focus_out = cmd_template!("inp.imm.focusOut();")(this,manip,view);
-        create_circle = cmd_template!("manip.create_RectBOX();")(this,manip,view);
+        create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,_manip,view);
+        im_focus_out = cmd_template!("inp.imm.focusOut();")(this,_manip,view);
+        create_circle = cmd_template!("manip.create_RectBOX();")(this,_manip,view);
         register_key(create_circle,InputState.Normal,default_ImageOpen);
+        register_key(create_circle,InputState.Edit,default_ImageOpen);
 
         // 内部使用
         // mode遷移はもっと包んだ方が良さそう
         // ModifierKeyとModeは括りつけない方がいいと確信した
-        input_mode_edit = cmd_template!("inp.change_mode_edit();")(this,manip,view);
-        input_mode_normal = cmd_template!("inp.change_mode_normal();")(this,manip,view);
-        input_mode_select = cmd_template!("inp.change_mode_select();")(this,manip,view);
-        input_mode_color = cmd_template!("inp.change_mode_color();")(this,manip,view);
+        input_mode_edit = cmd_template!("inp.change_mode_edit();")(this,_manip,view);
+        input_mode_normal = cmd_template!("inp.change_mode_normal();")(this,_manip,view);
+        input_mode_select = cmd_template!("inp.change_mode_select();")(this,_manip,view);
+        input_mode_color = cmd_template!("inp.change_mode_color();")(this,_manip,view);
         register_key(input_mode_color,InputState.Normal,default_MODE_COLOR);
         register_key(input_mode_color,InputState.Edit,default_MODE_COLOR);
-        register_key(input_mode_color,InputState.CellSelect,default_MODE_COLOR);
+        // register_key(input_mode_color,InputState.CellSelect,default_MODE_COLOR);
 
-        manip_mode_normal = cmd_template!("manip.change_mode_normal();")(this,manip,view);
-        manip_mode_select = cmd_template!("manip.change_mode_select();")(this,manip,view);
-        manip_mode_edit = cmd_template!("manip.change_mode_edit();")(this,manip,view);
-        manip_mode_point = cmd_template!("manip.change_mode_point();")(this,manip,view);
+        manip_mode_normal = cmd_template!("manip.change_mode_normal();")(this,_manip,view);
+        manip_mode_select = cmd_template!("manip.change_mode_select();")(this,_manip,view);
+        manip_mode_edit = cmd_template!("manip.change_mode_edit();")(this,_manip,view);
+        manip_mode_point = cmd_template!("manip.change_mode_point();")(this,_manip,view);
         register_key(manip_mode_point,InputState.Normal,default_Point);
 
-        color_select_L = cmd_template!("manip.select_color(Direct.left);")(this,manip,view); 
-        color_select_R = cmd_template!("manip.select_color(Direct.right);")(this,manip,view);
-        color_select_U = cmd_template!("manip.select_color(Direct.up);")(this,manip,view);
-        color_select_D = cmd_template!("manip.select_color(Direct.down);")(this,manip,view);
+        color_select_L = cmd_template!("manip.select_color(Direct.left);")(this,_manip,view); 
+        color_select_R = cmd_template!("manip.select_color(Direct.right);")(this,_manip,view);
+        color_select_U = cmd_template!("manip.select_color(Direct.up);")(this,_manip,view);
+        color_select_D = cmd_template!("manip.select_color(Direct.down);")(this,_manip,view);
         register_key(color_select_L,InputState.ColorSelect,default_MOVE_FOCUS_L);
         register_key(color_select_R,InputState.ColorSelect,default_MOVE_FOCUS_R);
         register_key(color_select_U,InputState.ColorSelect,default_MOVE_FOCUS_U);
         register_key(color_select_D,InputState.ColorSelect,default_MOVE_FOCUS_D);
 
-        quit = cmd_template!("stdlib.exit(0);")(this,manip,view);
-        grab_target = cmd_template!("manip.grab_selectbox();")(this,manip,view);
+        quit = cmd_template!("stdlib.exit(0);")(this,_manip,view);
+        grab_target = cmd_template!("manip.grab_selectbox();")(this,_manip,view);
 
-        text_backspace = cmd_template!("manip.backspace();")(this,manip,view);
+        text_backspace = cmd_template!("manip.backspace();")(this,_manip,view);
         register_key(text_backspace,InputState.Edit,backspace);
-        text_feed = cmd_template!("manip.text_feed();")(this,manip,view);
+        text_feed = cmd_template!("manip.text_feed();")(this,_manip,view);
         register_key(text_feed,InputState.Edit,return_key);
-        text_edit = cmd_template!("manip.edit_textbox();")(this,manip,view);
-        im_focus_in = cmd_template!("inp.imm.focusIn();")(this,manip,view);
+        text_edit = cmd_template!("manip.edit_textbox();")(this,_manip,view);
+        im_focus_in = cmd_template!("inp.imm.focusIn();")(this,_manip,view);
         // combined_COMMAND
 
         normal_edit_textbox = new combined_COMMAND(grab_target,text_edit,im_focus_in);
@@ -311,13 +323,15 @@ public:
         mode_edit = new combined_COMMAND(input_mode_edit,manip_mode_edit);
         mode_select = new combined_COMMAND(input_mode_select,manip_mode_select);
         register_key(mode_normal,InputState.Normal,escape_key);
-        register_key(mode_normal,InputState.CellSelect,escape_key);
         register_key(mode_normal,InputState.Edit,escape_key);
-        register_key(mode_normal,InputState.ColorSelect,escape_key);
         register_key(mode_normal,InputState.Normal,alt_escape);
-        register_key(mode_normal,InputState.CellSelect,alt_escape);
         register_key(mode_normal,InputState.Edit,alt_escape);
-        register_key(mode_normal,InputState.ColorSelect,alt_escape);
+        mode_edit_from_color_select = new combined_COMMAND(input_mode_edit);
+        mode_cell_select_from_color_select = new combined_COMMAND(input_mode_select,manip_mode_select);
+        register_key(mode_edit_from_color_select,InputState.ColorSelect,escape_key);
+        register_key(mode_edit_from_color_select,InputState.ColorSelect,alt_escape);
+        register_key(mode_cell_select_from_color_select,InputState.CellSelect,escape_key);
+        register_key(mode_cell_select_from_color_select,InputState.CellSelect,alt_escape);
 
         // open_imagefile = cmd_template!("manip.select_file();")(this,manip,view);
         // register_key(open_imagefile,InputState.Normal,default_ImageOpen);
@@ -363,16 +377,31 @@ public:
             command_queue ~= cmd;
         }
     }
+    InputState _before_state;
 public:
+    bool can_edit()const{
+        return _input_state == InputState.Edit
+            && _manip.mode == FocusMode.edit;
+    }
     void change_mode_normal(){
         final switch(_input_state){
             case InputState.Normal:
                 imm.focusOut();
                 break;
             case InputState.CellSelect:
-            case InputState.ColorSelect:
                 _input_state = InputState.Normal;
                 imm.focusOut();
+                break;
+            case InputState.ColorSelect:
+                if(_before_state == InputState.Edit)
+                {
+                    _input_state = InputState.Edit;
+                    _before_state = InputState.Normal;
+                }else
+                {
+                    _input_state = InputState.Normal;
+                    imm.focusOut();
+                }
                 break;
             case InputState.Edit:
                 keyState.clear();
@@ -385,12 +414,12 @@ public:
         final switch(_input_state){
            case InputState.Normal:
            case InputState.CellSelect:
+            case InputState.ColorSelect:
                 _input_state = InputState.Edit;
                 add_to_queue(
                 manip_mode_edit,im_focus_in);
                 break;
             case InputState.Edit:
-            case InputState.ColorSelect:
                 break;
         }
     }
@@ -417,10 +446,10 @@ public:
             case InputState.Edit:
                 imm.focusOut();
                 _input_state = InputState.ColorSelect;
+                _before_state = InputState.Edit;
                 break;
         }
     }
-
     void execute(){
         foreach(cmd; command_queue)
         {

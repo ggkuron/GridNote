@@ -170,7 +170,6 @@ private:
             _drwer.require_create_in(_focus);
             _drwer.set_drawer();
         }
-        // 間違ってるしouter側で処理するのが簡単
         // 
         // void render(Context cr){
         //     reshape();
@@ -264,8 +263,8 @@ public:
     this(){ 
         setProperty("can-focus",0);
 
-        _table = new BoxTable();
-        _selector_table = new BoxTable();
+        _table = new BoxTable(_gridSpace);
+        _selector_table = new BoxTable(_gridSpace);
         _holding_area = new Rect(0,0,200,200);
         _render_text = new RenderTextBOX(this);
         _selected_color_box = new RectBOX(_table,this);

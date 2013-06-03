@@ -90,14 +90,14 @@ private:
         return false;
     }
     void commit(string str,IMContext imc){
-        if(_interpreter.state == InputState.Edit)
+        if(_interpreter.can_edit())
         {
             _manip_table.im_commit_to_box(str);
             queueDraw();
         }
     }
     void preedit_changed(IMContext imc){
-        if(_interpreter.state == InputState.Edit)
+        if(_interpreter.can_edit())
         {
             auto inputted_box = cast(TextBOX)_manip_table.get_target();
             assert(inputted_box !is null);
@@ -163,21 +163,21 @@ private:
         foreach(tb; _in_view.get_textBoxes())
         {
             debug(gui) writeln("render textbox");
-                if(_show_contents_border)
-                {
-                    _render_text.render_fill(cr,tb,Color(linen,96));
-                    _render_text.render_grid(cr,tb,Color(gold,128),1);
-                }
-                render(cr,tb);
+            if(_show_contents_border)
+            {
+                _render_text.render_fill(cr,tb,Color(linen,96));
+                _render_text.render_grid(cr,tb,Color(gold,128),1);
+            }
+            render(cr,tb);
         }
         foreach(ib; _in_view.get_imageBoxes())
         {
             debug(gui) writeln("render textbox");
-                if(_show_contents_border)
-                {
-                    _render_text.render_grid(cr,ib,Color(gold,128),1);
-                }
-                    ib.fill(cr);
+            if(_show_contents_border)
+            {
+                _render_text.render_grid(cr,ib,Color(gold,128),1);
+            }
+            ib.fill(cr);
         }
 
         _render_text.render_grid(cr,_manip_table.get_target(),manip_box_color,manipLineWidth);
@@ -189,8 +189,6 @@ private:
     // BoxSizeの修正くらいならいいだろう
             // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
     void render(Context cr,TextBOX b){
-        import std.stdio;
-        writeln("ok");
         _render_text.render(cr,b);
     }
     
@@ -291,7 +289,7 @@ public:
 
         _imm = new IMMulticontext();
         _menu = new Menu();
-        _table = new BoxTable();
+        _table = new BoxTable(_gridSpace);
         _manip_table = new ManipTable(_table,this);
         _interpreter = new InputInterpreter(_manip_table,this,_imm);
         _holding_area = new Rect(0,0,200,200);

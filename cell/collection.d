@@ -2,6 +2,7 @@ module cell.collection;
 
 import cell.cell;
 import cell.rangecell;
+import std.traits;
 import util.direct;
 import util.array;
 import util.span;
@@ -14,9 +15,6 @@ class Collection : CellStructure{
 private:
 
     Cell[] box;
-    // _min_row 等に依存
-    // rangeとは独立している
-    Cell[LR][UpDown] _edge;
 
     int _numof_row = 1;  // 
     int _numof_col = 1;
@@ -26,6 +24,7 @@ private:
     // _min_row 等に依存
     // rangeとは独立している
     Cell[][Direct] _edge_line;
+    Cell[LR][UpDown] _edge;
 
     // Range をクロスさせた状態を表現する
     int _min_row = int.max;
@@ -39,14 +38,14 @@ private:
         cb.create_in(Cell(3,3));
         assert(cb.is_hold(Cell(3,3)));
         assert(!cb.is_hold(Cell(3,4)));
-        cb.expand(Direct.right);
+        cb.expand(right);
         assert(cb.is_hold(Cell(3,4)));
         cb = new Collection();
         cb.create_in(Cell(5,5));
-        cb.expand(Direct.right);
-        cb.expand(Direct.down);
-        assert(cb.box.count_lined(Cell(5,5),Direct.right) == 1);
-        assert(cb.box.count_lined(Cell(5,5),Direct.down) == 1);
+        cb.expand(right);
+        cb.expand(down);
+        assert(cb.box.count_lined(Cell(5,5),right) == 1);
+        assert(cb.box.count_lined(Cell(5,5),down) == 1);
         debug(cell) writeln("@@@@ update_info unittest start @@@@@");
         cb = new Collection();
         cb.create_in(Cell(5,5));
@@ -65,7 +64,7 @@ private:
         assert(cb._numof_col == 5);
         debug(cell) writeln("#### update_info unittest end ####");
     }
-    final void expand1(const Direct dir){
+    final void expand1(in Direct dir){
         debug(cell) writeln("@@@@ expand start @@@@");
 
         const Cell[] one_edges = edge_line[dir];
@@ -79,10 +78,10 @@ private:
         }
         if(dir.is_horizontal)
         {
-            _edge[up][cast(LR)dir].move(dir);
-            _edge[down][cast(LR)dir].move(dir);
-            _edge_line[Direct.up] ~= _edge[up][cast(LR)dir];
-            _edge_line[Direct.down] ~= _edge[down][cast(LR)dir];
+            _edge[Up][cast(LR)dir].move(dir);
+            _edge[Down][cast(LR)dir].move(dir);
+            _edge_line[up] ~= _edge[Up][cast(LR)dir];
+            _edge_line[down] ~= _edge[Down][cast(LR)dir];
             ++_numof_col;
             
             if(dir.is_positive)
@@ -92,10 +91,10 @@ private:
         }
         else // if(dir.is_vertical)
         {
-          _edge[cast(UpDown)dir][left].move(dir);
-          _edge[cast(UpDown)dir][right].move(dir);
-          _edge_line[Direct.left] ~= _edge[cast(UpDown)dir][left];
-          _edge_line[Direct.right] ~= _edge[cast(UpDown)dir][right];
+          _edge[cast(UpDown)dir][Left].move(dir);
+          _edge[cast(UpDown)dir][Right].move(dir);
+          _edge_line[Left] ~= _edge[cast(UpDown)dir][Left];
+          _edge_line[Right] ~= _edge[cast(UpDown)dir][Right];
 
           ++_numof_row;
           if(dir.is_positive)
@@ -107,7 +106,7 @@ private:
 
         debug(cell) writeln("#### expand end ####");
     }
-    final void remove1(const Direct dir){
+    final void remove1(in Direct dir){
         debug(cell) writeln("@@@@ Collection.remove start @@@@");
 
         if(dir.is_horizontal && _numof_col <= 1
@@ -122,8 +121,8 @@ private:
 
         if(dir.is_horizontal)
         {
-          _edge[up][cast(LR)dir].move(dir.reverse);
-          _edge[down][cast(LR)dir].move(dir.reverse);
+          _edge[Up][cast(LR)dir].move(dir.reverse);
+          _edge[Down][cast(LR)dir].move(dir.reverse);
           --_numof_col;
           if(dir.is_positive)
               --_max_col;
@@ -132,8 +131,8 @@ private:
         }
         else // if(dir.is_vertical)
         {
-          _edge[cast(UpDown)dir][left].move(dir.reverse);
-          _edge[cast(UpDown)dir][right].move(dir.reverse);
+          _edge[cast(UpDown)dir][Left].move(dir.reverse);
+          _edge[cast(UpDown)dir][Right].move(dir.reverse);
           --_numof_row;
           if(dir.is_positive)
               --_max_row;
@@ -146,7 +145,7 @@ private:
         debug(move) writeln("col_table are ",col_table);
         debug(move) writeln("row_table are ",row_table);
     }
-    final void move1(const Direct dir){
+    final void move1(in Direct dir){
         // この順番でないと1Cellだけのときに失敗する
         expand(dir);
         remove(dir.reverse);
@@ -191,17 +190,17 @@ public:
         _range.add(c);
         _min_row = _max_row = c.row;
         _min_col = _max_col = c.column;
-        _edge[up][left] = c;
-        _edge[up][right] = c;
-        _edge[down][left] = c;
-        _edge[down][right] = c;
-        _edge_line[Direct.left] ~= c;
-        _edge_line[Direct.right] ~= c;
-        _edge_line[Direct.up] ~= c;
-        _edge_line[Direct.down] ~= c;
+        _edge[Up][Left] = c;
+        _edge[Up][Right] = c;
+        _edge[Down][Left] = c;
+        _edge[Down][Right] = c;
+        _edge_line[left] ~= c;
+        _edge_line[right] ~= c;
+        _edge_line[up] ~= c;
+        _edge_line[down] ~= c;
     }
     // 任意のタイミングで行う操作
-    void add(const Cell c)
+    void add(in Cell c)
         in{
         assert(!box.empty);
         }
@@ -215,48 +214,48 @@ public:
         if(c.row < _range.row)
         {
             min_row_f = true;
-            _edge_line[Direct.up].clear();
-            _edge_line[Direct.up] ~= c;
+            _edge_line[up].clear();
+            _edge_line[up] ~= c;
         }
         else if(c.row > _range.row)
         {
             max_row_f = true;
-            _edge_line[Direct.down].clear();
-            _edge_line[Direct.down] ~= c;
+            _edge_line[down].clear();
+            _edge_line[down] ~= c;
         }
         else if(c.row == _range.row)
-            _edge_line[Direct.up] ~= c;
+            _edge_line[up] ~= c;
         else // if(c.row == row_table.max)
-            _edge_line[Direct.down] ~= c;
+            _edge_line[down] ~= c;
 
         if(c.column < _range.col)
         {
             min_row_f = true;
-            _edge_line[Direct.left].clear();
-            _edge_line[Direct.left] ~= c;
+            _edge_line[left].clear();
+            _edge_line[left] ~= c;
         }
         else if(c.column > _range.col)
         {
             max_col_f = true;
-            _edge_line[Direct.right].clear();
-            _edge_line[Direct.right] ~= c;
+            _edge_line[right].clear();
+            _edge_line[right] ~= c;
         }
         else if(c.column == _range.col)
-            _edge_line[Direct.left] ~= c;
+            _edge_line[left] ~= c;
         else // if(c.column == col_table.max)
-            _edge_line[Direct.right] ~= c;
+            _edge_line[right] ~= c;
 
         // cellを判定後に更新
         _range.add(c);
 
         if(max_col_f && max_row_f)
-            _edge[down][right] = c;
+            _edge[Down][Right] = c;
         if(max_col_f && min_row_f)
-            _edge[up][right] = c;
+            _edge[Up][Right] = c;
         if(min_col_f && max_row_f)
-            _edge[down][left] = c;
+            _edge[Down][Left] = c;
         if(min_col_f && min_row_f)
-            _edge[up][left] = c;
+            _edge[Up][Left] = c;
     }
     void expand(in Direct dir,in int width=1){
         int w = width;
@@ -309,7 +308,7 @@ public:
         assert(cb.min_col == 5);
         assert(cb.max_row == 9);
         assert(cb.max_col == 9);
-        cb.move(Direct.up);
+        cb.move(up);
         assert(cb.top_left == Cell(4,5));
         assert(cb.bottom_right == Cell(8,9));
         assert(cb.top_right == Cell(4,9));
@@ -318,7 +317,7 @@ public:
         assert(cb.min_col == 5);
         assert(cb.max_row == 8);
         assert(cb.max_col == 9);
-        cb.move(Direct.left);
+        cb.move(left);
         assert(cb.top_left == Cell(4,4));
         assert(cb.bottom_right == Cell(8,8));
         assert(cb.top_right == Cell(4,8));
@@ -327,7 +326,7 @@ public:
         assert(cb.min_col == 4);
         assert(cb.max_row == 8);
         assert(cb.max_col == 8);
-        cb.move(Direct.right);
+        cb.move(right);
         assert(cb.top_left == Cell(4,5));
         assert(cb.bottom_right == Cell(8,9));
         assert(cb.top_right == Cell(4,9));
@@ -355,9 +354,8 @@ public:
         cb.create_in(c);
         assert(cb.is_on_edge(c));
 
-        foreach(idir; Direct.min .. Direct.max+1)
+        foreach(dir; EnumMembers!Direct)
         {   // 最終的に各方向に1Cell分拡大
-            auto dir = cast(Direct)idir;
             cb.expand(dir);
             debug(collec) writeln("edge ",cb.edge_line[dir]);
             debug(collec) writeln("tl ",cb.top_left);
@@ -373,10 +371,10 @@ public:
     }
     @property const (Cell[][Direct]) edge_line()const{
         debug(cell) writefln("min_row %d max_row %d\n min_col %d max_col %d",min_row,max_row,min_col,max_col);
-        return  [Direct.right:_edge_line[Direct.right],
-                 Direct.left:_edge_line[Direct.left],
-                 Direct.up:_edge_line[Direct.up],
-                 Direct.down:_edge_line[Direct.down]];
+        return  [right:_edge_line[right],
+                 left:_edge_line[left],
+                 up:_edge_line[up],
+                 down:_edge_line[down]];
     }
     @property bool empty()const{
         return box.empty();
@@ -401,18 +399,18 @@ public:
         {
             if(w > 0)
             {
-                expand(Direct.right);
+                expand(right);
                 --w;
             }
             if(h > 0)
             {
-                expand(Direct.down);
+                expand(down);
                 --h;
             }
         }
         debug(collec) writeln("hold ",box);
     }
-    void hold_br(in Cell lr,int h,int w) // BottomRight
+    void hold_br(in Cell lr,in int h,in int w) // BottomRight
         in{
         assert(h >= 0);
         assert(w >= 0);
@@ -532,16 +530,16 @@ public:
         return box;
     }
     @property Cell top_left()const{
-        return _edge[up][left];
+        return _edge[Up][Left];
     }
     @property Cell bottom_right()const{
-        return _edge[down][right];
+        return _edge[Down][Right];
     }
     @property Cell top_right()const{
-        return _edge[up][right];
+        return _edge[Up][Right];
     }
     @property Cell bottom_left()const{
-        return _edge[down][left];
+        return _edge[Down][Left];
     }
     Cell[] grab_box(){
         return box;

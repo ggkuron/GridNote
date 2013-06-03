@@ -8,6 +8,7 @@ import cell.contentflex;
 public import cell.textbox;
 public import cell.imagebox;
 import std.typecons;
+import std.traits;
 import util.direct;
 import util.array;
 import util.span;
@@ -28,6 +29,7 @@ private:
 
     alias Span RowSpan;
     alias Span ColSpan;
+    int _grid_size;
 
     CellContent[KEY] _content_table;
     TextBOX[KEY] _text_table;
@@ -352,15 +354,20 @@ public:
     body{
         return tuple(_type_table[key],_content_table[key]);
     }
-    this(){
+    this(){ // 実際には使われてはいけないかもしれない
         _content_table[0] = null;
         _type_table[0] = "none";
     }
-    this(BoxTable r){
+    this(in int gridS){
+        _grid_size = gridS;
+        _content_table[0] = null;
+        _type_table[0] = "none";
+    }
+    this(BoxTable r,in int gridS){
         _content_table = r._content_table;
         _type_table = r._type_table;
         _keys = r._keys;
-        this();
+        this(gridS);
     }
     invariant(){
         assert(_content_table[0] is null);
@@ -404,9 +411,9 @@ public:
         _keys[c] = box_id;
         _type_table[box_id] = u.toString;
         _box_keys[u.grab_range()] = box_id;
-        foreach(i; Direct.min .. Direct.max+1)
+        foreach(dir; EnumMembers!Direct)
         {
-            _box_edges[box_id][cast(Direct)i] ~= c;
+            _box_edges[box_id][dir] ~= c;
         }
 
         _content_table[box_id] = u;
@@ -430,9 +437,9 @@ public:
         _keys[c] = box_id;
         _type_table[box_id] = u.toString;
         _content_table[box_id] = u;
-        foreach(i; Direct.min .. Direct.max+1)
+        foreach(dir; EnumMembers!Direct)
         {
-            _box_edges[box_id][cast(Direct)i] ~= c;
+            _box_edges[box_id][dir] ~= c;
         }
         u.create_in(c);
         import std.stdio;
@@ -559,6 +566,9 @@ public:
     }
     @property bool empty()const{
         return _keys.keys.empty();
+    }
+    @property int grid_size()const{
+        return _grid_size;
     }
     // RangeCellのopCmpの設計がされてない
     // @property Cell max_cell()const{

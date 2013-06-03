@@ -28,16 +28,16 @@ enum FocusMode{ normal,select,edit,point }
    // 指示棒をここがもってるから
 final class ManipTable{
 private:
-    BoxTable _focused_table;
+    BoxTable  _focused_table;
     CellContent _maniped_box;
     CellContent[] _old_state;
-    PageView _pv;
+    PageView  _pv;
     SelectBOX _select;
     FocusMode _mode;
 
-    Color _selected_color ;
+    Color  _selected_color;
     string _box_type;
-    bool _box_use_im;
+    bool   _box_use_im;
     ManipTextBOX _manip_textbox;
 public:
     this(BoxTable table,PageView p)
@@ -57,10 +57,10 @@ public:
         immutable focus = _select.focus();
         immutable max_view = _pv.get_view_max();
         immutable min_view = _pv.get_view_min();
-        if((focus.column <= min_view.column && dir == Direct.left)
-        || (focus.row <= min_view.row && dir == Direct.up)
-        || (focus.column >= max_view.column && dir==Direct.right )
-        || (focus.row >= max_view.row && dir==Direct.down ))
+        if((focus.column <= min_view.column && dir == left)
+        || (focus.row <= min_view.row && dir == up)
+        || (focus.column >= max_view.column && dir==right )
+        || (focus.row >= max_view.row && dir==down ))
         {
             debug(manip) writeln("focus ",focus);
             debug(manip) writeln("max ",max_view);
@@ -129,8 +129,8 @@ public:
         _select.expand(dir);
     }
     void delete_selected_area(){
-        auto select_min = _select.top_left;
-        auto select_max = _select.bottom_right;
+        const select_min = _select.top_left;
+        const select_max = _select.bottom_right;
         auto selected = _focused_table.get_contents(select_min,select_max);
         foreach(box; selected)
         {
@@ -151,7 +151,7 @@ public:
         immutable view_max = _pv.get_view_max();
         if(target is null) return;
         else{
-            if(target.top_left.row <= view_min.row && to == Direct.up)
+            if(target.top_left.row <= view_min.row && to == up)
             {   // viewを動かしたあとそれに合わせるためにmoveする
                 // このrequire_moveは必ず通る
                 _pv.move_view(to);
@@ -160,7 +160,7 @@ public:
                 if(!view_min.row)
                     _select.move(to.reverse);
             }
-            else if(target.top_left.column <= view_min.column && to == Direct.left)
+            else if(target.top_left.column <= view_min.column && to == left)
             {
                 _pv.move_view(to);
                 target.require_move(to);
@@ -168,21 +168,21 @@ public:
                 if(!view_min.column)
                      _select.move(to.reverse);
             }
-            else if(target.bottom_right.row >= view_max.row && to == Direct.down)
+            else if(target.bottom_right.row >= view_max.row && to == down)
             {   // 
                 _pv.move_view(to);
                 if(target.require_move(to))
                     move_focus(to);
             }
-            else if(target.bottom_right.column >= view_max.column && to==Direct.right)
+            else if(target.bottom_right.column >= view_max.column && to==right)
             {
                 _pv.move_view(to);
                 if(target.require_move(to))
                     move_focus(to);
             }
             else if(target.require_move(to)
-                 ||(target.top_left.column == view_min.column && to == Direct.left)
-                 ||(target.top_left.row == view_min.row && to == Direct.up))
+                 ||(target.top_left.column == view_min.column && to == left)
+                 ||(target.top_left.row == view_min.row && to == up))
                _select.move(to);
         }
     }
@@ -225,7 +225,7 @@ public:
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
         auto tb = _select.create_TextBOX();
-        tb.set_font_color(_selected_color);
+        tb.set_box_default_color(_selected_color);
 
         _maniped_box = tb;
         _box_type = tb.toString();
@@ -236,11 +236,11 @@ public:
     void select_color(in Direct dir){
         _pv.guide_view.select_color(dir);
         _selected_color = get_selectedColor();
+        if(_mode == FocusMode.edit)
+            _maniped_box.set_color(_selected_color);
     }
     void select_color(in Color c){
         _selected_color = c;
-        // add_colorをどうにかするいまのままじゃいかん
-        // 
         // _pv.guide_view.display_color(c);
     }
     const(Color) get_selectedColor(){
@@ -318,54 +318,59 @@ public:
     FocusMode mode()const{
         return _mode;
     }
+    final class ManipTextBOX {
+        // ManipTable _manip_table;
+        // IMMulticontext _imm;
+        // 上2つ使ってないかもしれない
+        // manip_table渡してしまったらどうして分離してるのかわからない
+        this(ManipTable mt){
+            // _manip_table = mt;
+        }
+        // void move_caret(TextBOX box, in Direct dir){
+        //     final switch(dir){
+        //         case right:
+        //             box.move_caretR(); return;
+        //             return;
+        //         case left:
+        //             box.move_caretL(); return;
+        //             return;
+        //         case up:
+        //             box.move_caretU(); return;
+        //             return;
+        //         case down:
+        //             box.move_caretD(); return;
+        //             return;
+        //     }
+        //     assert(0);
+        // }
+        void append(TextBOX box,string str){
+            debug(manip) writeln("text insert strat");
+            box.append(str);
+            debug(manip) writeln("end");
+        }
+        void with_commit(string str,TextBOX box){
+            debug(manip) writeln("with commit text");
+            append(box,str);
+        }
+        void backspace(TextBOX box){
+            box.backspace();
+        }
+        void feed(TextBOX box){
+            import std.stdio;
+            writeln("called");
+            box.expand_with_text_feed();
+        }
+        void set_foreground_color(TextBOX box,in Color c){
+            box.set_foreground_color(c);
+        }
+        void set_color(TextBOX box,in Color c){
+            box.set_foreground_color(c);
+        }
+    }
+
 }
 
 import gtk.IMMulticontext;
 import gtk.IMContext;
 
-final class ManipTextBOX {
-    // ManipTable _manip_table;
-    // IMMulticontext _imm;
-    // 上2つ使ってないかもしれない
-    // manip_table渡してしまったらどうして分離してるのかわからない
-    this(ManipTable mt){
-        //_manip_table = mt;
-    }
-    void move_caret(TextBOX box, in Direct dir){
-        final switch(dir){
-            case Direct.right:
-                box.move_caretR(); return;
-                return;
-            case Direct.left:
-                box.move_caretL(); return;
-                return;
-            case Direct.up:
-                box.move_caretU(); return;
-                return;
-            case Direct.down:
-                box.move_caretD(); return;
-                return;
-        }
-        assert(0);
-    }
-    void insert(TextBOX box,string str){
-        debug(manip) writeln("text insert strat");
-        box.insert(str);
-        move_caret(box,Direct.right);
-        debug(manip) writeln("end");
-    }
-    void with_commit(string str,TextBOX box){
-        debug(manip) writeln("with commit text");
-        insert(box,str);
-    }
-    void backspace(TextBOX box){
-        box.backspace();
-    }
-    void feed(TextBOX box){
-        box.move_caretD();
-    }
-    void set_font_color(TextBOX box,in Color c){
-        box.set_font_color(c);
-    }
-}
 

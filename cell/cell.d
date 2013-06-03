@@ -5,6 +5,7 @@ import std.algorithm;
 import util.array;
 import std.exception;
 import std.math;
+import std.traits;
 
 import std.typecons;
 debug(cell) import std.stdio;
@@ -81,20 +82,20 @@ unittest{
 }
 void move(ref Cell cell,in Direct to,int width=1){
     final switch(to){
-        case Direct.right: 
+        case right: 
             cell.column += width;
             break;
-        case Direct.left:
+        case left:
             while(width--)
             if(cell.column != 0)
                 --cell.column;
             break;
-        case Direct.up:
+        case up:
             while(width--)
             if(cell.row != 0)
                 --cell.row;
             break;
-        case Direct.down:
+        case down:
             cell.row += width;
             break;
     }
@@ -102,20 +103,20 @@ void move(ref Cell cell,in Direct to,int width=1){
 pure Cell if_moved(in Cell c,in Direct to,int width=1){
     Cell result = c;
     final switch(to){
-        case Direct.right: 
+        case right: 
             result.column += width;
             break;
-        case Direct.left:
+        case left:
             while(width--)
             if(result.column != 0)
                 --result.column;
             break;
-        case Direct.up:
+        case up:
             while(width--)
             if(result.row != 0)
                 --result.row;
             break;
-        case Direct.down:
+        case down:
             result.row += width;
             break;
     }
@@ -123,16 +124,16 @@ pure Cell if_moved(in Cell c,in Direct to,int width=1){
 }
 
 // 矩形しか持たないならいらないかもしれない
-pure int count_lined(const(Cell)[] box,in Cell from,in Direct to){
+pure int count_lined(in Cell[] box,in Cell from,in Direct to){
     // debug(cell) writeln("count_lined start");
     int result;
     Cell c = from;
     while(box.is_in(c))
     {
         ++result;
-        if(to == Direct.left && c.column == 0)
+        if(to == left && c.column == 0)
             break;
-        if(to == Direct.up && c.row == 0)
+        if(to == up && c.row == 0)
             break;
         c = c.if_moved(to);
     }
@@ -142,7 +143,7 @@ pure int count_lined(const(Cell)[] box,in Cell from,in Direct to){
 
 // test 用
 // CellBOX になれる構造かどうかチェック
-bool is_box(const Cell[] box){
+bool is_box(in Cell[] box){
     if(box.length == 1) return true;
     Cell[][int] row_table;
     Cell[][int] col_table;
@@ -156,7 +157,7 @@ bool is_box(const Cell[] box){
     int[] width;
     foreach(leftside_cell; col_table[all_col[0]])
     {
-        width ~= box.count_lined(leftside_cell,Direct.right);
+        width ~= box.count_lined(leftside_cell,right);
     }
     int i;
     // width == 0 はありえない
@@ -197,6 +198,7 @@ interface CellStructure{
     @property int numof_row()const;
 }
 
+import util.color;
 // 構造をTableに持たせる
 // Table上のCellContentと空間を共有する
 interface CellContent : CellStructure{
@@ -210,6 +212,7 @@ interface CellContent : CellStructure{
     bool is_to_spoil()const;
     void remove_from_table();
     void set_id(int);
+    void set_color(in Color);
     const(Cell)[] get_cells()const;
 }
 

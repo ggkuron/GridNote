@@ -88,11 +88,7 @@ public:
     }
     // drawerで指定した色を優先するので指定しなくてもいい
     // 版画の版みたいなShapeの使い方を想定して
-    void set_color(in Color c)
-        in{
-        assert(_image);
-        }
-    body{
+    override void set_color(in Color c){
         _image.set_color(c);
     }
     void set_width(in ubyte w)
