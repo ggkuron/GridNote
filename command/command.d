@@ -416,8 +416,10 @@ public:
            case InputState.CellSelect:
             case InputState.ColorSelect:
                 _input_state = InputState.Edit;
+                imm.focusIn();
                 add_to_queue(
-                manip_mode_edit,im_focus_in);
+                    manip_mode_edit,im_focus_in
+                    );
                 break;
             case InputState.Edit:
                 break;

@@ -127,15 +127,14 @@ public:
         void render_preedit()
         {
             debug(gui) writeln("render preedit start");
-            // if(_currentline !in _layout)  <- 改行後現れなくなる
             // 固定化されているBOXならここを通らなくていい
 
             if(_im_target_id !in _width)   
                 _width[_im_target_id] = 0;
 
-            _im_attr.insert(PgAttribute.fontDescNew(box.font_desc()));
+            // _im_attr.insert(PgAttribute.fontDescNew(box.font_desc()));
             _layout[_im_target_id].setAttributes(_im_attr);
-            // _layout[_im_target_id].setFontDescription(desc);
+            _layout[_im_target_id].setFontDescription(box.font_desc());
             _layout[_im_target_id].setText(_preedit);
 
             // いろのせっていいるよ
@@ -187,13 +186,11 @@ public:
             // Readonly 使うべき
             auto line_layout = _layout[box_id].getLine(line);
             int newIndex,newTraing;
-            // _layout[box_id].setFontDescription(_desc[box_id]);
 
             writeln("write position: ",_box_pos[box_id].x," ",_box_pos[box_id].y);
 
             auto lines_y = _box_pos[box_id].y + _gridSize * line;
             cr.moveTo(_box_pos[box_id].x,lines_y);
-            // PgCairo.updateLayout(cr,layout[box_id]);
             PgCairo.showLayoutLine(cr,line_layout);
 
             // get real ocupied width and height
