@@ -23,7 +23,7 @@ public:
     }
     override bool require_create_in(in Cell c)
     {
-        return table.try_create_in(this,c);
+        return _table.try_create_in(this,c);
     }
     override bool is_to_spoil()const{
         return super.is_to_spoil() || _inner_table.empty();

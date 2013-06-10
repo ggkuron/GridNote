@@ -49,19 +49,16 @@ private:
     alias int BoxId;
     Rect[BoxId] _box_pos;
     PgLayout[BoxId] _layout;
-    // PgFontDescription[BoxId] _desc;
     PgAttributeList[BoxId] _attrilst;
     PgAttributeList _im_attr;
 
     string[BoxId] _strings;
-
     int _currentline; // preedit のために保持
     string _preedit;
 
-    ubyte[BoxId] _fontsize;
-    // BOXは矩形なのでべつにlineごとに持たなくていい
-    int[BoxId] _width,_height;
-    Color[BoxId] _foreground;
+    // Rectを取得して入れてる
+    int[BoxId][Line] _width;
+    int[BoxId] _height;
     int _gridSize;
 public:
     this(TableView tv)
@@ -78,76 +75,9 @@ public:
         _gridSize = get_gridSize();
         _box_pos[box_id] = get_position(box); // gui.render_box::get_position
         _box_pos[box_id].y += _gridSize;
-        // _fontsize[box_id] = cast(ubyte)_gridSize; // box.font_size;    //  !!TextBOXで変更できるように 
-        _foreground[box_id] = box.default_foreground;             //  !!なったら変更 
         _currentline = box.getText().current_line();
         const numof_lines = box.getText().numof_lines();
             
-        void  modify_boxsize()
-        {   /+
-              描画された領域のサイズでBOXを変形させる
-              フォントの大きさを順守するため
-              1Cell1Charモードならここは通るな通すな
-
-              他に何通りかの挙動が考えられる
-                 1行目の横幅で自動改行
-                 自動expnad <= 下の実装
-                 横に圧縮して無理やり入れる
-                 Cellごと縮小して無理やり入れる
-              
-              確定された(固定化された)BOX はこの処理を通したくない
-              TODO 確定されたBOXの定義
-            +/
-            if(box_id !in _width) return;
-
-            do{
-                const cells_snap = box.get_cells();
-                const box_width = _gridSize * box.numof_col();
-                debug(gui) writefln("box width %d",box_width);
-
-                const calced_width = _width[box_id];
-                // const max_width = sorted_width[$-1];
-
-                // expand後の box_widthで揺らがないように調整必要
-                // 次のループではbox_widthの大きさは変わってる
-                if(calced_width > box_width)
-                    box.require_expand(Direct.right); 
-                else
-                if(calced_width < box_width-_gridSize)
-                {
-                    box.require_remove(Direct.right);
-                }
-
-                // 整形後と前が揺らがず一致したら終了
-                if(cells_snap == box.get_cells())
-                    break;
-
-            }while(true);
-        }
-        void render_preedit()
-        {
-            debug(gui) writeln("render preedit start");
-            // 固定化されているBOXならここを通らなくていい
-
-            if(_im_target_id !in _width)   
-                _width[_im_target_id] = 0;
-
-            // _im_attr.insert(PgAttribute.fontDescNew(box.font_desc()));
-            _layout[_im_target_id].setAttributes(_im_attr);
-            _layout[_im_target_id].setFontDescription(box.font_desc());
-            _layout[_im_target_id].setText(_preedit);
-
-            // いろのせっていいるよ
-            // 初回のpreeditのため(だけ)に必要
-            cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id],
-                      _box_pos[_im_target_id].y + _currentline-1*_gridSize );
-            PgCairo.updateLayout(cr,_layout[_im_target_id]);
-            PgCairo.showLayout(cr,_layout[_im_target_id]);
-
-            debug(text) writeln("preedit text ",_preedit);
-            set_preeditting(false);
-            debug(gui) writeln("#### render textbox end ####");
-        }
         void register_check(TextBOX box)
         {
             debug(gui) writeln("checkBOX start");
@@ -156,14 +86,13 @@ public:
             if(box_id !in _attrilst)
                 _attrilst[box_id] = PgAttributeList.init;
             if(box_id !in _width)
-                _width[box_id] = 0;
+                _width[box_id] = null;
             if(box_id !in _strings)
                 _strings[box_id] = string.init;
             if(_render_target != box){
 
                 _render_target = box;
                 _layout[box_id] = PgCairo.createLayout(cr);
-                // desc とかmarkupparce
             }
             debug(gui) writeln("end");
         }
@@ -195,10 +124,79 @@ public:
 
             // get real ocupied width and height
             // render_preedit より前に取得する必要がある
-            _width[box_id] = int.init;
-            _height[box_id] = int.init;
+            PangoRectangle inkRect;
+            line_layout.getPixelExtents(&inkRect,null);
+            _width[box_id][line] = inkRect.width;
+            _height[box_id] = inkRect.height;
         }
-        _layout[box_id].getPixelSize(_width[box_id],_height[box_id]);
+        // _layout[box_id].getPixelSize(_width[box_id],_height[box_id]);
+
+        void render_preedit()
+        {
+            debug(gui) writeln("render preedit start");
+            // 固定化されているBOXならここを通らなくていい
+            if(_im_target_id !in _width || _currentline !in _width[_im_target_id])   
+                _width[_im_target_id][_currentline] = 0;
+
+            auto layout = PgCairo.createLayout(cr);
+            layout.setAttributes(_im_attr);
+            writeln(_im_target);
+            writeln(_im_target.font_desc);
+            layout.setFontDescription(_im_target.font_desc());
+            layout.setText(_preedit);
+
+            cr.set_color(box.current_foreground);
+            cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
+                      _box_pos[_im_target_id].y + (box.cursor_line-1)*_gridSize );
+            PgCairo.updateLayout(cr,layout);
+            PgCairo.showLayout(cr,layout);
+
+
+            debug(text) writeln("preedit text ",_preedit);
+            set_preeditting(false);
+            debug(gui) writeln("#### render textbox end ####");
+        }
+        void  modify_boxsize()
+        {   /+
+              描画された領域のサイズでBOXを変形させる
+              フォントの大きさを順守するため
+              1Cell1Charモードならここは通るな通すな
+
+              他に何通りかの挙動が考えられる
+                 1行目の横幅で自動改行
+                 自動expnad <= 下の実装
+                 横に圧縮して無理やり入れる
+                 Cellごと縮小して無理やり入れる
+              
+              確定された(固定化された)BOX はこの処理を通したくない
+              TODO 確定されたBOXの定義
+            +/
+            if(box_id !in _width) return;
+
+            do{
+                const cells_snap = box.get_cells();
+                const box_width = _gridSize * box.numof_col();
+                debug(gui) writefln("box width %d",box_width);
+
+                const calced_width = _width[box_id].values.sort[$-1];
+                // const max_width = sorted_width[$-1];
+
+                // expand後の box_widthで揺らがないように調整必要
+                // 次のループではbox_widthの大きさは変わってる
+                if(calced_width > box_width)
+                    box.require_expand(Direct.right); 
+                else
+                if(calced_width < box_width-_gridSize)
+                {
+                    box.require_remove(Direct.right);
+                }
+
+                // 整形後と前が揺らがず一致したら終了
+                if(cells_snap == box.get_cells())
+                    break;
+
+            }while(true);
+        }
 
         if(is_preediting() && _im_target_id == box_id)
             render_preedit();
@@ -221,7 +219,7 @@ public:
         int cursor_pos;
         imc.setCursorLocation(cursorL);
         imc.getPreeditString(_preedit,_im_attr,cursor_pos);
-        _im_attr.insert(PgAttribute.fontDescNew(box.font_desc));
+        _im_attr.insert(PgAttribute.fontDescNew(_im_target.font_desc));
         _im_target.set_cursor_pos(cursor_pos);
 
         set_preeditting(true);

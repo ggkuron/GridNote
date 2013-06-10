@@ -31,19 +31,13 @@ private:
     int  _box_font_size ;
     Color _box_foreground = black;
 
-    PgFontDescription _font_desc;
-
     string desc_str()const{
         return _box_fontfamly~' '~_box_style~' '~to!string(_box_font_size);
-    }
-    void update_desc(){
-        _font_desc.fromString(desc_str());
     }
 public:
     this(BoxTable table){ 
         super(table);
-        _box_font_size = table.grid_size * 2/3;
-        update_desc();
+        _box_font_size = _table.grid_size * 2 / 3;
     }
     this(BoxTable table,in Cell tl,in int w,in int h){
         super(table,tl,w,h);
@@ -57,11 +51,10 @@ public:
     }
     override bool require_create_in(in Cell c)
     {
-        return table.try_create_in!(TextBOX)(this,c);
+        return _table.try_create_in!(TextBOX)(this,c);
     }
     void set_box_default_color(in Color c){
         _box_foreground = c;
-        update_desc();
     }
     void set_foreground_color(in Color c){
         _text.set_color(c);
@@ -129,7 +122,10 @@ public:
         _cursor_pos = p;
     }
     @property int cursor_pos()const{
-        return _cursor_pos;
+        return _text.current_pos;
+    }
+    @property int cursor_line()const{
+        return _text.current_line;
     }
     @property int numof_lines()const{
         return _text.numof_lines;
@@ -137,8 +133,12 @@ public:
     @property Color default_foreground()const{
         return _box_foreground;
     }
+    @property Color current_foreground()const{
+        return _text.current_foreground;
+    }
     @property PgFontDescription font_desc(){
-        return _font_desc;
+        _box_font_size = _table.grid_size * 2 / 3;
+        return PgFontDescription.fromString(desc_str());
     }
     // @property ubyte input_font_size()const{
     //     return _box_size;

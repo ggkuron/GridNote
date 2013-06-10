@@ -568,8 +568,8 @@ public:
         }
         else return false;
     }
+    private Color _current_foreground = black;
     void set_color(in Color c){
-        static Color before_color;
         if(_current_font_color_span.is_opened)
         {   // 既にtag_poolに同一のSpanがあればそちらを共用する
             auto current_tag = _tag_pool[_current_font_color_span];
@@ -579,14 +579,14 @@ public:
             {   // 範囲のない指定に意味はない
                 _current_font_color_span.set_end(backward_pos(_current));
                 _tag_pool[_current_font_color_span] = current_tag;
-                _tag_pool[_current_font_color_span].foreground(before_color);
+                _tag_pool[_current_font_color_span].foreground(_current_foreground);
             }
         }
         _current_font_color_span = TextSpan();
         _current_font_color_span.set_start(_current);
         _tag_pool[_current_font_color_span] = SpanTag.init;
         _tag_pool[_current_font_color_span].foreground(c);
-        before_color = c;
+        _current_foreground = c;
     }
     void set_font_size(in ubyte fsz){
         if(_current_fontsize_span.is_opened)
@@ -600,6 +600,12 @@ public:
     // アクセサ
     @property int current_line()const{
         return _current.line;
+    }
+    @property int current_pos()const{
+        return _current.pos;
+    }
+    @property Color current_foreground()const{
+        return _current_foreground;
     }
     @property int numof_lines()const{
         return _lines;

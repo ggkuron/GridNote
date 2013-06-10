@@ -268,6 +268,9 @@ public:
         _guide_view.add_color(cyan);
         _guide_view.add_color(firebrick);
         _guide_view.add_color(peachpuff);
+        _guide_view.add_color(mediumaquamarine);
+        _guide_view.add_color(dimgray);
+        _guide_view.add_color(gold);
         _guide_view.add_color(linen);
         _guide_view.add_color(darkgoldenrod);
         _guide_view.add_color(lemonchiffon);

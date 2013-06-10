@@ -51,7 +51,7 @@ public:
     }
     override bool require_create_in(in Cell c)
     {
-        return table.try_create_in(this,c);
+        return _table.try_create_in(this,c);
     }
     @property Shape image(){
         return _image;

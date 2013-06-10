@@ -16,17 +16,16 @@ private:
     int _box_id;
 package:
 protected:
-    BoxTable table;
+    BoxTable _table;
 public:
     RangeCell _inner_range_cell;
     alias _inner_range_cell this;
     this(BoxTable attach)
         out{
-        assert(table !is null);
+        assert(_table !is null);
         }
     body{
-        table = attach;
-        // inner_range_cell = new RangeCell();
+        _table = attach;
     }
     final void set_id(int id){
         _box_id = id;
@@ -52,7 +51,7 @@ public:
         debug(cell) writeln("take after start");
 
         clear();
-        table = t;
+        _table = t;
         _inner_range_cell = RangeCell(oldone);
         debug(cell) writeln("end");
     }
@@ -147,7 +146,7 @@ public:
             remove_from_table();
             clear();
         }
-        return table.try_create_in(this,c);
+        return _table.try_create_in(this,c);
     }
     bool require_move(in Cell c){
         ubyte result;
@@ -165,7 +164,7 @@ public:
         else return false;
     }
     bool require_move(in Direct to,in int width=1){
-        return (table.try_move(this,to,width));
+        return (_table.try_move(this,to,width));
     }
     unittest{
         debug(cell) writeln("@@@@ TableBOX unittest start @@@@");
@@ -189,15 +188,15 @@ public:
     }
     // 実行できたかどうかは知りたい
     bool require_expand(in Direct to,in int width=1){
-        return (table.try_expand(this,to,width));
+        return (_table.try_expand(this,to,width));
     }
     void require_remove(in Direct dir,in int width=1){
         if(!is_a_cell)
-        table.remove_content_edge(this,dir,width);
+        _table.remove_content_edge(this,dir,width);
     }
     void remove_from_table(){
         _spoiled = true;
-        auto result = table.try_remove(this);
+        auto result = _table.try_remove(this);
         clear();
         assert(result && empty);
     }

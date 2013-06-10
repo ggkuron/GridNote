@@ -180,7 +180,7 @@ immutable mediumseagreen = Color("mediumseagreen","#3cb371");
 immutable springgreen = Color("springgreen","#00ff7f");
 immutable mintcream = Color("mintcream","#f5fffa");
 immutable mediumspringgreen = Color("mediumspringgreen","#00fa9a");
-immutable mediumaqumarine = Color("mediumaqumarine","#66cdaa");
+immutable mediumaquamarine = Color("mediumaquamarine","#66cdaa");
 immutable aquamarine = Color("aquamarine","#7fffd4");
 immutable turquoise = Color("turquoise","#40e0e0");
 immutable lightseagreen = Color("lightseagreen","#20b2aa");
@@ -324,7 +324,7 @@ mediumseagreen,
 springgreen, 
 mintcream, 
 mediumspringgreen, 
-mediumaqumarine, 
+mediumaquamarine, 
 aquamarine, 
 turquoise, 
 lightseagreen, 
