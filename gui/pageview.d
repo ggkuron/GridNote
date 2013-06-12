@@ -105,7 +105,7 @@ private:
             // レイアウトのことは投げる
             // IMContextごと
             queueDraw();
-            // Preeditを描かせる必要がある
+            // Preeditを描かせる必要
         }
     }
     // ascii mode に切り替わったことを期待してみるようなところ
@@ -134,6 +134,7 @@ private:
         _imm.focusOut();
     }
     void unrealize(Widget w){
+        _imm.focusOut();
         _imm.setClientWindow(null);
     }
     void set_holding_area()

@@ -344,7 +344,7 @@ public:
                 return dupled_result.values;
         }
         assert(dupled_result.values.empty());
-        return dupled_result.values; //empty;
+        return dupled_result.values; 
     }
     Tuple!(string,CellContent) get_content(in int key)
         in{
