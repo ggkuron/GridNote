@@ -19,7 +19,6 @@ import pango.PgFontDescription;
 import pango.PgAttribute;
 import pango.PgAttributeList;
 
-
 // Text自体をTableに取り付けるためにBOX領域を管理する
 final class TextBOX : ContentBOX{  
 private:
@@ -28,16 +27,16 @@ private:
 
     string _box_fontfamly = "Sans";
     string _box_style = "Normal";
-    int  _box_font_size ;
+    ubyte  _box_font_size ;
     Color _box_foreground = black;
 
-    string desc_str()const{
+    string desc_str(){
+        _box_font_size = cast(ubyte)_table.grid_size / 2 ;
         return _box_fontfamly~' '~_box_style~' '~to!string(_box_font_size);
     }
 public:
     this(BoxTable table){ 
         super(table);
-        _box_font_size = _table.grid_size * 2 / 3;
     }
     this(BoxTable table,in Cell tl,in int w,in int h){
         super(table,tl,w,h);
@@ -57,7 +56,10 @@ public:
         _box_foreground = c;
     }
     void set_foreground_color(in Color c){
-        _text.set_color(c);
+        if(_text.empty)
+            _box_foreground = c;
+        else
+            _text.set_foreground(c);
     }
     override void set_color(in Color c){
         set_foreground_color(c);
@@ -66,7 +68,8 @@ public:
         foreach(dchar c; s)
         {
             _text.append(c);
-            // if(c == '\n') expand_with_text_feed();
+            if(c == '\n') // 入力中は作動せず(改行文字は直接渡されない)、存在するstringを渡した時を想定している
+                expand_with_text_feed();
         }
     }
     void backspace(){
@@ -75,13 +78,6 @@ public:
     }
     // 現状caretは改行時のみの使用になってる
     // Text::TextPointをcaretとして扱う実装仕様にする
-
-    // bool move_caretR(){
-    //     return _text.move_caretR();
-    // }
-    // bool move_caretL(){
-    //     return _text.move_caretL();
-    // }
     bool expand_with_text_feed(){
         if(require_expand(down))
         {
@@ -90,20 +86,15 @@ public:
         }else 
             return false;
     }
-    bool move_caretU(){
-        return _text.move_caretU();
-    }
-    void set_caret()(in int pos){
-        _text.set_caret(pos); // 
-    }
+//     void set_caret()(in int pos){
+//         _text.set_caret(pos); // 
+//     }
     string markup_string(){
         if(_text.empty) return null;
         SpanTag box_desc;
         box_desc.font_desc(desc_str());
         box_desc.foreground(_box_foreground);
         auto tmp =  box_desc.tagging(_text.markup_string());
-        // writeln(_text.markup_string());
-        // writeln(tmp);
         return tmp;
     }
     // 操作が終わった時にTableから取り除くべきか
@@ -111,10 +102,6 @@ public:
     override bool is_to_spoil()const{
         return super.is_to_spoil() || _text.empty();
     }
-    // アクセサ
-    // string get_fontname()const{
-    //     return _box_fontfamly;
-    // }
     Text getText(){
         return _text;
     }
@@ -134,13 +121,23 @@ public:
         return _box_foreground;
     }
     @property Color current_foreground()const{
-        return _text.current_foreground;
+        auto text_status = _text.current_foreground();
+        if(text_status[0])
+            return text_status[1];
+        else 
+            return default_foreground();
     }
     @property PgFontDescription font_desc(){
-        _box_font_size = _table.grid_size * 2 / 3;
         return PgFontDescription.fromString(desc_str());
     }
-    // @property ubyte input_font_size()const{
-    //     return _box_size;
-    // }
+    ubyte current_fontsize()const{
+        const text_setting = _text.current_fontsize;
+        if(text_setting)
+            return text_setting;
+        else
+            return _box_font_size;
+    }
+    int get_caret()const{
+        return _text.caret;
+    }
 }

@@ -10,6 +10,8 @@ import cell.contentbox;
 import command.command;
 import gui.pageview;
 
+import gtk.IMMulticontext;
+import gtk.IMContext;
 import gtk.FileChooserDialog;
 
 import std.array;
@@ -18,7 +20,6 @@ debug(manip) import std.stdio;
 enum FocusMode{ normal,select,edit,point }
 
 // Tableに対する操作
-// 操作は細分化しているのに、それをCMDで全部捌いているのが問題だと思ったならそうすべき
 // CMDは指示を投げるだけってことをやるかってこと
 // このコメントを消そうとするときに考える
 
@@ -26,6 +27,7 @@ enum FocusMode{ normal,select,edit,point }
    // ここからCellBOXに対する操作も行う
    // 表示位置の移動ってここでやってしまおうか
    // 指示棒をここがもってるから
+   // 指示棒自体はCell::SelectBOX
 final class ManipTable{
 private:
     BoxTable  _focused_table;
@@ -369,8 +371,5 @@ public:
     }
 
 }
-
-import gtk.IMMulticontext;
-import gtk.IMContext;
 
 

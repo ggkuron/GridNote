@@ -570,6 +570,9 @@ public:
     @property int grid_size()const{
         return _grid_size;
     }
+    void set_gridsize(in int s){
+        _grid_size = s;
+    }
     // RangeCellのopCmpの設計がされてない
     // @property Cell max_cell()const{
     //     if(_box_keys.keys.empty) return Cell(0,0);

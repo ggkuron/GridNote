@@ -10,6 +10,15 @@ import util.array;
 import shape.shape;
 import shape.drawer;
 
+/+
+    描画部分はこのinterfaceの
+    default実装を用いて実装する。
+    このdefault実装自体は
+    各所で使われる。
+    見分けがつけやすいように
+    大文字始まりのメソッド名にしてみる。
++/
+
 interface TableView{
     int get_gridSize()const;
     const(Rect) get_holdingArea()const;
@@ -39,6 +48,18 @@ final:
         grid_rect.set_color(grid_color);
         grid_drwer.fill(cr);
     }
+    void Fill(Context cr,Rect rect){
+        scope grid_drwer = new RectDrawer(rect);
+        grid_drwer.fill(cr);
+    }
+    void StrokeCell(Context cr,in Cell cell,in Color c){
+        immutable gridSpace = get_gridSize();
+        scope grid_rect = new Rect(get_x(cell),get_y(cell),gridSpace,gridSpace);
+        scope grid_drwer = new RectDrawer(grid_rect);
+
+        grid_rect.set_color(c);
+        grid_drwer.stroke(cr);
+    }
     void PointCell(Context cr,in Cell cell,in Color c){
         immutable gridSpace = get_gridSize();
         const pos = get_pos(cell);
@@ -52,7 +73,7 @@ final:
         point.set_color(Color(red,196));
         pdrw.stroke(cr);
     }
-    void strokeGrids(Context cr,in Cell[] cells,in Color color,in ubyte grid_width){
+    void StrokeGrids(Context cr,in Cell[] cells,in Color color,in ubyte grid_width){
         bool[Direct] adjacent_info(in Cell[] cells,in Cell searching){
             if(cells.empty) assert(0);
             bool[Direct] result;

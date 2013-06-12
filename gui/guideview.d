@@ -48,8 +48,9 @@ private:
     Rect _holding_area;  // 内部処理はこちらを使う
 
     BoxTable _table;    // 描画すべき個々のアイテムに対する
-    BoxTable _selector_table;
+    BoxTable _selector_table; // selectorが動いたときの表示用
     TextBOX _mode_indicator;
+    TextBOX _tag_view;
 
     RenderTextBOX _render_text;
 
@@ -91,7 +92,8 @@ private:
         _holding_area.set_by(_holding);
     }
     RectBOX _back_color;
-    Color _back_color_color = Color(moccasin,96);
+    Color _back_color_color = Color(darkgray,148);
+    Color _down_accent = Color(moccasin,48);
     void backDesign(Context cr){
         _back_color.set_color(_back_color_color);
         _back_color.fill(cr);
@@ -105,12 +107,12 @@ private:
 
         _color_box_back.fill(cr);
     }
-    // void renderTable(Context cr){
-    //     debug(gui) writeln("@@@@ render Guide _table start @@@@");
-    //     if(_table.empty) return;
+    void set_tag_text(){
+        _tag_view = new TextBOX(_table);
+        _tag_view.require_create_in(Cell(max_row*5/8,0));
+    }
 
-    //     debug(gui) writeln("#### render _table end ####");
-    // }
+
     void renderColorBox(Context cr){
         _selected_color_box.set_color(_selected_color);
         if(_selected_color in _color_box)
@@ -123,6 +125,9 @@ private:
         {
             b.fill(cr);
         }
+    }
+    void renderTag(Context cr){
+        _render_text.render(cr,_tag_view);
     }
     bool draw_callback(Context cr,Widget widget){
         if(!_c_cnt) return false;
@@ -170,11 +175,6 @@ private:
             _drwer.require_create_in(_focus);
             _drwer.set_drawer();
         }
-        // 
-        // void render(Context cr){
-        //     reshape();
-        //     _drwer.stroke(cr,Color(color,128));
-        // }
         void move(in Direct dir){
             int pre_calc_diff;
             const exist_priority_limit = _color_priority.keys.sort[$-1];
@@ -247,7 +247,7 @@ private:
         _color_box_back = new RectBOX(_table,this);
         _color_box_back.hold_tl(Cell(max_row()-3,0),max_col()+1,5);
         _color_box_back.set_drawer();
-        _color_box_back.set_color(Color(blue,50));
+        _color_box_back.set_color(_down_accent);
 
         foreach(c; _color_priority)
             add_color(c);
@@ -287,7 +287,6 @@ public:
     double get_x(in Cell c)const{ return c.column * _gridSpace ; }
     double get_y(in Cell c)const{ return c.row * _gridSpace ; }
 
-   // アクセサ
     int get_gridSize()const{
         return _gridSpace;
     }

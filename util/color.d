@@ -7,10 +7,10 @@ struct Color{
     int r,g,b,a;
     string _name;
     // 指定なしで赤色なのは見落とし防止の為
-    this(int rr=255,int gg=0,int bb=0,int aa=255){
+    this(in int rr=255,in int gg=0,in int bb=0,in int aa=255){
         r = rr; g = gg; b = bb; a = aa;
     }
-    this(string hexspec,int alpha=255)
+    this(string hexspec,in int alpha=255)
         in{
         assert(hexspec[0] == '#');
         assert(hexspec.length == 7);
@@ -25,10 +25,10 @@ struct Color{
         this(hexspec);
         _name = color_name;
     }
-    this(Color color){
+    this(in Color color){
         this(color.r,color.g,color.b,color.a);
     }
-    this(Color color,int alpha){
+    this(in Color color,in int alpha){
         this(color.r,color.g,color.b,alpha);
     }
     private string color_string()const{
@@ -40,7 +40,7 @@ struct Color{
         else
             return color_string;
     }
-    void change_alpha(int aa)
+    void change_alpha(in int aa)
         in{
         assert(aa < 256);
         assert(aa >= 0);

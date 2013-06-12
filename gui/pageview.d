@@ -165,8 +165,8 @@ private:
             debug(gui) writeln("render textbox");
             if(_show_contents_border)
             {
-                _render_text.render_fill(cr,tb,Color(linen,96));
-                _render_text.render_grid(cr,tb,Color(gold,128),1);
+                _render_text.fill(cr,tb,Color(linen,96));
+                _render_text.stroke(cr,tb,Color(gold,128),1);
             }
             render(cr,tb);
         }
@@ -175,12 +175,12 @@ private:
             debug(gui) writeln("render textbox");
             if(_show_contents_border)
             {
-                _render_text.render_grid(cr,ib,Color(gold,128),1);
+                _render_text.stroke(cr,ib,Color(gold,128),1);
             }
             ib.fill(cr);
         }
 
-        _render_text.render_grid(cr,_manip_table.get_target(),manip_box_color,manipLineWidth);
+        _render_text.stroke(cr,_manip_table.get_target(),manip_box_color,manipLineWidth);
 
         debug(gui) writeln("#### render table end ####");
     }
@@ -336,16 +336,14 @@ public:
     void zoom_in(){
         ++_gridSpace;
         setGrid();
+        _table.set_gridsize(_gridSpace);
         queueDraw();
-        import std.stdio;
-        writeln(_gridSpace);
     }
     void zoom_out(){
         if(_gridSpace>15)  --_gridSpace;
         setGrid();
+        _table.set_gridsize(_gridSpace);
         queueDraw();
-        import std.stdio;
-        writeln(_gridSpace);
     }
     void IM_FocusOut(){
         _imm.focusOut();

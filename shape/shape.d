@@ -141,9 +141,9 @@ final class Rect : Shape{
         w = cast(double)u.width;
         h = cast(double)u.height;
     }
-    // this(Rect r){
-    //     this = r;
-    // }
+    this(PangoRectangle pr){
+        set_gen(pr);
+    }
     this(GtkAllocation ga){
         set_gen(ga);
     }

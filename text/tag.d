@@ -5,10 +5,6 @@ import std.string;
 import std.conv;
 import std.array;
 public import gtkc.pangotypes;
-// public import pango.PgCairo;
-// public import pango.PgFontDescription;
-// public import pango.PgAttributeList;
-// public import gtkc.pangotypes;
 import util.color;
 
 alias PangoUnderline Underline;
@@ -27,7 +23,6 @@ public enum PangoUnderline
 struct SpanTag{
 private:
     string[TagType] _tags;
-    // bool _is_span_tag = true;
     enum TagType{
       font_desc_tag,
       font_family_tag,
