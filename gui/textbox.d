@@ -228,6 +228,7 @@ public:
         _im_target = box;
         immutable box_id = _im_target.id();
         _im_target_id = box_id;
+        _gridSize = get_gridSize();
 
         auto box_pos = window_position(box);
         auto im_rect = cast(cairo_rectangle_int_t)_logicRect[_currentline];

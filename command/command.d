@@ -149,6 +149,8 @@ public:
     COMMAND text_edit;
     COMMAND open_imagefile;
     COMMAND create_circle;
+    COMMAND save_to_file;
+    COMMAND restore_from_file;
 
     // combined_COMMAND
     COMMAND edit_to_normal_state; 
@@ -222,7 +224,7 @@ public:
         view = pv;
 
         // 内部使用
-        // ユーザー入力
+        // ユーザー入力に対応した挙動のための定義
         zoom_in = cmd_template!("view.zoom_in();")(this,_manip,view);
         zoom_out = cmd_template!("view.zoom_out();")(this,_manip,view);
         register_key(zoom_in,InputState.Normal,default_ZOOM_IN);
@@ -312,9 +314,15 @@ public:
         register_key(text_feed,InputState.Edit,return_key);
         text_edit = cmd_template!("manip.edit_textbox();")(this,_manip,view);
         im_focus_in = cmd_template!("inp.imm.focusIn();")(this,_manip,view);
+
+        save_to_file = cmd_template!("manip.preserve();")(this,_manip,view);
+        register_key(save_to_file,InputState.Normal,default_SAVE);
+        restore_from_file = cmd_template!("manip.restore();")(this,_manip,view);
+        register_key(restore_from_file,InputState.Normal,default_RESTORE);
+
         // combined_COMMAND
 
-        normal_edit_textbox = new combined_COMMAND(grab_target,text_edit,im_focus_in);
+        normal_edit_textbox = new combined_COMMAND(grab_target,text_edit);
         register_key(normal_edit_textbox,InputState.Normal,default_EDIT);
         normal_start_edit_text = new combined_COMMAND(input_mode_edit,create_TextBOX,im_focus_in);
         register_key(normal_start_edit_text,InputState.Normal,default_INSERT);
@@ -358,7 +366,7 @@ public:
             case InputState.Normal:
             case InputState.CellSelect:
             case InputState.ColorSelect:
-                if(im_driven) imm.focusOut();
+                imm.focusOut();
                 break; // ここで使われる値ではない
         }
         keyState ~= ev.keyval;
@@ -412,13 +420,13 @@ public:
     }
     void change_mode_edit(){
         final switch(_input_state){
-           case InputState.Normal:
-           case InputState.CellSelect:
+            case InputState.Normal:
+            case InputState.CellSelect:
             case InputState.ColorSelect:
                 _input_state = InputState.Edit;
-                // imm.focusIn();
+                imm.focusIn();
                 add_to_queue(
-                    manip_mode_edit,im_focus_in
+                    manip_mode_edit
                     );
                 break;
             case InputState.Edit:

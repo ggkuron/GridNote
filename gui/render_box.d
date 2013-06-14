@@ -79,7 +79,11 @@ final:
     int get_gridSize()const{
         return _table_view.get_gridSize();
     }
-    final void stroke(Context cr,in CellContent b,in Color color,in ubyte width){
+    final void stroke(Context cr,in CellContent b,in Color color,in ubyte width)
+        in{
+        assert(b);
+        }
+    body{
         _table_view.StrokeGrids(cr,b.get_cells(),color,width);
     }
     final void fill(Context cr,in ContentFlex b,in Color color){
@@ -98,8 +102,8 @@ final:
     final void fill(Context cr,Rect rect){
         _table_view.Fill(cr,rect);
     }
-
     final void stroke(Context cr,in Cell ce,in Color c){
         _table_view.StrokeCell(cr,ce,c);
+        writeln("ok");
     }
 }

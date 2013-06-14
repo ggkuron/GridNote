@@ -143,6 +143,34 @@ struct Text
         _writing = t._writing.dup;
         _line_length = t._line_length;
     }
+    this(string[] dat){
+        writeln("ok");
+        _lines = to!int(chomp(dat[4]));
+        foreach(l; 8 .. 8 + _lines)
+        {
+            if(l == 8 + _lines -1
+            && dat[l][$-1] == '\n')
+                dat[l] = dat[l][0 .. $-1];
+
+            append(dat[l]);
+            // if(l != 8 + _lines - 1)
+            // {
+            //     line_feed();
+            //     // writeln("FEED");
+            // }
+        }
+        writeln(_writing);
+        writeln("ok");
+        foreach(l; 0  ..  _lines)
+            _line_length[l] = to!int(chomp(dat[9+_lines+l]));
+        writeln(_line_length.values);
+        writeln("ok");
+        _caret = to!int(chomp(dat[9+_lines])); 
+        writeln("ok");
+        writeln(dat.length);
+        auto s = std.string.split(dat[9+_lines*2],":");
+        writeln(s);
+    }
 private:
     TextSpan _current_fontcolor_span;
     TextSpan _current_fontsize_span;
@@ -454,6 +482,8 @@ public:
         foreach(dchar c; s)
         {
             append(c);
+            if(c == '\n')
+                line_feed();
         }
     }
     @property bool empty()const{
@@ -601,6 +631,26 @@ public:
     }
     @property auto writing()const{
         return _writing;
+    }
+    import std.conv;
+    string get_data_expression(){
+        string result;
+        result ~= to!string(_lines) ~ '\n';
+        result ~= to!string(_color_is_set) ~ '\n';
+        result ~= to!string(_current) ~ '\n';
+        result ~= to!string(_text_end) ~ '\n';
+        foreach(l; 0 .. _lines)
+            result ~= str(l);
+        result ~= '\n';
+        foreach(l; 0 .. _lines)
+            result ~= to!string(_line_length[l]) ~ '\n';
+        result ~= to!string(_caret) ~ '\n';
+        result ~= (to!string(_tag_pool))[1 .. $-1] ~ '\n';
+        result ~= to!string(_current_fontsize) ~ '\n';
+        result ~= to!string(_current_fontcolor_span) ~ '\n';
+        result ~= to!string(_current_fontsize_span) ~ '\n';
+        result ~= to!string(_current_underline_span) ~ '\n';
+        return result;
     }
 }
 

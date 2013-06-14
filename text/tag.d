@@ -45,6 +45,9 @@ public:
     void foreground(in Color c){
         _tags[foreground_tag] = " foreground="~'"'~to!string(c)~'"';
     }
+    void foreground(string color_name){
+        _tags[foreground_tag] = " foreground="~'"'~color_name~'"';
+    }
     // correspond to Pango's font, not font_size
     void font_size(in ubyte s){
         _tags[font_size_tag] = " font="~to!string(s);

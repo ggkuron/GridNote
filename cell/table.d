@@ -9,16 +9,12 @@ public import cell.textbox;
 public import cell.imagebox;
 import std.typecons;
 import std.traits;
+import std.stdio;
 import util.direct;
 import util.array;
 import util.span;
 import cell.contentbox;
 import cell.collection;
-
-debug(cell) import std.stdio;
-debug(move) import std.stdio;
-debug(table) import std.stdio;
-debug(refer) import std.stdio;
 
 // Cellによる空間を提供する
 // 誰がその空間を使っているかを管理する
@@ -45,7 +41,7 @@ private:
         {   // throw exception
             assert(0);
         }
-        // 0は欠番にしておく
+        // 0は欠番にしておく null的に扱う
         c.set_id(++_content_counter);
     }
     bool cell_forward(ref Cell start,in Cell end){
@@ -210,7 +206,6 @@ public:
         _content_table.remove(box_id);
         _type_table.remove(box_id);
 
-        // assert(keys.keys.empty || !keys.values.is_in(box_id));
         return true;
     }
     unittest{
@@ -483,7 +478,7 @@ public:
         _box_edges[Direct.down] ~= u.all_in_row[u.max_row];
 
         debug(table){
-           writeln("type: ",u.toString);
+            writeln("type: ",u.toString);
             writeln("table key(box_id): ",box_id);
             writeln("boxes are: ",u.get_box());
         }

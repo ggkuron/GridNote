@@ -13,7 +13,6 @@ import cell.contentbox;
 import cell.imagebox;
 import cell.refer;
 import cell.textbox;
-import text.text;
 import manip;
 import shape.shape;
 import shape.drawer;
@@ -135,6 +134,7 @@ private:
     }
     void unrealize(Widget w){
         _imm.focusOut();
+        _imm.reset();
         _imm.setClientWindow(null);
     }
     void set_holding_area()
@@ -181,12 +181,14 @@ private:
             ib.fill(cr);
         }
 
-        _render_text.stroke(cr,_manip_table.get_target(),manip_box_color,manipLineWidth);
+        if(auto manip_t = _manip_table.get_target())
+        _render_text.stroke(cr,manip_t,manip_box_color,manipLineWidth);
 
         debug(gui) writeln("#### render table end ####");
     }
     // renderするだけじゃなく描画域によってCellのサイズを修正する
     // Pangoしか知り得ないことを迂回して教えるよりはいいかと
+    //      迂回してでも責任の分離はしておくべきやも
     // BoxSizeの修正くらいならいいだろう
             // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
     void render(Context cr,TextBOX b){
@@ -303,7 +305,7 @@ public:
         init_color_select();
 
         addOnKeyPress(&_interpreter.key_to_cmd);
-        addOnFocusIn(&focus_in);
+        // addOnFocusIn(&focus_in);
         addOnFocusOut(&focus_out);
         addOnRealize(&realize);
         addOnUnrealize(&unrealize);

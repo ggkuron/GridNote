@@ -7,6 +7,7 @@ import std.traits;
 import util.array;
 import util.direct;
 import util.color;
+import data.content;
 debug(cb) import std.stdio;
 debug(cell) import std.stdio;
 
@@ -47,6 +48,10 @@ public:
         hold_tl(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
+    this(BoxTable t,BoxShape bs){
+        this(t,bs.pivot,bs.w,bs.h);
+    }
+
     this(BoxTable t,ContentBOX oldone){
         debug(cell) writeln("take after start");
 
@@ -190,6 +195,13 @@ public:
     bool require_expand(in Direct to,in int width=1){
         return (_table.try_expand(this,to,width));
     }
+    bool require_hold(in Cell c,in int w,in int h){
+        return 
+        require_create_in(c)
+        && require_expand(right,w)
+        && require_expand(down,h);
+    }
+
     void require_remove(in Direct dir,in int width=1){
         if(!is_a_cell)
         _table.remove_content_edge(this,dir,width);

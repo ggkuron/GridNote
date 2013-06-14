@@ -15,6 +15,7 @@ import gtk.IMContext;
 import gtk.FileChooserDialog;
 
 import std.array;
+import std.stdio;
 debug(manip) import std.stdio;
 
 enum FocusMode{ normal,select,edit,point }
@@ -47,6 +48,7 @@ public:
         assert(_focused_table);
         assert(_manip_textbox);
         assert(_select);
+        assert(_pv);
         }
     body{
         _focused_table = table;
@@ -313,7 +315,51 @@ public:
         if(!_old_state.empty())
         _maniped_box = _old_state[$-1];
     }
-    // アクセサ
+    bool preserve(string file_name = "save.dat"){
+        auto file = File(file_name,"w");
+        if(!file.isOpen()) return false;
+        auto all_ibs = _focused_table.get_imageBoxes();
+        foreach(ib; all_ibs)
+            if(auto rect = cast(RectBOX)ib)
+            {
+                file.write(rect.get_data_expression);
+            }
+        auto all_txt = _focused_table.get_textBoxes();
+        foreach(tb; all_txt)
+        {
+            file.write(tb.get_data_expression);
+        }
+
+        return true;
+    }
+    import std.string;
+    void restore(string file_name = "save.dat"){
+        auto file = File(file_name,"r");
+        string[][int] line_buf;
+        int i;
+        foreach(string l; lines(file))
+        {   
+            writeln(l);
+            if(l[0] == '[')
+                ++i;
+            line_buf[i-1] ~= l;
+        }
+        foreach(l; line_buf)
+        {
+            switch(chomp(l[1])){
+                case "RectBOX":
+                    new RectBOX(_focused_table,_pv,l);
+                    break;
+                case "TextBOX":
+                    writeln(l);
+                    new TextBOX(_focused_table,l);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+    }
     const(SelectBOX) select()const{
         return _select;
     }

@@ -3,7 +3,7 @@ module cell.textbox;
 import cell.cell;
 import cell.table;
 import cell.contentbox;
-import text.text;
+public import text.text;
 import text.tag;
 import std.string;
 import std.utf;
@@ -27,7 +27,7 @@ private:
 
     string _box_fontfamly = "Sans";
     string _box_style = "Normal";
-    ubyte  _box_font_size ;
+    ubyte  _box_font_size;
     Color _box_foreground = black;
 
     string desc_str(){
@@ -48,6 +48,38 @@ public:
 
         super(table,tb);
     }
+    import std.ascii;
+    this(BoxTable table,string[] data){
+        super(table);
+        auto pos = std.string.split(data[0],",");
+        int[] pos_num;
+        foreach(numstr; pos)
+        {
+            string num;
+            foreach(numc; numstr)
+            {
+                if(isDigit(numc))
+                    num ~= numc;
+            }
+            pos_num ~= to!int(num);
+            writeln(pos_num);
+        }
+
+        writeln(pos);
+        (require_create_in(Cell(pos_num[0],pos_num[1])));
+        writeln(data[3]);
+        // set_color(Color(chomp(data[2])));
+        auto desc = std.string.split(data[2]," ");
+        writeln(desc);
+        _box_fontfamly = chomp(desc[0]);
+        _box_style = chomp(desc[1]);
+        _box_font_size = to!ubyte(chomp(desc[2]));
+        _box_foreground = Color(chomp(data[3]));
+        _text = Text(data);
+        if(_text.numof_lines > 1)
+        require_expand(down,_text.numof_lines - 1);
+    }        
+
     override bool require_create_in(in Cell c)
     {
         return _table.try_create_in!(TextBOX)(this,c);
@@ -140,4 +172,18 @@ public:
     int get_caret()const{
         return _text.caret;
     }
+    import std.conv;
+    string get_data_expression(){
+        string result ="[";
+        result ~= to!string(top_left()) ~',';
+        result ~= to!string(numof_row) ~ ',';
+        result ~= to!string(numof_row) ~ "]\n";
+        result ~= "TextBOX\n";
+        result ~= desc_str ~ '\n';
+        result ~= _box_foreground.hex_str ~'\n';
+        result ~= _text.get_data_expression();
+        writeln(result);
+        return result;
+    }
+
 }

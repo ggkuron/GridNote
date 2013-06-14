@@ -8,6 +8,7 @@ import shape.shape;
 import shape.drawer;
 import cairo.Context;
 import util.direct;
+import std.conv;
 
 import gui.pageview;
 debug(cell) import std.stdio;
@@ -45,7 +46,7 @@ public:
     body{
         super(table);
         _view = tv;
-   }
+    }
     void reshape(){
         set_shape();
     }
@@ -123,12 +124,40 @@ public:
     //     else return false;
     // }
 }
+import std.string;
+import std.array;
+import std.stdio;
+import std.ascii;
 
 class RectBOX : ImageBOX{
     RectDrawer _rect_d;
     this(BoxTable table,TableView tv){
         super(table,tv);
     }
+    this(BoxTable table,TableView tv,string[] data){
+        // string[] pos;
+        super(table,tv);
+        auto pos = std.string.split(data[0],",");
+        int[] pos_num;
+        foreach(numstr; pos)
+        {
+            string num;
+            foreach(numc; numstr)
+            {
+                if(isDigit(numc))
+                    num ~= numc;
+            }
+            pos_num ~= to!int(num);
+            writeln(pos_num);
+        }
+
+        writeln(pos);
+        assert(require_create_in(Cell(pos_num[0],pos_num[1])));
+        set_drawer();
+        writeln(data[2]);
+        set_color(Color(chomp(data[2])));
+    }        
+
     void set_drawer()
         out{
         assert(_rect_d);
@@ -152,6 +181,15 @@ class RectBOX : ImageBOX{
         immutable w = numof_col * gridSize;
         immutable h = numof_row * gridSize;
         (cast(Rect)_image).replace(tl[0],tl[1],w,h);
+    }
+    string get_data_expression()const{
+        string result ="[";
+        result ~= to!string(top_left()) ~',';
+        result ~= to!string(numof_row) ~ ',';
+        result ~= to!string(numof_row) ~ "]\n";
+        result ~= "RectBOX\n";
+        result ~= _image.color.hex_str ~ '\n';
+        return result;
     }
 }
 class PointBOX : ImageBOX{
