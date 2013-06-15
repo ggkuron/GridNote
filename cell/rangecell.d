@@ -94,13 +94,13 @@ public:
         return _row.min == _row.max &&
         _row.max == _col.min && _col.min == _col.max;
     }
-    final void move(in Cell c){
+    void move(in Cell c){
         if(c.row)
             move(down,c.row);
         if(c.column)
             move(right,c.column);
     } 
-    final void move(in Direct dir,in int pop_cnt=1){
+    void move(in Direct dir,in int pop_cnt=1){
 
         if(dir.is_negative)
         {   // 0境界越はSpanで吸収

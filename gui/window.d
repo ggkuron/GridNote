@@ -32,7 +32,7 @@ class Window : MainWindow{
         auto box = new Box(GtkOrientation.HORIZONTAL,1);
         setEvents(EventMask.ALL_EVENTS_MASK);
         auto guide_view = new GuideView();
-        auto page_view = new PageView(guide_view);
+        auto page_view = new PageView(this,guide_view);
         guide_view.setSizeRequest(80,-1);
         page_view.setSizeRequest(600,-1);
         box.packStart(guide_view,1,1,0);

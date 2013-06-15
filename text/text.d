@@ -223,7 +223,9 @@ private:
     // lineが存在しないなら""を返す
     // これに依存、str(TextPoint,TextPoint)
     @property string str(in int line)const{
-        if(!_writing.keys.empty()
+        if(!_writing
+        || !_writing.keys.empty()
+        || line !in _writing
         || !_writing[line].values.empty())
         {
             dstring s;   
