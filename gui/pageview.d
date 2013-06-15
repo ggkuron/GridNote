@@ -263,16 +263,16 @@ public:
     // ConfigFileから読むようにしたい
     void init_color_select(){
         _manip_table.select_color(black);
-        _guide_view.add_color(black);
+        _guide_view.add_color(dimgray);
         _guide_view.add_color(darkorange);
         _guide_view.add_color(violet);
         _guide_view.add_color(plum);
         _guide_view.add_color(cadetblue);
+        _guide_view.add_color(black);
         _guide_view.add_color(cyan);
         _guide_view.add_color(firebrick);
         _guide_view.add_color(peachpuff);
         _guide_view.add_color(mediumaquamarine);
-        _guide_view.add_color(dimgray);
         _guide_view.add_color(gold);
         _guide_view.add_color(linen);
         _guide_view.add_color(darkgoldenrod);
@@ -280,7 +280,9 @@ public:
         _guide_view.add_color(forestgreen);
         _guide_view.display_color();
     }
-    this(GuideView guide,Cell start_offset = Cell(0,0))
+    import gui.window;
+    Window _main_window;
+    this(Window w,GuideView guide,Cell start_offset = Cell(0,0))
         out{
         assert(_table);
         assert(_in_view);
@@ -288,6 +290,7 @@ public:
         assert(_guide_view);
         }
     body{ 
+        _main_window = w;
         void set_view_offset(){
             // TODO: set start_offset 
         }

@@ -315,26 +315,90 @@ public:
         if(!_old_state.empty())
         _maniped_box = _old_state[$-1];
     }
-    bool preserve(string file_name = "save.dat"){
+    import gtk.FileChooserDialog;
+    import glib.ListSG;
+    import glib.Str;
+    import gtk.Window;
+    private FileChooserDialog _file_chooser;
+    private string _opened_file;
+    string choose_save_file(){
+        string file_name;
+        if(!_file_chooser)
+        {
+            string[] a;
+            ResponseType[] r;
+            a ~= "Save on!";
+            a ~= "Cancel";
+            r ~= ResponseType.ACCEPT;
+            r ~= ResponseType.CANCEL;
+            scope win = new Window("saving");
+            _file_chooser = new FileChooserDialog("File Selection", win, FileChooserAction.SAVE,a,r);
+        }
+        _file_chooser.setFileChooserAction(FileChooserAction.SAVE);
+        auto response = _file_chooser.run();
+        if(response == ResponseType.ACCEPT )
+        {
+             _opened_file = file_name = _file_chooser.getFilename();
+        }
+        _file_chooser.hide();
+        return file_name;
+    }
+    bool preserve(string file_name = ""){
+        if(_opened_file) 
+            file_name = _opened_file;
+        else 
+            file_name = choose_save_file();
+
         auto file = File(file_name,"w");
         if(!file.isOpen()) return false;
         auto all_ibs = _focused_table.get_imageBoxes();
         foreach(ib; all_ibs)
+        {
             if(auto rect = cast(RectBOX)ib)
             {
                 file.write(rect.get_data_expression);
             }
+        }
         auto all_txt = _focused_table.get_textBoxes();
         foreach(tb; all_txt)
         {
             file.write(tb.get_data_expression);
         }
-
         return true;
     }
     import std.string;
-    void restore(string file_name = "save.dat"){
+    string choose_open_file(){
+        string file_name;
+        if(!_file_chooser)
+        {
+            string[] a;
+            ResponseType[] r;
+            a ~= "Open!";
+            a ~= "Cancel";
+            r ~= ResponseType.ACCEPT;
+            r ~= ResponseType.CANCEL;
+            scope win = new Window("restore");
+            _file_chooser = new FileChooserDialog("File Selection", win, FileChooserAction.OPEN,a,r);
+        }
+        _file_chooser.setFileChooserAction(FileChooserAction.OPEN);
+        auto response = _file_chooser.run();
+        if( response == ResponseType.ACCEPT )
+        {
+            _opened_file = file_name = _file_chooser.getFilename();
+        }
+        _file_chooser.hide();
+        return file_name;
+    }
+    void restore(){
+        string file_name;
+        if(_opened_file)
+            file_name = _opened_file;
+        else 
+            file_name = choose_open_file();
+
+        _focused_table.clear();
         auto file = File(file_name,"r");
+
         string[][int] line_buf;
         int i;
         foreach(string l; lines(file))
@@ -357,7 +421,6 @@ public:
                 default:
                     break;
             }
-
         }
     }
     const(SelectBOX) select()const{

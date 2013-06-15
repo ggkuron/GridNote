@@ -1,0 +1,400 @@
+[Cell(19, 16),1,1]
+RectBOX
+#B22222
+[Cell(19, 29),1,1]
+RectBOX
+#FF8C00
+[Cell(17, 19),1,1]
+RectBOX
+#B22222
+[Cell(19, 17),1,1]
+RectBOX
+#B22222
+[Cell(19, 30),1,1]
+RectBOX
+#FF8C00
+[Cell(22, 17),1,1]
+RectBOX
+#B22222
+[Cell(26, 17),1,1]
+RectBOX
+#B22222
+[Cell(19, 31),1,1]
+RectBOX
+#FF8C00
+[Cell(18, 20),1,1]
+RectBOX
+#B22222
+[Cell(-1, -1),1,1]
+RectBOX
+#B22222
+[Cell(19, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(20, 33),1,1]
+RectBOX
+#FF8C00
+[Cell(28, 17),1,1]
+RectBOX
+#B22222
+[Cell(25, 30),1,1]
+RectBOX
+#FF8C00
+[Cell(18, 21),1,1]
+RectBOX
+#B22222
+[Cell(19, 27),1,1]
+RectBOX
+#FF8C00
+[Cell(25, 31),1,1]
+RectBOX
+#FF8C00
+[Cell(20, 34),1,1]
+RectBOX
+#FF8C00
+[Cell(19, 28),1,1]
+RectBOX
+#FF8C00
+[Cell(25, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(18, 22),1,1]
+RectBOX
+#B22222
+[Cell(33, 17),1,1]
+RectBOX
+#B22222
+[Cell(24, 17),1,1]
+RectBOX
+#B22222
+[Cell(24, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(18, 23),1,1]
+RectBOX
+#B22222
+[Cell(23, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(18, 16),1,1]
+RectBOX
+#B22222
+[Cell(30, 17),1,1]
+RectBOX
+#B22222
+[Cell(22, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(18, 24),1,1]
+RectBOX
+#B22222
+[Cell(25, 17),1,1]
+RectBOX
+#B22222
+[Cell(17, 16),1,1]
+RectBOX
+#B22222
+[Cell(18, 26),1,1]
+RectBOX
+#B22222
+[Cell(21, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(31, 17),1,1]
+RectBOX
+#B22222
+[Cell(17, 17),1,1]
+RectBOX
+#B22222
+[Cell(20, 32),1,1]
+RectBOX
+#FF8C00
+[Cell(17, 18),1,1]
+RectBOX
+#B22222
+[Cell(21, 34),1,1]
+TextBOX
+Sans Normal 16
+#FF8C00
+1
+false
+TextPoint(0, 3)
+TextPoint(0, 0)
+致命的
+4
+4
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(28, 18),1,1]
+TextBOX
+Sans Normal 16
+#B8860B
+1
+false
+TextPoint(0, 4)
+TextPoint(0, 0)
+お腹痛い
+5
+5
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(30, 18),1,1]
+TextBOX
+Sans Normal 16
+#B8860B
+1
+false
+TextPoint(0, 22)
+TextPoint(0, 0)
+EscとCtrl[の挙動が微妙に違う気がする
+25
+25
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(15, 31),1,1]
+TextBOX
+Sans Normal 16
+#696969
+1
+false
+TextPoint(0, 6)
+TextPoint(0, 0)
+Ctrl+O
+6
+6
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(13, 14),3,3]
+TextBOX
+Sans Normal 16
+#696969
+3
+false
+TextPoint(2, 15)
+TextPoint(0, 0)
+GtkFileChooserで
+Fileを指定して
+保存と復元ができるようになった
+15
+39
+9
+15
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(31, 18),2,2]
+TextBOX
+Sans Normal 16
+#B8860B
+2
+false
+TextPoint(1, 11)
+TextPoint(0, 0)
+起動時のSelectedColorの設定を決め打ち同期
+してるの。内蔵に悪い。
+11
+42
+11
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(13, 24),2,2]
+TextBOX
+Sans Normal 16
+#696969
+2
+false
+TextPoint(1, 10)
+TextPoint(0, 0)
+とりあえずText情報だけ（矩形も）
+残せるようになった。
+40
+10
+40
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(-1, -1),1,1]
+TextBOX
+Sans Normal 16
+#000000
+1
+false
+TextPoint(0, 1)
+TextPoint(0, 0)
+l
+4
+4
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(33, 18),1,1]
+TextBOX
+Sans Normal 16
+#B8860B
+1
+false
+TextPoint(0, 18)
+TextPoint(0, 0)
+MathML表示できると真面目っぽい
+18
+18
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(19, 18),2,2]
+TextBOX
+Sans Normal 16
+#B8860B
+2
+false
+TextPoint(1, 13)
+TextPoint(0, 0)
+四角の近くに置くと
+保存時にまれによくSEGV
+13
+25
+13
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(15, 26),1,1]
+TextBOX
+Sans Normal 16
+#696969
+1
+false
+TextPoint(0, 6)
+TextPoint(0, 0)
+Ctrl+s
+6
+6
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(25, 18),1,1]
+TextBOX
+Sans Normal 16
+#B8860B
+1
+false
+TextPoint(0, 19)
+TextPoint(0, 0)
+Tableが無限に広がることによる迷子
+19
+19
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(21, 18),1,1]
+TextBOX
+Sans Normal 16
+#B8860B
+1
+false
+TextPoint(0, 29)
+TextPoint(0, 0)
+Text::strで配列のRangeErrorで死んでる謎
+29
+37
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(26, 18),2,2]
+TextBOX
+Sans Normal 16
+#B8860B
+2
+false
+TextPoint(1, 10)
+TextPoint(0, 0)
+保存時にTopLeft位置のTableに切り詰めると
+最初から迷子は防げる
+10
+38
+10
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(22, 18),2,2]
+TextBOX
+Sans Normal 16
+#B8860B
+2
+false
+TextPoint(1, 25)
+TextPoint(0, 0)
+IM Rectの位置がTableの座標に引っ張られ
+てるみたい。ReferViewの正しい位置でない。
+25
+53
+25
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(24, 18),1,1]
+TextBOX
+Sans Normal 16
+#B8860B
+1
+false
+TextPoint(0, 11)
+TextPoint(0, 0)
+caret表示できない
+34
+34
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+[Cell(18, 17),1,1]
+TextBOX
+Sans Normal 16
+#B22222
+1
+false
+TextPoint(0, 4)
+TextPoint(0, 0)
+Memo
+5
+5
+
+0
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)
+TextSpan(TextPoint(0, 0), TextPoint(0, 0), 0)

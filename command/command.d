@@ -149,6 +149,10 @@ public:
     COMMAND text_edit;
     COMMAND open_imagefile;
     COMMAND create_circle;
+    COMMAND choose_open_file;
+    COMMAND choose_save_file;
+    COMMAND save;
+    COMMAND restore;
     COMMAND save_to_file;
     COMMAND restore_from_file;
 
@@ -315,10 +319,16 @@ public:
         text_edit = cmd_template!("manip.edit_textbox();")(this,_manip,view);
         im_focus_in = cmd_template!("inp.imm.focusIn();")(this,_manip,view);
 
-        save_to_file = cmd_template!("manip.preserve();")(this,_manip,view);
-        register_key(save_to_file,InputState.Normal,default_SAVE);
-        restore_from_file = cmd_template!("manip.restore();")(this,_manip,view);
-        register_key(restore_from_file,InputState.Normal,default_RESTORE);
+        save = cmd_template!("manip.preserve();")(this,_manip,view);
+        restore = cmd_template!("manip.restore();")(this,_manip,view);
+        choose_open_file = cmd_template!("manip.choose_open_file();")(this,_manip,view);
+        choose_save_file = cmd_template!("manip.choose_save_file();")(this,_manip,view);
+        save_to_file = new combined_COMMAND(choose_save_file,save);
+        restore_from_file = new combined_COMMAND(choose_open_file,restore);
+        register_key(save_to_file,InputState.Normal,default_SAVE_NEW);
+        register_key(save,InputState.Normal,default_SAVE);
+        register_key(restore_from_file,InputState.Normal,default_RESTORE_FILE);
+        register_key(restore,InputState.Normal,default_RESTORE);
 
         // combined_COMMAND
 
@@ -461,6 +471,7 @@ public:
         }
     }
     void execute(){
+
         foreach(cmd; command_queue)
         {
             debug(cmd) writeln("try exec: ",cmd);

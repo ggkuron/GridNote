@@ -210,6 +210,7 @@ interface CellContent : CellStructure{
     bool require_expand(in Direct,in int width=1);
     void require_remove(in Direct,in int width=1);
     bool is_to_spoil()const;
+    bool is_registered()const;
     void remove_from_table();
     void set_id(int);
     void set_color(in Color);

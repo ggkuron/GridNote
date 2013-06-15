@@ -104,6 +104,5 @@ final:
     }
     final void stroke(Context cr,in Cell ce,in Color c){
         _table_view.StrokeCell(cr,ce,c);
-        writeln("ok");
     }
 }

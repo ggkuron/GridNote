@@ -472,10 +472,10 @@ public:
             foreach(edge; _box_edges)
                 assert(edge.empty());
         }
-        _box_edges[Direct.right] ~= u.all_in_col[u.max_col];
-        _box_edges[Direct.left] ~= u.all_in_col[u.min_col];
-        _box_edges[Direct.up] ~= u.all_in_row[u.min_row];
-        _box_edges[Direct.down] ~= u.all_in_row[u.max_row];
+        _box_edges[right] ~= u.all_in_col[u.max_col];
+        _box_edges[left] ~= u.all_in_col[u.min_col];
+        _box_edges[up] ~= u.all_in_row[u.min_row];
+        _box_edges[down] ~= u.all_in_row[u.max_row];
 
         debug(table){
             writeln("type: ",u.toString);
@@ -484,10 +484,10 @@ public:
         }
     }
     final void add_box(T:Collection)(T u)
-            in{
-            assert(u !is null);
-            assert(!u.empty);
-            }
+        in{
+        assert(u !is null);
+        assert(!u.empty);
+        }
     body{
         debug(move) writeln("add_box start");
 
@@ -532,8 +532,9 @@ public:
         _keys = new_key;
         foreach(content; _content_table)
         {
-            if(content is null
-                    || content.empty()) continue; // _content_table[0]
+            if(content is null // _content_table[0]
+            || content.empty()) 
+                continue; 
             content.move(o);
         }
         debug(refer) writeln("shift end");
@@ -548,10 +549,35 @@ public:
         else // if(dir == Direct.down)
             shift(Cell(1,0));
     }
+    import std.stdio;
     final void clear(){
-        _keys.clear();
-        _type_table.clear();
-        _content_table.clear();
+        KEY[Cell] empty_k;
+        string[KEY] empty_t;
+        CellContent[KEY] empty_c;
+        TextBOX[KEY] empty_tx;
+        ImageBOX[KEY] empty_i;
+        writeln(_content_table.values);
+        foreach(c;_content_table.values)
+            if(c)
+            writeln(c.id);
+
+        foreach(c; _content_table.values)
+        {
+            if(c && c.is_registered())
+            {
+                writeln(c.id);
+            c.remove_from_table();
+                writeln("a");
+            }
+        }
+
+        _keys = empty_k;
+        _type_table = empty_t;
+        _content_table = empty_c;
+        _image_table = empty_i;
+        _text_table = empty_tx;
+        _content_table[0] = null;
+        _type_table[0] = "none";
     }
     final bool is_vacant(in Cell c)const{
         return cast(bool)(c !in _keys);

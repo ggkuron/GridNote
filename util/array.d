@@ -26,6 +26,11 @@ void remove(T)(ref T[] array,in int del_num){
         }
     }
 }
+void removeAll(T,K)(T[K] arr){
+    foreach(k; arr.keys)
+        arr.remove(k);
+}
+
 bool is_in(T)(in T[] array,in T b)
     in{
     assert(!array.empty);

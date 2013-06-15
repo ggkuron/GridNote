@@ -88,5 +88,8 @@ immutable default_ImageOpen= KeyCombine(GdkKeysyms.GDK_I);
 immutable default_Point= KeyCombine(GdkKeysyms.GDK_p);
 
 immutable default_MODE_COLOR = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_c]);
+// CLEARに当たる操作
+immutable default_RESTORE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_0]);
+immutable default_RESTORE_FILE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_O]);
 immutable default_SAVE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_s]);
-immutable default_RESTORE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_O]);
+immutable default_SAVE_NEW = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_S]);
