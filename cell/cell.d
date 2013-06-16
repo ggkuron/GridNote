@@ -17,7 +17,7 @@ struct Cell
 {
     int row;
     int column;
-    public:
+public:
     Cell opBinary(string op)(in Cell rhs)const if(op =="+"){
         return  Cell(row + rhs.row, column + rhs.column);
     }

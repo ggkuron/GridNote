@@ -19,40 +19,48 @@ public enum PangoUnderline
 	ERROR
 }
 +/
+enum TagType{
+  font_desc_tag,
+  font_family_tag,
+  face_tag,
+  style_tag,
+  weight_tag,
+  foreground_tag,
+  font_size_tag,
+  underline_tag
+};
+alias TagType.font_desc_tag font_desc_tag;
+alias TagType.font_family_tag font_family_tag;
+alias TagType.foreground_tag foreground_tag;
+alias TagType.font_size_tag font_size_tag;
+alias TagType.underline_tag underline_tag;
 
 struct SpanTag{
 private:
     string[TagType] _tags;
-    enum TagType{
-      font_desc_tag,
-      font_family_tag,
-      face_tag,
-      style_tag,
-      weight_tag,
-      foreground_tag,
-      font_size_tag,
-      underline_tag
-    };
-    alias TagType.font_desc_tag font_desc_tag;
-    alias TagType.font_family_tag font_family_tag;
-    alias TagType.foreground_tag foreground_tag;
-    alias TagType.font_size_tag font_size_tag;
-    alias TagType.underline_tag underline_tag;
+    Color _foreground;
+    ubyte _font_size;
+    Underline _underline;
+    string _font_desc;
 public:
+    TagType[] tag_types()const{
+        return _tags.keys;
+    }
     void font_desc(string desc){
+        _font_desc = desc;
         _tags[font_desc_tag] = " font_desc="~'"'~desc~'"';
     }
     void foreground(in Color c){
+        _foreground = c;
         _tags[foreground_tag] = " foreground="~'"'~to!string(c)~'"';
-    }
-    void foreground(string color_name){
-        _tags[foreground_tag] = " foreground="~'"'~color_name~'"';
     }
     // correspond to Pango's font, not font_size
     void font_size(in ubyte s){
+        _font_size = s;
         _tags[font_size_tag] = " font="~to!string(s);
     }
     void underline(in Underline uc){
+        _underline = uc;
         _tags[underline_tag] = " underline="~'"'~toLower(to!string(uc))~'"';
     }
     string tagging(string content)const{
@@ -71,6 +79,32 @@ public:
     }
     @property empty()const{
         return _tags.values.empty;
+    }
+    this(string dat){
+        import std.stdio;
+        writeln(dat);
+        dat = dat[1 .. $-1];
+        auto tag_strs = split(dat,",");
+        foreach(tag_str; tag_strs)
+        {
+            auto is_fore = munch(tag_str,"foreground_tag:");
+            if(is_fore)
+                foreground(Color(tag_str));
+        }
+    }
+    string dat()const{
+        string result;
+        result ~= "(";
+        foreach(tag_n; _tags.keys)
+        {
+            result ~= to!string(tag_n);
+            if(tag_n == foreground_tag)
+                result ~= ":"~to!string(_foreground.hex_str());
+            result ~= ",";
+        }
+
+        result = result[0 .. $-1] ~")";
+        return result;
     }
 }
 

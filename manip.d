@@ -338,8 +338,9 @@ public:
         auto response = _file_chooser.run();
         if(response == ResponseType.ACCEPT )
         {
-             _opened_file = file_name = _file_chooser.getFilename();
-        }
+            _opened_file = file_name = _file_chooser.getFilename();
+        }else
+            _opened_file = "";
         _file_chooser.hide();
         return file_name;
     }
@@ -348,6 +349,8 @@ public:
             file_name = _opened_file;
         else 
             file_name = choose_save_file();
+        if(!file_name) 
+            file_name = "tmp.dat";
 
         auto file = File(file_name,"w");
         if(!file.isOpen()) return false;
@@ -362,7 +365,7 @@ public:
         auto all_txt = _focused_table.get_textBoxes();
         foreach(tb; all_txt)
         {
-            file.write(tb.get_data_expression);
+            file.write(tb.get_dat());
         }
         return true;
     }
@@ -467,8 +470,6 @@ public:
             box.backspace();
         }
         void feed(TextBOX box){
-            import std.stdio;
-            writeln("called");
             box.expand_with_text_feed();
         }
         void set_foreground_color(TextBOX box,in Color c){
@@ -478,7 +479,6 @@ public:
             box.set_foreground_color(c);
         }
     }
-
 }
 
 
