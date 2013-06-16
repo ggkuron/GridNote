@@ -16,6 +16,7 @@ import gtk.FileChooserDialog;
 
 import std.array;
 import std.stdio;
+import std.string;
 debug(manip) import std.stdio;
 
 enum FocusMode{ normal,select,edit,point }
@@ -148,8 +149,7 @@ public:
         if(_box_type == "cell.textbox.TextBOX")
             _box_use_im = true;
     }
-    void move_selected(in Direct to)
-    body{
+    void move_selected(in Direct to){
         auto target = _focused_table.get_content(_select.focus)[1];
         immutable view_min = _pv.get_view_min();
         immutable view_max = _pv.get_view_max();
@@ -190,8 +190,7 @@ public:
                _select.move(to);
         }
     }
-    void delete_selected()
-    body{
+    void delete_selected(){
         auto target = _focused_table.get_content(_select.focus);
         if(target[1] is null) return;
         else{
@@ -245,7 +244,6 @@ public:
     }
     void select_color(in Color c){
         _selected_color = c;
-        // _pv.guide_view.display_color(c);
     }
     const(Color) get_selectedColor(){
         return _pv.guide_view.get_selectedColor();
@@ -316,8 +314,6 @@ public:
         _maniped_box = _old_state[$-1];
     }
     import gtk.FileChooserDialog;
-    import glib.ListSG;
-    import glib.Str;
     import gtk.Window;
     private FileChooserDialog _file_chooser;
     private string _opened_file;
@@ -338,8 +334,9 @@ public:
         auto response = _file_chooser.run();
         if(response == ResponseType.ACCEPT )
         {
-             _opened_file = file_name = _file_chooser.getFilename();
-        }
+            _opened_file = file_name = _file_chooser.getFilename();
+        }else
+            _opened_file = "";
         _file_chooser.hide();
         return file_name;
     }
@@ -348,6 +345,8 @@ public:
             file_name = _opened_file;
         else 
             file_name = choose_save_file();
+        if(!file_name) 
+            file_name = "tmp.dat";
 
         auto file = File(file_name,"w");
         if(!file.isOpen()) return false;
@@ -362,11 +361,10 @@ public:
         auto all_txt = _focused_table.get_textBoxes();
         foreach(tb; all_txt)
         {
-            file.write(tb.get_data_expression);
+            file.write(tb.get_dat());
         }
         return true;
     }
-    import std.string;
     string choose_open_file(){
         string file_name;
         if(!_file_chooser)
@@ -403,7 +401,6 @@ public:
         int i;
         foreach(string l; lines(file))
         {   
-            writeln(l);
             if(l[0] == '[')
                 ++i;
             line_buf[i-1] ~= l;
@@ -415,7 +412,6 @@ public:
                     new RectBOX(_focused_table,_pv,l);
                     break;
                 case "TextBOX":
-                    writeln(l);
                     new TextBOX(_focused_table,l);
                     break;
                 default:
@@ -467,8 +463,6 @@ public:
             box.backspace();
         }
         void feed(TextBOX box){
-            import std.stdio;
-            writeln("called");
             box.expand_with_text_feed();
         }
         void set_foreground_color(TextBOX box,in Color c){
@@ -478,7 +472,6 @@ public:
             box.set_foreground_color(c);
         }
     }
-
 }
 
 
