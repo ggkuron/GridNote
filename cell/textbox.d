@@ -173,7 +173,7 @@ public:
         return _text.caret;
     }
     import std.conv;
-    string get_data_expression(){
+    string get_dat(){
         string result ="[";
         result ~= to!string(top_left()) ~',';
         result ~= to!string(numof_row) ~ ',';
@@ -181,7 +181,7 @@ public:
         result ~= "TextBOX\n";
         result ~= desc_str ~ '\n';
         result ~= _box_foreground.hex_str ~'\n';
-        result ~= _text.get_data_expression();
+        result ~= _text.dat();
         writeln(result);
         return result;
     }
