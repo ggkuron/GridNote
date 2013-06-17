@@ -105,7 +105,7 @@ public:
         }
     }
     void backspace(){
-        if(!_text.backspace())
+        if(!_text.backspace()) // 行始でfalse
             require_remove(down);
     }
     // 現状caretは改行時のみの使用になってる

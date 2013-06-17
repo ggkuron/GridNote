@@ -34,6 +34,9 @@ alias TagType.font_family_tag font_family_tag;
 alias TagType.foreground_tag foreground_tag;
 alias TagType.font_size_tag font_size_tag;
 alias TagType.underline_tag underline_tag;
+alias TagType.face_tag face_tag;
+alias TagType.style_tag style_tag;
+alias TagType.weight_tag weight_tag;
 
 struct SpanTag{
 private:
@@ -100,6 +103,8 @@ public:
             result ~= to!string(tag_n);
             if(tag_n == foreground_tag)
                 result ~= ":"~to!string(_foreground.hex_str());
+            else if(tag_n == font_size_tag)
+                result ~= ":"~to!string(_font_size);
             result ~= ",";
         }
 
