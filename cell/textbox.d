@@ -68,7 +68,6 @@ public:
         writeln(pos);
         (require_create_in(Cell(pos_num[0],pos_num[1])));
         writeln(data[3]);
-        // set_color(Color(chomp(data[2])));
         auto desc = std.string.split(data[2]," ");
         writeln(desc);
         _box_fontfamly = chomp(desc[0]);
@@ -95,6 +94,16 @@ public:
     }
     override void set_color(in Color c){
         set_foreground_color(c);
+    }
+    void set_heading(ubyte size)
+        in{
+        assert(size >= 0);
+        assert(size <= 6);
+        }
+    body{
+    }
+    void set_font_bigger()
+    {
     }
     void append(string s){
         foreach(dchar c; s)
@@ -164,18 +173,16 @@ public:
     }
     ubyte current_fontsize()const{
         const text_setting = _text.current_fontsize;
-        if(text_setting)
-            return text_setting;
-        else
-            return _box_font_size;
+        return text_setting?
+            text_setting : _box_font_size; 
     }
     int get_caret()const{
         return _text.caret;
     }
-    import std.conv;
-    string get_dat(){
+    string dat(in Cell offset=Cell(0,0)){
         string result ="[";
-        result ~= to!string(top_left()) ~',';
+        writeln(top_left());
+        result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
         result ~= to!string(numof_row) ~ "]\n";
         result ~= "TextBOX\n";

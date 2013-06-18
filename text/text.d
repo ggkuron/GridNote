@@ -279,7 +279,7 @@ private:
     SpanTag[TextSpan] _tag_pool;
     TextSpan[TextPoint] _tag_end_table;
     dchar[Pos][Line] _writing;
-    int[int] _line_length ;
+    int[int] _line_length;
     ubyte _current_fontsize;
 
     invariant(){
@@ -325,23 +325,23 @@ private:
             return toUTF8(s);
         }else return "";
     }   
-    dchar get_char(in TextPoint tp)const{
+    dchar _get_char(in TextPoint tp)const{
         if(tp.line !in _writing || tp.pos !in _writing[tp.line])
             throw new Exception("out of range");
         return _writing[tp.line][tp.pos];
     }
-    @property string plane_string()const{
+    @property string _plane_string()const{
         string result;
         foreach(l; 0 .. _lines)
             result ~= _str(l);
         return result;
     }
-    bool is_valid_pos(in TextPoint tp)const{
+    bool _is_valid_pos(in TextPoint tp)const{
         return tp.line in _writing && tp.pos in _writing[tp.line];
     }
     // endを含む
-    string ranged_str(in TextPoint start,in TextPoint end)const{
-        if(!is_valid_pos(start) || !is_valid_pos(end))
+    string _ranged_str(in TextPoint start,in TextPoint end)const{
+        if(!_is_valid_pos(start) || !_is_valid_pos(end))
         {
             writeln("start pos ",start);
             writeln("end pos ",end);
@@ -366,7 +366,6 @@ private:
         {   // 間に空行が存在してもstrが""返してくれるのを期待してる
             result ~= _writing[l].values;
         }
-       
         foreach(i; 0 .. end.pos+1)
         {
             result ~= _writing[end.line][i];
@@ -376,18 +375,18 @@ private:
 
         assert(0);
     }
-    string ranged_str(in TextSpan span)const{
-        return ranged_str(span.min,span.max);
+    string _ranged_str(in TextSpan span)const{
+        return _ranged_str(span.min,span.max);
     }
     unittest{
         Text text;
         text.append("なんかかっこいいこと言いたかった人生だった");
         auto start = TextPoint(0,16);
         auto end = TextPoint(0,17);
-        auto result = text.ranged_str(start,end);
+        auto result = text._ranged_str(start,end);
         assert(result == "人生");
     }
-    @property TextPoint end_point(){
+    @property TextPoint _end_point(){
         auto line = _line_length.keys.sort[$-1];
         auto pos = line_length(line);
         if(pos)
@@ -395,8 +394,8 @@ private:
         else
             return TextPoint(line,0);
     }
-    @property TextPoint back_point(){
-        auto endp = end_point();
+    @property TextPoint _back_point(){
+        auto endp = _end_point();
         if(endp.pos == 0)
             if(endp.line == 0)
                 return TextPoint(0,0);
@@ -409,16 +408,16 @@ private:
         else
             return TextPoint(endp.line,endp.pos-1);
     }
-    bool is_line_end(in TextPoint tp)const{
+    bool _is_line_end(in TextPoint tp)const{
         return tp.pos == _line_length[tp.line];
     }
-    bool is_line_head(in TextPoint tp)const{
+    bool _is_line_head(in TextPoint tp)const{
         return tp.pos == 0;
     }
-    bool above_line_exist(in int l)const{
+    bool _above_line_exist(in int l)const{
         return l != 0;
     }
-    bool next_line_exist(in int l)const{
+    bool _next_line_exist(in int l)const{
         return cast(bool)((l+1) in _writing);
     }
     int line_length(in int line)const{
@@ -429,7 +428,7 @@ private:
         return TextPoint(line,line_length(line));
     }
     void _move_to_next_head(){
-        if(!next_line_exist(_current.line))
+        if(!_next_line_exist(_current.line))
         {
             line_feed();
         }
@@ -444,9 +443,9 @@ private:
     }
     TextPoint _forward_point(in TextPoint tp)const{
         TextPoint result = tp;
-        if(is_line_end(result))
+        if(_is_line_end(result))
         {
-            if(next_line_exist(result.line)) 
+            if(_next_line_exist(result.line)) 
                 return _line_head(result.line+1);
             else
                 return _line_end(result.line);
@@ -460,9 +459,9 @@ private:
     }
     TextPoint _backward_point(in TextPoint tp)const{
         TextPoint result = tp;
-        if(is_line_head(result))
+        if(_is_line_head(result))
         {
-            if(above_line_exist(result.line))
+            if(_above_line_exist(result.line))
                 return _line_head(result.line);
             else
                 return TextPoint(0,0);
@@ -477,11 +476,11 @@ private:
 public:
     string markup_string(){
         if(_tag_pool.keys.empty)
-            return plane_string();
+            return _plane_string();
         if(empty())
             return "";
 
-        TextPoint end = end_point();
+        TextPoint end = _end_point();
         _writing.values.sort();
         string[][TextPoint] tag_pos;
         int opened_cnt;
@@ -535,13 +534,19 @@ public:
             result ~= "</span>";
         return result;
     }
-    // 改行文字どうしよ
-    // tag打つかpreformatとして仕込むか
+    // 改行文字
+    // _writing行終に'\n'として入れてる
+    // _writingが行ごとに分割したテーブルになってるので
+    // 読み出すときのための書き出しルール
+    // preformatということになるのだろうか
+
     // current.pos はこれから値が入る位置.既に入ってるわけではない
     //     名前caretの方がいいかもしれない
     // だから_line_lengthはcurrent.posを含まず考慮する
     // ただ、長さなのでcurrent.posと一致することになる
-    // _line_lengthは伸ばす方向のみこのメソッドでは扱う
+
+    // _line_lengthの伸ばす方向の変更は今のところここのみ
+    // Textに文字を入れる操作は最終的にここを通る
     ulong append(in dchar c){
         _writing[current_line][_current.pos] = c;
         if(c != '\n')
@@ -587,8 +592,8 @@ public:
             }
 
             _deleteChar(--_current.pos);
-            --_line_length[current_line]; // pos に一致してるから負数にはならない
-            assert(_line_length[current_line] >= 0);
+            if(_line_length[current_line])
+                --_line_length[current_line]; // pos に一致してるから負数にはならないとおもいきや、削除後に0になってるところでbackすると0になってるので
             return true;
         }
         else if(_current.line)
@@ -690,7 +695,6 @@ public:
     //         case face_tag:
     //         case style_tag:
     //         case weight_tag:
-
     private void _set_tag(TagType tt,T)(in T val,ref T state_val){
         if(tt !in _current_opened_span)
         {   // この初期化は初回一回だけなのでctorに移動したい。
@@ -713,7 +717,7 @@ public:
             if(closed.is_set())
             {
                 _tag_pool[closed] = current_tag;
-                _set_pooled_tag(tt,closed,_current_foreground);
+                _set_pooled_tag(tt,closed,val);
             }
         }
         _opened(tt).clear();
@@ -721,7 +725,7 @@ public:
         const opened_new = _opened(tt);
         if(opened_new !in _tag_pool)
             _tag_pool[opened_new] = SpanTag.init;
-        _set_pooled_tag(tt,_opened(foreground_tag),val);
+        _set_pooled_tag(tt,_opened(tt),val);
         state_val = val;
     }
     void set_foreground(in Color c){
@@ -731,7 +735,6 @@ public:
     void set_fontsize(in ubyte fsz){
         _set_tag!(font_size_tag,ubyte)(fsz,_current_fontsize);
     }
-    
     // アクセサ
     @property int current_line()const{
         return _current.line;
@@ -766,6 +769,7 @@ public:
             result ~= _str(l);
         result ~= '\n';
         foreach(l; 0 .. _lines)
+            if(l in _line_length)
             result ~= to!string(_line_length[l]) ~ '\n';
         result ~= to!string(_caret) ~ '\n';
         foreach(span,tag; _tag_pool)

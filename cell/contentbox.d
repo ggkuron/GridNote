@@ -45,7 +45,7 @@ public:
             writefln("rw %d cw %d",cw,rw);
         }
         this(t);
-        hold_tl(ul,rw,cw);
+        require_hold(ul,rw,cw);
         debug(cell)writeln("ctor end");
     }
     this(BoxTable t,BoxShape bs){
@@ -198,10 +198,19 @@ public:
     bool require_hold(in Cell c,in int w,in int h){
         return 
         require_create_in(c)
-        && require_expand(right,w)
-        && require_expand(down,h);
+        && require_expand(right,w-1)
+        && require_expand(down,h-1);
     }
-
+    unittest{
+        import cell.textbox;
+        BoxTable table = new BoxTable;
+        auto cb = new TextBOX(table);
+        assert(cb.require_hold(Cell(3,3),8,8));
+        assert(cb.top_left == Cell(3,3));
+        assert(cb.top_right == Cell(3,10));
+        assert(cb.bottom_right == Cell(10,10));
+        assert(cb.bottom_left == Cell(10,3));
+    }
     void require_remove(in Direct dir,in int width=1){
         if(!is_a_cell)
         _table.remove_content_edge(this,dir,width);
@@ -324,6 +333,8 @@ public:
         debug(cell) writeln("@@@@ ContentBOX move unittest start @@@@");
         cb = new TextBOX(table,Cell(5,5),5,5);
         assert(cb.top_left == Cell(5,5));
+        import std.stdio;
+        writeln(cb.bottom_right);
         assert(cb.bottom_right == Cell(9,9));
         assert(cb.top_right == Cell(5,9));
         assert(cb.bottom_left == Cell(9,5));

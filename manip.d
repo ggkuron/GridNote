@@ -351,17 +351,19 @@ public:
         auto file = File(file_name,"w");
         if(!file.isOpen()) return false;
         auto all_ibs = _focused_table.get_imageBoxes();
+        const offset = Cell(_focused_table.edge(up),_focused_table.edge(left));
+        writeln(offset);
         foreach(ib; all_ibs)
         {
             if(auto rect = cast(RectBOX)ib)
             {
-                file.write(rect.get_data_expression);
+                file.write(rect.dat(offset));
             }
         }
         auto all_txt = _focused_table.get_textBoxes();
         foreach(tb; all_txt)
         {
-            file.write(tb.get_dat());
+            file.write(tb.dat(offset));
         }
         return true;
     }

@@ -27,7 +27,7 @@ enum TagType{
   weight_tag,
   foreground_tag,
   font_size_tag,
-  underline_tag
+  underline_tag,
 };
 alias TagType.font_desc_tag font_desc_tag;
 alias TagType.font_family_tag font_family_tag;
@@ -45,6 +45,7 @@ private:
     ubyte _font_size;
     Underline _underline;
     string _font_desc;
+    PangoWeight _weight = PangoWeight.NORMAL;
 public:
     TagType[] tag_types()const{
         return _tags.keys;
@@ -66,6 +67,10 @@ public:
         _underline = uc;
         _tags[underline_tag] = " underline="~'"'~toLower(to!string(uc))~'"';
     }
+    void weight(in PangoWeight wei){ 
+        _weight = wei;
+        _tags[weight_tag] = " weight="~'"'~toLower(to!string(wei))~'"';
+    }
     string tagging(string content)const{
         return start_tag()~content~end_tag();
     }
@@ -78,7 +83,8 @@ public:
         return start;
     }
     string end_tag()const{
-        return "</span>";
+        string result;
+        return result~"</span>";
     }
     @property empty()const{
         return _tags.values.empty;

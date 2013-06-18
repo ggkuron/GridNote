@@ -135,7 +135,6 @@ class RectBOX : ImageBOX{
         super(table,tv);
     }
     this(BoxTable table,TableView tv,string[] data){
-        // string[] pos;
         super(table,tv);
         auto pos = std.string.split(data[0],",");
         int[] pos_num;
@@ -182,9 +181,9 @@ class RectBOX : ImageBOX{
         immutable h = numof_row * gridSize;
         (cast(Rect)_image).replace(tl[0],tl[1],w,h);
     }
-    string get_data_expression()const{
+    string dat(in Cell offset=Cell(0,0))const{
         string result ="[";
-        result ~= to!string(top_left()) ~',';
+        result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
         result ~= to!string(numof_row) ~ "]\n";
         result ~= "RectBOX\n";
