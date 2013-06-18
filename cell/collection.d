@@ -283,7 +283,7 @@ public:
     // 線形探索:要素数は小さいものしか想定してないから
     // box.lenthでアルゴリズム切り分ける必要があるかも
     bool is_hold(in Cell c)const{
-        return .is_in(box,c);
+        return c.is_in(box);
     }
     
     void move(in Cell c){
@@ -342,7 +342,7 @@ public:
             
         foreach(each_edged; edge_line())
         {
-            if(each_edged.is_in(c)) return true;
+            if(c.is_in(each_edged)) return true;
             else continue;
         }
         return false;
@@ -367,7 +367,7 @@ public:
         debug(cell) writeln("####is_on_edge unittest end####");
     }
     bool is_on_edge(in Cell c,in Direct on)const{
-        return edge_line[on].is_in(c);
+        return c.is_in(edge_line[on]);
     }
     @property const (Cell[][Direct]) edge_line()const{
         debug(cell) writefln("min_row %d max_row %d\n min_col %d max_col %d",min_row,max_row,min_col,max_col);

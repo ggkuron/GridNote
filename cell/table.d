@@ -35,11 +35,16 @@ private:
     KEY[RangeCell] _box_keys; // ContentBOXだけcacheしとく
     Cell[][Direct][KEY] _box_edges;
 
+    // int _leftest_col;
+    // int _rightst_col;
+    // int _uppest_row;
+    // int _lowest_row;
+
     int _content_counter;
     void set_id(CellContent c){
         if(_content_counter == int.max)
         {   // throw exception
-            assert(0);
+            throw new Exception("table buffer size overflow");
         }
         // 0は欠番にしておく null的に扱う
         c.set_id(++_content_counter);
@@ -56,7 +61,8 @@ private:
                 start.column = 0;
                 ++start.row;
             }
-        }else ++start.column;
+        }else 
+            ++start.column;
         return true;
     }
 package:
@@ -208,12 +214,58 @@ public:
 
         return true;
     }
+    final int edge(in Direct dir)const{
+        int cnum; // row or col number
+        foreach(cont; _content_table.values)
+        {
+            if(cont is null) continue;
+            if(dir.is_positive)
+            {
+                auto edge = cont.bottom_right;
+                if(dir.is_horizontal)
+                    cnum = cnum < edge.column?edge.column:cnum;
+                else
+                    cnum = cnum < edge.row?edge.row:cnum;
+            }
+            else
+            {
+                cnum = int.max;
+                auto edge = cont.top_left;
+                if(dir.is_horizontal)
+                    cnum = cnum > edge.column?edge.column:cnum;
+                else
+                    cnum = cnum > edge.row?edge.row:cnum;
+            }
+        }
+        return cnum;
+    }
+    unittest{
+        auto table = new BoxTable();
+        auto cb = new TextBOX(table,Cell(5,5),5,5);
+        writeln(table.edge(left));
+        writeln(table.edge(right));
+        writeln(table.edge(up));
+        writeln(table.edge(down));
+        assert(table.edge(left) == 5);
+        assert(table.edge(right) == 9);
+        assert(table.edge(up) == 5);
+        assert(table.edge(down) == 9);
+        table.clear();
+        writeln(table.edge(left));
+        writeln(table.edge(right));
+        writeln(table.edge(up));
+        writeln(table.edge(down));
+        assert(table.edge(left) == 0);
+        assert(table.edge(right) == 0);
+        assert(table.edge(up) == 0);
+        assert(table.edge(down) == 0);
+    }
+
     unittest{
         import cell.textbox;
         auto table = new BoxTable();
         auto cb = new TextBOX(table,Cell(0,0),5,5);
-        cb.move(Direct.up);
-        // 何もしない
+        cb.move(Direct.up); // 何もしない
         assert(cb.top_left == Cell(0,0));
         import std.stdio;
         writeln(cb.numof_col);
@@ -225,9 +277,10 @@ public:
         assert(cb.max_row == 4);
         assert(cb.max_col == 4);
 
+        table.clear();
         cb = new TextBOX(table,Cell(0,0),5,5);
         cb.remove(Direct.up);
-        debug(table) writeln(cb.top_left);
+        writeln(cb.top_left);
         assert(cb.top_left == Cell(1,0));
         assert(cb.numof_col == 5);
         assert(cb.numof_row == 4);
@@ -343,7 +396,7 @@ public:
     }
     Tuple!(string,CellContent) get_content(in int key)
         in{
-        assert(_keys.values.is_in(key));
+        assert(key.is_in(_keys.values));
         assert(key in _content_table);
         }
     body{

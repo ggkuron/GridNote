@@ -4,6 +4,7 @@ import text.text;
 import std.string;
 import std.conv;
 import std.array;
+import std.traits;
 public import gtkc.pangotypes;
 import util.color;
 
@@ -26,22 +27,29 @@ enum TagType{
   style_tag,
   weight_tag,
   foreground_tag,
+  background_tag,
   font_size_tag,
-  underline_tag
+  underline_tag,
 };
 alias TagType.font_desc_tag font_desc_tag;
 alias TagType.font_family_tag font_family_tag;
 alias TagType.foreground_tag foreground_tag;
+alias TagType.background_tag background_tag;
 alias TagType.font_size_tag font_size_tag;
 alias TagType.underline_tag underline_tag;
+alias TagType.face_tag face_tag;
+alias TagType.style_tag style_tag;
+alias TagType.weight_tag weight_tag;
 
 struct SpanTag{
 private:
     string[TagType] _tags;
     Color _foreground;
+    Color _background;
     ubyte _font_size;
     Underline _underline;
     string _font_desc;
+    PangoWeight _weight = PangoWeight.NORMAL;
 public:
     TagType[] tag_types()const{
         return _tags.keys;
@@ -54,6 +62,11 @@ public:
         _foreground = c;
         _tags[foreground_tag] = " foreground="~'"'~to!string(c)~'"';
     }
+    void background(in Color c){
+        _background = c;
+        _tags[background_tag] = " background="~'"'~to!string(c)~'"';
+    }
+
     // correspond to Pango's font, not font_size
     void font_size(in ubyte s){
         _font_size = s;
@@ -63,19 +76,25 @@ public:
         _underline = uc;
         _tags[underline_tag] = " underline="~'"'~toLower(to!string(uc))~'"';
     }
+    void weight(in PangoWeight wei){ 
+        _weight = wei;
+        _tags[weight_tag] = " weight="~'"'~toLower(to!string(wei))~'"';
+    }
     string tagging(string content)const{
         return start_tag()~content~end_tag();
     }
     string start_tag()const{
         string start ="<";
         start = "<span";
-        foreach(tag; _tags)
-            start ~= tag;
+        foreach(tag; EnumMembers!TagType)
+            if(tag in _tags)
+            start ~= _tags[tag];
         start ~= ">";
         return start;
     }
     string end_tag()const{
-        return "</span>";
+        string result;
+        return result~"</span>";
     }
     @property empty()const{
         return _tags.values.empty;
@@ -100,6 +119,8 @@ public:
             result ~= to!string(tag_n);
             if(tag_n == foreground_tag)
                 result ~= ":"~to!string(_foreground.hex_str());
+            else if(tag_n == font_size_tag)
+                result ~= ":"~to!string(_font_size);
             result ~= ",";
         }
 

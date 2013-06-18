@@ -7,17 +7,17 @@ alias uint KeySym;
 struct KeyCombine{
     const(KeySym)[] keys;
     ModifierType mod;
-    bool use_mod;
+    private bool _use_mod;
     this(in KeySym[] k...){
         keys = k;
     }
     this(ModifierType m,in KeySym[] k...){
-        use_mod = true;
+        _use_mod = true;
         mod = m;
         keys = k;
     }
     bool opEquals(const KeyCombine kc)const{
-        if(use_mod || kc.use_mod)
+        if(_use_mod || kc._use_mod)
             return (mod & kc.mod) && (keys == kc.keys);
         else return keys == kc.keys;
     }
@@ -93,3 +93,6 @@ immutable default_RESTORE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK
 immutable default_RESTORE_FILE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_O]);
 immutable default_SAVE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_s]);
 immutable default_SAVE_NEW = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_S]);
+immutable default_heading1 = KeyCombine([GdkKeysyms.GDK_numbersign]);
+immutable default_heading2 = KeyCombine([GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign]);
+immutable default_heading3 = KeyCombine([GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign]);

@@ -20,7 +20,7 @@ private:
     Cell _offset;
     Cell _max_range; // table(_master)の座標での取りうる最大値
 
-    bool check_range(in Cell c)const{
+    bool _check_range(in Cell c)const{
         return  (c <=  _max_range);
     }
 public:
@@ -61,8 +61,6 @@ public:
         return _master.get_content(c+offset);
     }
     override TextBOX[] get_textBoxes(){
-        import std.stdio;
-        writeln("called!!");
         return _master.get_textBoxes(_offset,_max_range);
     }
     override ImageBOX[] get_imageBoxes(){
@@ -87,10 +85,9 @@ public:
         assert(u.table == _master);
         }
     body{
-        if(!check_range) assert(0);
+        if(!_check_range) assert(0);
         _master.add_box(u+_offset);
     }
-    // 
     override void shift(in Direct to){
         _offset.move(to);
         _max_range.move(to);
@@ -99,6 +96,7 @@ public:
         return _offset;
     }
     // 今使ってない
+    // 保存時の補正に使えるかな
     Cell get_position(in CellContent b)const{
         assert(!b.empty());
         return b.top_left - _offset;
@@ -106,7 +104,6 @@ public:
     override @property bool empty()const{
         return _master.empty();
     }
-
     // content（tableの中身）の移動方向で指定
     void move_area(in Direct dir){
         if(dir.is_negative)
