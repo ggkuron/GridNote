@@ -2,6 +2,8 @@ module util.color;
 
 import std.string;
 import std.array;
+import std.algorithm;
+import std.typecons;
 
 struct Color{
     int r,g,b,a;
@@ -93,12 +95,55 @@ unittest{
     assert(from_hex("A") == 10);
     assert(from_hex("F") == 15);
     assert(from_hex("FF") == 255);
+    assert(from_hex("FFFF") == 65535);
     assert(from_hex("ff") == 255);
     assert(from_hex("20") == 32);
     assert(from_hex("10") == 16);
     assert("ff" == to_hex(255));
     assert("FF" == to_Hex(255));
 }
+
+Color brightness(in Color c,in int per){
+    Tuple!(int,const int)[] rgb = [tuple(0,c.r),tuple(1,c.g),tuple(2,c.b)];
+    double min_v = int.max;
+    double max_v = 0;
+    int min= -1,max = -1;
+    foreach(k; rgb)
+    {
+        if(k[1] < min_v ){
+            min_v = k[1];
+            min = k[0];
+        }
+        if(k[1] > max_v ){
+            max_v = k[1];
+            max = k[0];
+        }
+    }
+    const middle = 3 - max - min; 
+    const double middle_v = (rgb[middle])[1];
+
+    double[int] adjust;
+    adjust[max] = (255.0/100.0) * per;
+    adjust[middle] = adjust[max] / (max_v/middle_v);
+    adjust[min] = adjust[middle] / (max_v/min_v); 
+    import std.stdio;
+    writeln(rgb);
+    writeln(adjust);
+    return Color(
+            cast(int)(c.r + adjust[0]),
+            cast(int)(c.g + adjust[1]),
+            cast(int)(c.b + adjust[2]),
+            c.a);
+}
+unittest{
+    import std.stdio;
+    Color orign = Color("#006400");
+    auto bright = orign.brightness(20);
+    writeln(orign.hex_str);
+    writeln(bright.hex_str);
+    assert(bright.hex_str == "#009700");
+}
+
 
 import cairo.Context;
 void set_color(Context cr,in Color c)
