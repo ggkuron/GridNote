@@ -92,9 +92,16 @@ public:
         else
             _text.set_foreground(c);
     }
-    override void set_color(in Color c){
-        set_foreground_color(c);
+    void set_background_color(in Color c){
+        if(_text.empty) // box_colorを設定
+            set_color(c); 
+        else // 文字の背景色を設定
+            _text.set_background(c);
     }
+
+    // override void set_color(in Color c){
+    //     set_foreground_color(c);
+    // }
     void set_heading(ubyte size)
         in{
         assert(size >= 0);

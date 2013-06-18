@@ -91,6 +91,7 @@ public:
     // 版画の版みたいなShapeの使い方を想定して
     override void set_color(in Color c){
         _image.set_color(c);
+        super.set_color(c);
     }
     void set_width(in ubyte w)
         in{
@@ -147,13 +148,10 @@ class RectBOX : ImageBOX{
                     num ~= numc;
             }
             pos_num ~= to!int(num);
-            writeln(pos_num);
         }
 
-        writeln(pos);
         assert(require_create_in(Cell(pos_num[0],pos_num[1])));
         set_drawer();
-        writeln(data[2]);
         set_color(Color(chomp(data[2])));
     }        
 
@@ -217,10 +215,6 @@ class CircleBOX : ImageBOX{
         super(table,tv);
     }
     void set_drawer(){
-        debug(cell) writeln("sc tl: ",top_left);
-        debug(cell) writeln("br: ",bottom_right);
-        debug(cell) writeln("cc: ",(top_left+bottom_right)/2);
-
         auto center = _view.get_center_pos((top_left+bottom_right)/2);
         auto radius = numof_col * (_view.get_gridSize()*4/5);
         _image = new Circle(center,radius/2);

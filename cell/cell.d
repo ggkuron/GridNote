@@ -128,7 +128,7 @@ pure int count_lined(in Cell[] box,in Cell from,in Direct to){
     // debug(cell) writeln("count_lined start");
     int result;
     Cell c = from;
-    while(box.is_in(c))
+    while(c.is_in(box))
     {
         ++result;
         if(to == left && c.column == 0)
@@ -160,7 +160,7 @@ bool is_box(in Cell[] box){
         width ~= box.count_lined(leftside_cell,right);
     }
     int i;
-    // width == 0 はありえない
+
     assert(width.length != 0);
     foreach(r; width){
         if(i && r!=i) return false;
@@ -214,7 +214,7 @@ interface CellContent : CellStructure{
     void remove_from_table();
     void set_id(int);
     void set_color(in Color);
+    @property Color box_color()const;
     const(Cell)[] get_cells()const;
 }
-
 

@@ -31,7 +31,7 @@ void removeAll(T,K)(T[K] arr){
         arr.remove(k);
 }
 
-bool is_in(T)(in T[] array,in T b)
+bool is_in(T)(in T b,in T[] array)
     in{
     assert(!array.empty);
     }

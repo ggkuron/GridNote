@@ -15,6 +15,7 @@ debug(cell) import std.stdio;
 abstract class ContentBOX : CellContent{
 private:
     int _box_id;
+    Color _box_color = Color(linen,96);
 package:
 protected:
     BoxTable _table;
@@ -294,8 +295,12 @@ public:
     @property Cell[] edge_forward_cells(const Direct dir)const{
         return _inner_range_cell.edge_forward_cells(dir);
     }
-
-    void set_color(in Color c){}
+    void set_color(in Color c){
+        _box_color = c;
+    }
+    @property Color box_color()const{
+        return _box_color;
+    }
 }
     unittest{
         import cell.textbox;

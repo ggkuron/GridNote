@@ -86,9 +86,9 @@ private:
     }
 public:
     void set(in TextPoint s,in TextPoint e)
-        in{
-        assert(s <= e);
-        }
+    in{
+    assert(s <= e);
+    }
     body{
         _min = s;
         _max = e;
@@ -304,9 +304,9 @@ private:
         return _backward_pos(_current);
     }
     void _move_back(ref TextSpan ts)
-        in{
-        assert(ts.is_set());
-        }
+    in{
+    assert(ts.is_set());
+    }
     body{
         if(!ts.is_set()) return;
         ts.set_end(_backward_pos(ts.max));
@@ -655,6 +655,7 @@ public:
     //     debug(text) writefln("type:%s",typeid(linepos));
     // }
     private Color _current_foreground;
+    private Color _current_background;
 
     // 色の未定義値表現がないからこんなことに
     // optionalかnullableで包みたい
@@ -672,6 +673,9 @@ public:
         switch(t){
             case foreground_tag:
                 _tag_pool[s].foreground(v);
+                break;
+            case background_tag:
+                _tag_pool[s].background(v);
                 break;
             default:
                 assert(0);
@@ -731,6 +735,9 @@ public:
     void set_foreground(in Color c){
         _set_tag!(foreground_tag,Color)(c,_current_foreground);
         _color_is_set = true;
+    }
+    void set_background(in Color c){
+        _set_tag!(background_tag,Color)(c,_current_background);
     }
     void set_fontsize(in ubyte fsz){
         _set_tag!(font_size_tag,ubyte)(fsz,_current_fontsize);

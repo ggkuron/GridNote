@@ -396,7 +396,7 @@ public:
     }
     Tuple!(string,CellContent) get_content(in int key)
         in{
-        assert(_keys.values.is_in(key));
+        assert(key.is_in(_keys.values));
         assert(key in _content_table);
         }
     body{

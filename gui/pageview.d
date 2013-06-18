@@ -65,7 +65,7 @@ private:
     bool _grid_show_flg = true;
     LinesBOX _grids;
 
-    int _gridSpace =32; // □の1辺長
+    int _gridSpace =24; // □の1辺長
     ubyte _grid_width = 1;
 
     bool _on_key_press(Event ev,Widget w){
@@ -159,22 +159,19 @@ private:
     // }
     bool _show_contents_border = true;
     void _renderTable(Context cr){
-        debug(gui) writeln("@@@@ render table start @@@@");
         if(_in_view.empty) return;
 
         foreach(tb; _in_view.get_textBoxes())
         {
-            debug(gui) writeln("render textbox");
             if(_show_contents_border)
             {
-                _render_text.fill(cr,tb,Color(linen,96));
+                _render_text.fill(cr,tb,tb.box_color);
                 _render_text.stroke(cr,tb,Color(gold,128),1);
             }
             _render(cr,tb);
         }
         foreach(ib; _in_view.get_imageBoxes())
         {
-            debug(gui) writeln("render textbox");
             if(_show_contents_border)
             {
                 _render_text.stroke(cr,ib,Color(gold,128),1);
@@ -185,7 +182,6 @@ private:
         if(auto manip_t = _manip_table.get_target())
         _render_text.stroke(cr,manip_t,_manip_box_color,_manipLineWidth);
 
-        debug(gui) writeln("#### render table end ####");
     }
     // renderするだけじゃなく描画域によってCellのサイズを修正する
     // Pangoしか知り得ないことを迂回して教えるよりはいいかと
@@ -197,14 +193,12 @@ private:
     }
     
     bool _draw_callback(Context cr,Widget widget){
-        debug(gui) writeln("draw callback");
         // backDesign(cr);
         if(_grid_show_flg) _renderGrid(cr);
         _renderTable(cr);
         _renderSelection(cr);
         _renderFocus(cr);
         cr.resetClip(); // end of rendering
-        debug(gui) writeln("end");
         return true;
     }
     void _setGrid(){
