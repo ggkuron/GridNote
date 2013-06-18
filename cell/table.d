@@ -215,7 +215,9 @@ public:
         return true;
     }
     final int edge(in Direct dir)const{
-        int cnum; // row or col number
+        int cnum = int.min; // row or col number
+        if(dir.is_negative)
+            cnum = int.max;
         foreach(cont; _content_table.values)
         {
             if(cont is null) continue;
@@ -229,7 +231,6 @@ public:
             }
             else
             {
-                cnum = int.max;
                 auto edge = cont.top_left;
                 if(dir.is_horizontal)
                     cnum = cnum > edge.column?edge.column:cnum;
@@ -237,6 +238,11 @@ public:
                     cnum = cnum > edge.row?edge.row:cnum;
             }
         }
+
+        if(dir.is_negative && cnum == int.max)
+            return 0;
+        else if(dir.is_positive && cnum == int.min)
+            return int.max;
         return cnum;
     }
     unittest{
@@ -256,9 +262,20 @@ public:
         writeln(table.edge(up));
         writeln(table.edge(down));
         assert(table.edge(left) == 0);
-        assert(table.edge(right) == 0);
+        assert(table.edge(right) == int.max);
         assert(table.edge(up) == 0);
-        assert(table.edge(down) == 0);
+        assert(table.edge(down) == int.max);
+        table.clear();
+        cb = new TextBOX(table,Cell(5,2),1,1);
+        auto cc = new TextBOX(table,Cell(2,5),1,1);
+        writeln(table.edge(left));
+        writeln(table.edge(right));
+        writeln(table.edge(up));
+        writeln(table.edge(down));
+        assert(table.edge(left) == 2);
+        assert(table.edge(right) == 5);
+        assert(table.edge(up) == 2);
+        assert(table.edge(down) == 5);
     }
 
     unittest{
