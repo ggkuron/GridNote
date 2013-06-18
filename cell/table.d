@@ -35,11 +35,6 @@ private:
     KEY[RangeCell] _box_keys; // ContentBOXだけcacheしとく
     Cell[][Direct][KEY] _box_edges;
 
-    // int _leftest_col;
-    // int _rightst_col;
-    // int _uppest_row;
-    // int _lowest_row;
-
     int _content_counter;
     void set_id(CellContent c){
         if(_content_counter == int.max)

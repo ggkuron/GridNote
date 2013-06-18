@@ -39,9 +39,10 @@ public:
         in{
         assert(!_row.empty());
         assert(!_col.empty());
-        assert(width > 0);
+        // assert(width > 0);
         }
     body{
+        if(!width) return;
         if(dir.is_negative)
         {       // Spanで0境界越訂正期待
             row_or_col(dir).pop_back(width);

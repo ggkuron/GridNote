@@ -180,6 +180,9 @@ class RectBOX : ImageBOX{
         (cast(Rect)_image).replace(tl[0],tl[1],w,h);
     }
     string dat(in Cell offset=Cell(0,0))const{
+        import std.stdio;
+        writeln(top_left());
+        writeln(offset);
         string result ="[";
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';

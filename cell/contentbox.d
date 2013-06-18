@@ -198,9 +198,9 @@ public:
     }
     bool require_hold(in Cell c,in int w,in int h){
         return 
-        require_create_in(c)
-        && require_expand(right,w-1)
-        && require_expand(down,h-1);
+            require_create_in(c)
+            && require_expand(right,w-1)
+            && require_expand(down,h-1);
     }
     unittest{
         import cell.textbox;
