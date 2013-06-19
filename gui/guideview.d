@@ -62,11 +62,11 @@ private:
 
     bool onButtonPress(Event event, Widget widget)
     {
-        if ( event.type == EventType.BUTTON_PRESS )
+        if( event.type == EventType.BUTTON_PRESS )
         {
             GdkEventButton* buttonEvent = event.button;
 
-            if ( buttonEvent.button == 3)
+            if( buttonEvent.button == 3)
             {
                 return true;
             }
@@ -272,13 +272,19 @@ private:
     // double _debug_pos_div=3/10;
     string _debug_str;
     void _renderDebug(Context cr){
-        if(_debug_str)
-            _render_text.render(cr,_debug_msg);
         _render_text.fill(cr,_debug_msg,dimgray);
+        if(_debug_str)
+            _render_text.render(cr,_debug_msg,true,true);
+        import std.stdio;
+        writeln(_debug_str);
     }
 
 public:
-    void set_debug_str(string d){
+    void set_msg(string d){
+        _debug_msg.text_clear();
+        _debug_msg.append(d);
+        if(d != _debug_str)
+            queueDraw();
         _debug_str = d;
     }
     this(){ 

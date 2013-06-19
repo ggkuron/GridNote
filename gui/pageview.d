@@ -158,6 +158,12 @@ private:
     bool _show_contents_border = true;
     void _renderTable(Context cr){
         if(_in_view.empty) return;
+        auto manip_t = _manip_table.get_target();
+
+        if(manip_t)
+        {
+            _render_text.stroke(cr,manip_t,_manip_box_color,_manipLineWidth);
+        }
 
         foreach(tb; _in_view.get_textBoxes())
         {
@@ -166,7 +172,7 @@ private:
                 _render_text.fill(cr,tb,tb.box_color);
                 _render_text.stroke(cr,tb,Color(gold,128),1);
             }
-            _render(cr,tb);
+            _render(cr,tb,(manip_t is tb));
         }
         foreach(ib; _in_view.get_imageBoxes())
         {
@@ -177,17 +183,14 @@ private:
             ib.fill(cr);
         }
 
-        if(auto manip_t = _manip_table.get_target())
-        _render_text.stroke(cr,manip_t,_manip_box_color,_manipLineWidth);
-
     }
     // renderするだけじゃなく描画域によってCellのサイズを修正する
     // Pangoしか知り得ないことを迂回して教えるよりはいいかと
     //      迂回してでも責任の分離はしておくべきやも
     // BoxSizeの修正くらいならいいだろう
             // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
-    void _render(Context cr,TextBOX b){
-        _render_text.render(cr,b);
+    void _render(Context cr,TextBOX b,bool focused = false){
+        _render_text.render(cr,b,focused);
     }
     
     bool _draw_callback(Context cr,Widget widget){
@@ -373,6 +376,11 @@ public:
     // アクセサにする意味ないかもしれません
     @property GuideView guide_view(){
         return _guide_view;
+    }
+    void set_msg(string msg){
+        _guide_view.set_msg(msg);
+        import std.stdio;
+        writeln(msg);
     }
 }
 

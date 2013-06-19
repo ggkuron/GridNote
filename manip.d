@@ -429,6 +429,8 @@ public:
     FocusMode mode()const{
         return _mode;
     }
+    // このclassの役割って..?
+    // Textを扱うContentをたくさん作るつもりだ(った)からこいつで吸収してもらおうと考えた
     final class ManipTextBOX {
         // ManipTable _manip_table;
         // IMMulticontext _imm;
@@ -459,7 +461,6 @@ public:
             debug(manip) writeln("end");
         }
         void with_commit(string str,TextBOX box){
-            debug(manip) writeln("with commit text");
             append(box,str);
         }
         void backspace(TextBOX box){

@@ -14,6 +14,7 @@ import std.array;
 import std.string;
 import std.typecons;
 import std.stdio;
+import std.conv;
 
 import gtk.IMContext;
 
@@ -87,8 +88,7 @@ public:
     this(TableView tv){
         super(tv);
     }
-    void render(Context cr,TextBOX box){
-        debug(gui) writeln("@@@@ render textbox start @@@@");
+    void render(Context cr,TextBOX box,bool show_caret=false,bool fixed = false){
 
         // get info and update class holded info
         if(box.empty()) return;
@@ -101,7 +101,6 @@ public:
             
         void register_check(TextBOX box)
         {
-            debug(gui) writeln("checkBOX start");
             if(box_id !in _box_pos)
                 _box_pos[box_id] = Rect.init;
             if(box_id !in _attrilst)
@@ -117,9 +116,11 @@ public:
             }
             foreach(l; 0 .. box.numof_lines)
                 _logicRect[l] = PangoRectangle.init;
-            debug(gui) writeln("end");
         }
 
+        double lines_y(in int l){
+            return _box_pos[box_id].y + _gridSize * l;
+        }
         register_check(box);
         string markup_str = box.markup_string();
         if(markup_str)
@@ -127,26 +128,28 @@ public:
             const markup_len = cast(int)markup_str.length;
             PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
             _layout[box_id].setMarkup(markup_str,markup_len);
-            _layout[box_id].getCursorPos(box.get_caret,null,&_caretRect);
-            auto caret = new Rect(_caretRect);
-            caret.x /= 1024;
-            caret.x += _box_pos[box_id].x;
-            caret.y /= 1024;
-            caret.y += _box_pos[box_id].y;
-            caret.w = 32;
-            caret.h /= 1024;
-            writeln(box.get_caret);
-            writeln(_caretRect);
-            caret.set_color(red);
-            fill(cr,caret);
+            if(show_caret)
+            {   // 
+                _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
+                auto caret = new Rect(_caretRect);
+                caret.x /= 1024;
+                caret.x += _box_pos[box_id].x;
+                caret.y /= 1024;
+                caret.y = lines_y(_currentline);
+                caret.w = 32;
+                caret.h /= 1024;
+                _table_view.set_msg(to!string(box.get_caret));
+                caret.set_color(red);
+                fill(cr,caret);
+            }
         }
         for(int line; line < box.numof_lines; ++line )
         {
             auto line_layout = _layout[box_id].getLineReadonly(line);
             int newIndex,newTraing;
 
-            const lines_y = _box_pos[box_id].y + _gridSize * line;
-            cr.moveTo(_box_pos[box_id].x,lines_y);
+            const line_y = lines_y(line);
+            cr.moveTo(_box_pos[box_id].x,line_y);
             PgCairo.showLayoutLine(cr,line_layout);
 
             // get real ocupied width and height
@@ -158,7 +161,6 @@ public:
 
         void render_preedit()
         {   // 固定化されているBOXならここを通らなくていい
-            debug(gui) writeln("render preedit start");
             if(_im_target_id !in _width || _currentline !in _width[_im_target_id])   
                 _width[_im_target_id][_currentline] = 0;
 
@@ -174,7 +176,6 @@ public:
             PgCairo.showLayout(cr,layout);
 
             set_preeditting(false);
-            debug(gui) writeln("#### render textbox end ####");
         }
         void  modify_boxsize()
         {   /+
@@ -216,18 +217,16 @@ public:
 
             } while(1);
         }
-        if(is_preediting() && _im_target_id == box_id)
+        if(!fixed && is_preediting() && _im_target_id == box_id)
             render_preedit();
-        if(!_render_target.empty)
+        if(!fixed && !_render_target.empty)
             modify_boxsize();
-        debug(gui) writeln("text render end");
     }
     public void prepare_preedit(IMContext imc,TextBOX box)
         out{
         assert(_im_target_id == box.id);
         }
     body{
-        debug(text) writeln("prepare_preedit start");
         _im_target = box;
         immutable box_id = _im_target.id();
         _im_target_id = box_id;
@@ -249,7 +248,6 @@ public:
         _im_target.set_cursor_pos(cursor_pos);
 
         set_preeditting(true);
-        debug(text) writeln("end");
     }
     public void retrieve_surrouding(IMContext imc){
     }
@@ -261,11 +259,9 @@ public:
         _preeditting = b;
     }
     public Tuple!(string,int) get_surrounding(){
-        debug(gui) writeln("get surrounding start");
         // _im_target.set_cursor_pos(_im_target.getText.caret().column);
         writeln("cursor_pos: ",_im_target.cursor_pos); 
         return tuple(_strings[_im_target_id],_im_target.cursor_pos);
-        debug(gui) writeln("end");
     }
 }
  

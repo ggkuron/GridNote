@@ -179,7 +179,8 @@ unittest{
     assert(is_box(box));
 }
 
-// 独立して存在できる
+// Cellで構成される集合
+    // 実際にはCellを遅延して生成するものも含む
 interface CellStructure{
     @property Cell top_left()const;
     @property Cell top_right()const;

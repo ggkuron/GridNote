@@ -24,6 +24,7 @@ interface TableView{
     const(Rect) get_holdingArea()const;
     double get_x(in Cell c)const;
     double get_y(in Cell c)const;
+    void set_msg(string);
 final:
     // Cellの順ではなく、x(column方向),y(row方向)順なのに注意
     double[2] get_pos(in Cell c)const{

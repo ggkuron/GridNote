@@ -27,8 +27,8 @@ package methods:
 
 class BoxRenderer{
 private:
-    TableView _table_view;
 protected:
+    TableView _table_view;
 public:
     this(TableView tv)
         out{

@@ -269,7 +269,7 @@ private:
     TextSpan[TagType] _current_opened_span;
     TextPoint _current = TextPoint(0,0);
     TextPoint _text_end;
-    int _caret;
+    int _caret; // byte数でのカウント.pangoのせい
 
     alias int Pos;
     alias int Line;
@@ -328,7 +328,10 @@ private:
     }   
     dchar _get_char(in TextPoint tp)const{
         if(tp.line !in _writing || tp.pos !in _writing[tp.line])
+        {
+            writeln(tp);
             throw new Exception("out of range");
+        }
         return _writing[tp.line][tp.pos];
     }
     @property string _plane_string()const{
@@ -535,6 +538,10 @@ public:
             result ~= "</span>";
         return result;
     }
+    // .. カプセル化壊すがCell.TextBOXでappendするときにbyte数をとれるから
+    void impel_caret(in ulong s){
+        _caret += s;
+    }
     // 改行文字
     // _writing行終に'\n'として入れてる
     // _writingが行ごとに分割したテーブルになってるので
@@ -552,7 +559,7 @@ public:
         _writing[current_line][_current.pos] = c;
         if(c != '\n')
             ++_current.pos;
-        ++_caret;
+        // ++_caret;
         
         if(c == '\n')   line_feed;
         const cp = current_pos;
@@ -561,7 +568,6 @@ public:
         else if(_line_length[current_line] < cp) 
             _line_length[current_line] = cp;
 
-        debug(text) writef("insert : %s\n",writing[current_line]);
         return _current.pos;
     }
     // TextBOXとは別パス。BOXの大きさの制約を受けないとき用途。TextBOXからは呼んではいけない。
@@ -569,9 +575,8 @@ public:
         foreach(dchar c; s)
         {
             append(c);
-            // if(c == '\n')
-            //     line_feed();
         }
+        _caret += s.length;
     }
     @property bool empty()const{
         return (_writing.keys.empty())
@@ -591,14 +596,17 @@ public:
                     _tag_pool.remove(span);
                 }
             }
-
+            _caret -= to!string(_get_char(pos_next)).length;
             _deleteChar(--_current.pos);
             if(_line_length[current_line])
                 --_line_length[current_line]; // pos に一致してるから負数にはならないとおもいきや、削除後に0になってるところでbackすると0になってるので
             return true;
         }
         else if(_current.line)
+        {
             line_join();
+            --_caret;
+        }
         return false;
     }
     @property string[int] strings(){
@@ -616,6 +624,7 @@ public:
             _writing[current_line][current_pos] = '\n';
 
         ++_current.line;
+        ++_caret;
         _current.pos = 0;
         _line_length[_current.line] = 0;
         if(_current.line !in _writing)
@@ -766,6 +775,9 @@ public:
     }
     @property auto writing()const{
         return _writing;
+    }
+    void clear(){
+        this = Text();
     }
     string dat(){
         string result;
