@@ -82,12 +82,7 @@ public:
             return;
         _inner_range_cell.remove(dir,width);
     }
-    void hold(UpDown ud,LR lr)(in Cell start,in int horizontal_cnt,in int vertical_cnt) // TopLeft
-        in{
-        // assert(vertical_cnt >= 1);
-        // assert(horizontal_cnt >= 1);
-        }
-    body{
+    void hold(UpDown ud,LR lr)(in Cell start,in int vertical_cnt,in int horizontal_cnt,){
         int w = horizontal_cnt;
         int h = vertical_cnt;
         _inner_range_cell.clear();
@@ -196,7 +191,7 @@ public:
     bool require_expand(in Direct to,in int width=1){
         return (_table.try_expand(this,to,width));
     }
-    bool require_hold(in Cell c,in int w,in int h){
+    bool require_hold(in Cell c,in int h,in int w){
         return 
             require_create_in(c)
             && require_expand(right,w-1)

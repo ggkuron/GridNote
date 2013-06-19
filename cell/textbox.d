@@ -48,9 +48,10 @@ public:
 
         super(table,tb);
     }
-    this(BoxTable table,string[] data){
+    this(BoxTable table,string[] dat){
         super(table);
-        auto pos = std.string.split(data[0],",");
+        dat[0] = dat[0][6 .. $];
+        auto pos = std.string.split(dat[0],",");
         int[] pos_num;
         foreach(numstr; pos)
         {
@@ -64,15 +65,13 @@ public:
             writeln(pos_num);
         }
 
-        require_create_in(Cell(pos_num[0],pos_num[1]));
-        auto desc = std.string.split(data[2]," ");
+        require_hold(Cell(pos_num[0],pos_num[1]),pos_num[2],pos_num[3]);
+        auto desc = std.string.split(dat[2]," ");
         _box_fontfamly = chomp(desc[0]);
         _box_style = chomp(desc[1]);
         _box_font_size = to!ubyte(chomp(desc[2]));
-        _box_foreground = Color(chomp(data[3]));
-        _text = Text(data);
-        if(_text.numof_lines > 1)
-        require_expand(down,_text.numof_lines - 1);
+        _box_foreground = Color(chomp(dat[3]));
+        _text = Text(dat);
     }        
     bool mark_caret = false;
 
@@ -192,7 +191,7 @@ public:
         writeln(top_left());
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
-        result ~= to!string(numof_row) ~ "]\n";
+        result ~= to!string(numof_col) ~ "]\n";
         result ~= "TextBOX\n";
         result ~= desc_str ~ '\n';
         result ~= _box_foreground.hex_str ~'\n';

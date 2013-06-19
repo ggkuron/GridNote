@@ -149,9 +149,9 @@ private:
         _selected_color_box.hold_tl(Cell(start_row-3,1),2,2);
         _selected_color_box.set_drawer();
         _color_selector.reshape();
-        _debug_msg.hold_tl(Cell(0,0),max_col()+1,5);
+        _debug_msg.hold_tl(Cell(0,0),5,max_col()+1);
 
-        _back_color.hold_tl(Cell(0,0),max_col()+1,max_row()+1);
+        _back_color.hold_tl(Cell(0,0),max_row()+1,max_col()+1);
         _back_color.set_drawer();
 
         debug(gui) writeln("_holding w:",_holding_area.w, "h:",_holding_area.h);
@@ -182,7 +182,7 @@ private:
             _drwer.require_create_in(_focus);
             _drwer.set_drawer();
             _debug_msg = new TextBOX(_table);
-            _debug_msg.require_hold(Cell(0,0),max_col(),5);
+            _debug_msg.require_hold(Cell(0,0),5,max_col());
         }
         void move(in Direct dir){
             int pre_calc_diff;
@@ -254,7 +254,7 @@ private:
         }
         clear();
         _color_box_back = new RectBOX(_table,this);
-        _color_box_back.hold_tl(Cell(max_row()-3,0),max_col()+1,5);
+        _color_box_back.hold_tl(Cell(max_row()-3,0),5,max_col()+1);
         _color_box_back.set_drawer();
         _color_box_back.set_color(_down_accent);
 
@@ -274,7 +274,7 @@ private:
     void _renderDebug(Context cr){
         _render_text.fill(cr,_debug_msg,dimgray);
         if(_debug_str)
-            _render_text.render(cr,_debug_msg,true,true);
+            _render_text.render(cr,_debug_msg,true);
         import std.stdio;
         writeln(_debug_str);
     }

@@ -156,7 +156,7 @@ private:
     // void backDesign(Context cr){
     // }
     bool _show_contents_border = true;
-    void _renderTable(Context cr){
+    void _renderTable(Context cr,bool modify= false){
         if(_in_view.empty) return;
         auto manip_t = _manip_table.get_target();
 
@@ -172,7 +172,7 @@ private:
                 _render_text.fill(cr,tb,tb.box_color);
                 _render_text.stroke(cr,tb,Color(gold,128),1);
             }
-            _render(cr,tb,(manip_t is tb));
+            _render(cr,tb,(manip_t !is tb)||modify);
         }
         foreach(ib; _in_view.get_imageBoxes())
         {

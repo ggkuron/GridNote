@@ -350,7 +350,7 @@ public:
         if(!file_name) 
             file_name = "tmp.dat";
 
-        auto file = File(file_name,"w");
+        auto file = std.stdio.File(file_name,"w");
         if(!file.isOpen()) return false;
         auto all_ibs = _focused_table.get_imageBoxes();
         const offset = Cell(_focused_table.edge(up),_focused_table.edge(left));
@@ -371,7 +371,7 @@ public:
     }
     string choose_open_file(){
         string file_name;
-        if(!_file_chooser)
+        // if(!_file_chooser)
         {
             string[] a;
             ResponseType[] r;
@@ -382,7 +382,7 @@ public:
             scope win = new Window("restore");
             _file_chooser = new FileChooserDialog("File Selection", win, FileChooserAction.OPEN,a,r);
         }
-        _file_chooser.setFileChooserAction(FileChooserAction.OPEN);
+        // _file_chooser.setFileChooserAction(FileChooserAction.OPEN);
         auto response = _file_chooser.run();
         if( response == ResponseType.ACCEPT )
         {
@@ -399,7 +399,7 @@ public:
             file_name = choose_open_file();
 
         _focused_table.clear();
-        auto file = File(file_name,"r");
+        auto file = std.stdio.File(file_name,"r");
 
         string[][int] line_buf;
         int i;
@@ -422,6 +422,7 @@ public:
                     break;
             }
         }
+        _pv.queueDraw();
     }
     const(SelectBOX) select()const{
         return _select;

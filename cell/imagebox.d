@@ -186,7 +186,7 @@ class RectBOX : ImageBOX{
         string result ="[";
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
-        result ~= to!string(numof_row) ~ "]\n";
+        result ~= to!string(numof_col) ~ "]\n";
         result ~= "RectBOX\n";
         result ~= _image.color.hex_str ~ '\n';
         return result;

@@ -88,7 +88,7 @@ public:
     this(TableView tv){
         super(tv);
     }
-    void render(Context cr,TextBOX box,bool show_caret=false,bool fixed = false){
+    void render(Context cr,TextBOX box,bool fixed = false){
 
         // get info and update class holded info
         if(box.empty()) return;
@@ -128,7 +128,7 @@ public:
             const markup_len = cast(int)markup_str.length;
             PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
             _layout[box_id].setMarkup(markup_str,markup_len);
-            if(show_caret)
+            if(!fixed)
             {   // 
                 _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
                 auto caret = new Rect(_caretRect);
@@ -136,7 +136,7 @@ public:
                 caret.x += _box_pos[box_id].x;
                 caret.y /= 1024;
                 caret.y = lines_y(_currentline);
-                caret.w = 32;
+                caret.w = _gridSize * 3.0 / 2.0;
                 caret.h /= 1024;
                 _table_view.set_msg(to!string(box.get_caret));
                 caret.set_color(red);
