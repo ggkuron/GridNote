@@ -20,6 +20,7 @@ import gtk.Menu;
 
 immutable int start_size_w = 480;
 immutable int start_size_h = 480;
+immutable double max_guide_area_percentage = 0.2;
 
 class Window : MainWindow{
     int width = start_size_w;
@@ -33,16 +34,14 @@ class Window : MainWindow{
         setEvents(EventMask.ALL_EVENTS_MASK);
         auto guide_view = new GuideView();
         auto page_view = new PageView(this,guide_view);
-        guide_view.setSizeRequest(80,-1);
-        page_view.setSizeRequest(600,-1);
-        box.packStart(guide_view,1,1,0);
+        box.packStart(guide_view,0,0,0);
         box.packStart(page_view,1,1,0);
+        guide_view.setSizeRequest(100,-1);
+        page_view.setSizeRequest(start_size_w,-1);
 
         add(box);
         // add(page_view);
 
-        // page_view.show();
-        // guide_view.show();
         box.showAll();
         showAll();
     }

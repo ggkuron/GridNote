@@ -5,6 +5,7 @@ import cell.table;
 import cell.contentbox;
 import std.string;
 import std.array;
+import std.conv;
 import cairo.ImageSurface;
 import gtkc.gtktypes;
 
@@ -158,6 +159,9 @@ final class Rect : Shape{
                  cast(int)y,
                  cast(int)w,
                  cast(int)h);
+    }
+    override string toString()const{
+        return "("~to!string(x)~','~to!string(y)~','~to!string(w)~','~to!string(h)~')';
     }
 }
 class Tri : Shape{

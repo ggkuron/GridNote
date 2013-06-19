@@ -38,23 +38,22 @@ public:
         _table_view = tv;
     }
 package:
-final:
     final Rect window_position(in CellContent b)
         in{
         assert(b !is null);
         }
     body{
-        auto cp = b.top_left;
+        const cp = b.top_left;
         debug(gui) writefln("cp : %s",cp);
-        auto xy = _table_view.get_window_pos(cp);
+        const xy = _table_view.get_window_pos(cp);
 
         auto grid = _table_view.get_gridSize;
 
-        int w = grid * b.numof_col();
-        int h = grid * b.numof_row();
+        const w = grid * b.numof_col();
+        const h = grid * b.numof_row();
 
         auto result =  new Rect(xy[0],xy[1],w,h);
-        debug(gui) writefln("window_position is %f %f %f %f",result.x,result.y,result.w,result.h);
+        debug(gui) writefln("window_position : %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
     final Rect context_position(in CellContent b)
@@ -62,9 +61,9 @@ final:
         assert(b !is null);
         }
     body{
-        auto cp = b.top_left;
+        const cp = b.top_left;
         debug(gui) writefln("cp : %s",cp);
-        auto xy = _table_view.get_pos(cp);
+        const xy = _table_view.get_pos(cp);
 
         auto grid = _table_view.get_gridSize;
 
@@ -72,7 +71,7 @@ final:
         int h = grid * b.numof_row();
 
         auto result =  new Rect(xy[0],xy[1],w,h);
-        debug(gui) writefln("window_position is %f %f %f %f",result.x,result.y,result.w,result.h);
+        debug(gui) writefln("window_position : %f %f %f %f",result.x,result.y,result.w,result.h);
         return result;
     }
 

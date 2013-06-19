@@ -53,8 +53,6 @@ private:
 
     GuideView _guide_view;
 
-    // ubyte renderdLineWidth = 2;
-    // ubyte selectedLineWidth = 2;
     ubyte _manipLineWidth = 2;
     Color _grid_color = Color(48,48,48,96);
     Color _selected_cell_border_color = Color("#00e4e4",128);

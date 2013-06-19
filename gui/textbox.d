@@ -122,15 +122,19 @@ public:
 
         register_check(box);
         string markup_str = box.markup_string();
-        import std.stdio;
-        writeln(markup_str);
         if(markup_str)
         {
             const markup_len = cast(int)markup_str.length;
             PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
             _layout[box_id].setMarkup(markup_str,markup_len);
-            _layout[box_id].indexToPos(box.get_caret,&_caretRect);
+            _layout[box_id].getCursorPos(box.get_caret,null,&_caretRect);
             auto caret = new Rect(_caretRect);
+            caret.x /= 1024;
+            caret.x += _box_pos[box_id].x;
+            caret.y /= 1024;
+            caret.y += _box_pos[box_id].y;
+            caret.w = 32;
+            caret.h /= 1024;
             writeln(box.get_caret);
             writeln(_caretRect);
             caret.set_color(red);
@@ -169,7 +173,6 @@ public:
             PgCairo.updateLayout(cr,layout);
             PgCairo.showLayout(cr,layout);
 
-            debug(text) writeln("preedit text ",_preedit);
             set_preeditting(false);
             debug(gui) writeln("#### render textbox end ####");
         }
@@ -231,9 +234,13 @@ public:
         _gridSize = get_gridSize();
 
         auto box_pos = window_position(box);
-        auto im_rect = cast(cairo_rectangle_int_t)_logicRect[_currentline];
-        im_rect.x += box_pos.x;
-        im_rect.y += box_pos.y + _gridSize * (_currentline + 1);
+        auto logical = cast(cairo_rectangle_int_t)_logicRect[_currentline];
+        auto im_rect =
+            cairo_rectangle_int_t(
+                cast(int)(logical.width + box_pos.x),
+                cast(int)(logical.y + box_pos.y + _gridSize * (_currentline + 1)),
+                logical.width,
+                logical.height);
 
         int cursor_pos;
         imc.setCursorLocation(im_rect);

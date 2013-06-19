@@ -201,6 +201,8 @@ interface CellStructure{
 import util.color;
 // 構造をTableに持たせる
 // Table上のCellContentと空間を共有する
+// TODO:各コンテンツに固定化した状態を定義させる
+//      変更を伴わない状態。
 interface CellContent : CellStructure{
     @property int id()const;
     @property const(Cell[][Direct]) edge_line()const;

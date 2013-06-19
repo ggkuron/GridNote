@@ -285,6 +285,7 @@ private:
     invariant(){
         assert(_current.line < _lines);
     }
+    // current line のposを指定して削除
     void _deleteChar(in int pos){
         _writing[current_line].remove(pos);
     }
@@ -550,10 +551,10 @@ public:
     ulong append(in dchar c){
         _writing[current_line][_current.pos] = c;
         if(c != '\n')
-        {
             ++_current.pos;
-            ++_caret;
-        }
+        ++_caret;
+        
+        if(c == '\n')   line_feed;
         const cp = current_pos;
         if(current_line !in _line_length)
             _line_length[current_line] = cp;
@@ -568,8 +569,8 @@ public:
         foreach(dchar c; s)
         {
             append(c);
-            if(c == '\n')
-                line_feed();
+            // if(c == '\n')
+            //     line_feed();
         }
     }
     @property bool empty()const{

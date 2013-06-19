@@ -8,10 +8,11 @@ import text.tag;
 import std.string;
 import std.utf;
 import std.conv;
+import std.stdio;
+import std.ascii;
 import util.direct;
 import shape.shape;
 debug(cell) import std.stdio;
-import std.stdio;
 
 import pango.PgCairo;
 import pango.PgLayout;
@@ -24,7 +25,6 @@ final class TextBOX : ContentBOX{
 private:
     Text _text;
     int _cursor_pos; // 描画側（IM)が教えるために使う
-
     string _box_fontfamly = "Sans";
     string _box_style = "Normal";
     ubyte  _box_font_size;
@@ -48,7 +48,6 @@ public:
 
         super(table,tb);
     }
-    import std.ascii;
     this(BoxTable table,string[] data){
         super(table);
         auto pos = std.string.split(data[0],",");
@@ -65,11 +64,8 @@ public:
             writeln(pos_num);
         }
 
-        writeln(pos);
-        (require_create_in(Cell(pos_num[0],pos_num[1])));
-        writeln(data[3]);
+        require_create_in(Cell(pos_num[0],pos_num[1]));
         auto desc = std.string.split(data[2]," ");
-        writeln(desc);
         _box_fontfamly = chomp(desc[0]);
         _box_style = chomp(desc[1]);
         _box_font_size = to!ubyte(chomp(desc[2]));
@@ -115,9 +111,10 @@ public:
     void append(string s){
         foreach(dchar c; s)
         {
-            _text.append(c);
             if(c == '\n') // 入力中は作動せず(改行文字は直接渡されない)、存在するstringを渡した時を想定している
                 expand_with_text_feed();
+            else
+                _text.append(c);
         }
     }
     void backspace(){
@@ -129,7 +126,8 @@ public:
     bool expand_with_text_feed(){
         if(require_expand(down))
         {
-            _text.line_feed();
+            // _text.line_feed();
+            _text.append('\n');
             return true;
         }else 
             return false;
@@ -199,5 +197,4 @@ public:
         writeln(result);
         return result;
     }
-
 }
