@@ -109,7 +109,7 @@ public:
             }
             box.remove(dir);
         }
-        // if(box.empty()) throw exception?
+        assert(!box.empty()); 
     }
     final bool try_expand(ContentBOX cb,in Direct to,in int width=1)
         in{
@@ -614,7 +614,6 @@ public:
         else // if(dir == Direct.down)
             shift(Cell(1,0));
     }
-    import std.stdio;
     final void clear(){
         KEY[Cell] empty_k;
         string[KEY] empty_t;

@@ -301,7 +301,9 @@ public:
         auto tb = cast(TextBOX)_maniped_box;
         _old_state ~= new TextBOX(_focused_table,tb);
         if(_box_type == "cell.textbox.TextBOX")
-        _manip_textbox.feed(tb);
+            if(_manip_textbox.feed(tb))
+                move_focus(down);
+                
     }
     void edit_textbox(){
         if(_box_type != "cell.textbox.TextBOX") 
@@ -431,7 +433,6 @@ public:
         // ManipTable _manip_table;
         // IMMulticontext _imm;
         // 上2つ使ってないかもしれない
-        // manip_table渡してしまったらどうして分離してるのかわからない
         this(ManipTable mt){
             // _manip_table = mt;
         }
@@ -464,8 +465,8 @@ public:
         void backspace(TextBOX box){
             box.backspace();
         }
-        void feed(TextBOX box){
-            box.expand_with_text_feed();
+        bool feed(TextBOX box){
+            return box.expand_with_text_feed();
         }
         void set_foreground_color(TextBOX box,in Color c){
             box.set_foreground_color(c);
