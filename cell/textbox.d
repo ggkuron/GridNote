@@ -50,7 +50,7 @@ public:
     }
     this(BoxTable table,string[] dat){
         super(table);
-        dat[0] = dat[0][6 .. $];
+        dat[0] = dat[0][6 .. $-1];
         auto pos = std.string.split(dat[0],",");
         int[] pos_num;
         foreach(numstr; pos)
@@ -65,6 +65,7 @@ public:
             writeln(pos_num);
         }
 
+        assert(pos_num.length == 4);
         require_hold(Cell(pos_num[0],pos_num[1]),pos_num[2],pos_num[3]);
         auto desc = std.string.split(dat[2]," ");
         _box_fontfamly = chomp(desc[0]);

@@ -9,6 +9,7 @@ import shape.drawer;
 import cairo.Context;
 import util.direct;
 import std.conv;
+import std.exception;
 
 import gui.pageview;
 debug(cell) import std.stdio;
@@ -137,6 +138,7 @@ class RectBOX : ImageBOX{
     }
     this(BoxTable table,TableView tv,string[] dat){
         super(table,tv);
+        dat[0] = dat[0][6 .. $-1];
         auto pos = std.string.split(dat[0],",");
         int[] pos_num;
         foreach(numstr; pos)
@@ -149,8 +151,8 @@ class RectBOX : ImageBOX{
             }
             pos_num ~= to!int(num);
         }
-
-        assert(require_create_in(Cell(pos_num[0],pos_num[1])));
+        assert(pos_num.length == 4);
+        enforce(require_create_in(Cell(pos_num[0],pos_num[1])));
         set_drawer();
         set_color(Color(chomp(dat[2])));
     }        
