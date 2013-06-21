@@ -395,7 +395,6 @@ public:
             command_queue ~= cmd;
         }
     }
-    InputState _before_state;
 public:
     bool can_edit()const{
         return _input_state == InputState.Edit
@@ -411,17 +410,7 @@ public:
                 _imm.focusOut();
                 break;
             case InputState.ColorSelect:
-                if(_before_state == InputState.Edit)
-                {
-                    _input_state = InputState.Edit;
-                    _before_state = InputState.Normal;
-                    change_mode_edit();
-                }
-                else
-                {
-                    _input_state = InputState.Normal;
-                    _imm.focusOut();
-                }
+
                 break;
             case InputState.Edit:
                 keyState.clear();
@@ -469,7 +458,6 @@ public:
             case InputState.Edit:
                 _imm.focusOut();
                 _input_state = InputState.ColorSelect;
-                _before_state = InputState.Edit;
                 break;
         }
     }

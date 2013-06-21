@@ -250,9 +250,13 @@ private:
         FillGrids(cr,_manip_table.select.get_cells(),_selected_cell_border_color);
     }
     void _when_sizeallocate(GdkRectangle* n,Widget w){
+        _size_allocate();
+    }
+    void _size_allocate(){
         _set_holding_area();
         _set_view_size();
         _setGrid();
+        _table.set_gridsize(_gridSpace);
     }
 public:
     // ConfigFileから読むようにしたい
@@ -330,19 +334,17 @@ public:
         showAll();
     }
     void move_view(in Direct dir){
-
         _in_view.move_area(dir);
     }
     void zoom_in(){
-        ++_gridSpace;
-        _setGrid();
-        _table.set_gridsize(_gridSpace);
+        _gridSpace *= 1.15;
+        _size_allocate();
         queueDraw();
     }
     void zoom_out(){
-        if(_gridSpace>15)  --_gridSpace;
-        _setGrid();
-        _table.set_gridsize(_gridSpace);
+        if(_gridSpace<15) return;
+        _gridSpace /= 1.15;
+        _size_allocate();
         queueDraw();
     }
     void IM_FocusOut(){

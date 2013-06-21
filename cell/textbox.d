@@ -96,7 +96,6 @@ public:
             set_color(c); 
         else // 文字の背景色を設定
             _text.set_background(c);
-        
     }
     void set_heading(ubyte size)
         in{

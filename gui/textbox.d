@@ -37,7 +37,7 @@ PgLayout::indexToPos で矩形範囲をとれる
 PgLayout::xyToPos
 PgLayout::getCursorPos
 
-PgLayout::getLineReadonly(int line)
+PgLayout::getLineReadonly(int line) getLineより高速
 +/
 
 /+
@@ -262,7 +262,7 @@ public:
     }
     public Tuple!(string,int) get_surrounding(){
         // _im_target.set_cursor_pos(_im_target.getText.caret().column);
-        writeln("cursor_pos: ",_im_target.cursor_pos); 
+        // writeln("cursor_pos: ",_im_target.cursor_pos); 
         return tuple(_strings[_im_target_id],_im_target.cursor_pos);
     }
 }
