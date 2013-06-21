@@ -379,8 +379,6 @@ public:
     }
     void set_msg(string msg){
         _guide_view.set_msg(msg);
-        import std.stdio;
-        writeln(msg);
     }
 }
 

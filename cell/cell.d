@@ -43,9 +43,12 @@ public:
         assert(c == Cell(0,0));
         assert(d == Cell(15,15));
     }
-    invariant(){
-        assert(row >= 0);
-        assert(column >= 0);
+    // invariant(){
+    //     assert(row >= 0);
+    //     assert(column >= 0);
+    // }
+    static Cell invalid(){
+        return Cell(-1,-1);
     }
     int opCmp(in Cell rhs)const{
         if(row == rhs.row)

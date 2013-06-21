@@ -135,9 +135,9 @@ class RectBOX : ImageBOX{
     this(BoxTable table,TableView tv){
         super(table,tv);
     }
-    this(BoxTable table,TableView tv,string[] data){
+    this(BoxTable table,TableView tv,string[] dat){
         super(table,tv);
-        auto pos = std.string.split(data[0],",");
+        auto pos = std.string.split(dat[0],",");
         int[] pos_num;
         foreach(numstr; pos)
         {
@@ -152,7 +152,7 @@ class RectBOX : ImageBOX{
 
         assert(require_create_in(Cell(pos_num[0],pos_num[1])));
         set_drawer();
-        set_color(Color(chomp(data[2])));
+        set_color(Color(chomp(dat[2])));
     }        
 
     void set_drawer()

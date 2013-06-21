@@ -31,8 +31,9 @@ public:
     void add(in Cell c){ 
         _row.add(c.row);
         _col.add(c.column);
-        debug(cb) writeln("tl ",top_left);
-        debug(cb) writeln("br ",bottom_right);
+        import std.stdio;
+        writeln("tl ",top_left);
+        writeln("br ",bottom_right);
     }
     // Spanを矩形として扱うのでCollectionで使える場面は限られる
     void expand(in Direct dir,in int width=1)
@@ -42,7 +43,7 @@ public:
         // assert(width > 0);
         }
     body{
-        if(!width) return;
+        if(width <= 0) return;
         if(dir.is_negative)
         {       // Spanで0境界越訂正期待
             row_or_col(dir).pop_back(width);

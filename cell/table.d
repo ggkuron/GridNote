@@ -119,7 +119,6 @@ public:
         if(to == Direct.left && cb.min_col==0
         || to == Direct.up && cb.min_row == 0)
             return false;
-        debug(move) writeln("expand box start");
         immutable id = cb.id();
         int w = width;
         debug(move) writeln("edge ",edge);
@@ -144,11 +143,9 @@ public:
         }
 
         cb.expand(to,width);
-        debug(table) writeln("expanded");
         return true;
     }
     final bool try_expand(ContentFlex cf,in Direct to,int width=1){
-        debug(move) writeln("expand box start");
         immutable id = cf.id();
         debug(move) writeln("edge ",edge);
         Cell[] tobe_expanded;
@@ -457,9 +454,9 @@ public:
         assert(box_id in _content_table);
         assert(box_id in _type_table);
         debug(table){
-            writeln("type: ",u.toString);
-            writeln("table key(box_id): ",box_id);
-            writeln("boxes are: ",u.get_box());
+            // writeln("type: ",u.toString);
+            // writeln("table key(box_id): ",box_id);
+            // writeln("boxes are: ",u.get_box());
         }
     }
     final bool try_create_in(T:ContentBOX)(T u,in Cell c)
@@ -477,13 +474,14 @@ public:
         }
 
         _content_table[box_id] = u;
-        static if(is(T == TextBOX)) _text_table[box_id] = u;
-        else 
-        static if(is(T == ImageBOX)) _image_table[box_id] = u;
+        static if(is(T == TextBOX)) 
+            _text_table[box_id] = u;
+        else static if(is(T == ImageBOX)) 
+            _image_table[box_id] = u;
         u.create_in(c);
-        writeln("table:",_content_table.values);
-        writeln("text:",_text_table.values);
-        writeln("image:",_image_table.values);
+        // writeln("table:",_content_table.values);
+        // writeln("text:",_text_table.values);
+        // writeln("image:",_image_table.values);
 
         return true;
     }

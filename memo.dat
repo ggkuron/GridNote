@@ -1,93 +1,330 @@
 [Cell(0, 0),1,1]
 RectBOX
-#B22222
-[Cell(0, 0),1,1]
-RectBOX
-#B22222
-[Cell(8, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 8),1,1]
-RectBOX
-#B22222
-[Cell(0, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 14),1,1]
-RectBOX
+#696969
+[Cell(5, 1),1,2]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 5)
+TextPoint(-1, -1)
+Manip
+5
+5
+
+
+Cell(14, 17)
+const(Cell)(8, 4)
+Cell(6, 13)
+[Cell(6, 13),1,1]
+TextBOX
+Sans Normal 12
 #FF8C00
-[Cell(0, 3),1,1]
-RectBOX
-#B22222
-[Cell(0, 6),1,1]
-RectBOX
-#B22222
-[Cell(9, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 13),1,1]
-RectBOX
-#FF8C00
-[Cell(11, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 14),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 1),1,1]
-RectBOX
-#B22222
-[Cell(3, 13),1,1]
-RectBOX
-#FF8C00
+1
+false
+TextPoint(0, 0)
+TextPoint(-1, -1)
+
+0
+0
+
+
+Cell(14, 6)
+const(Cell)(8, 4)
+Cell(6, 2)
+[Cell(6, 2),3,9]
+TextBOX
+Sans Normal 12
+#696969
+3
+false
+TextPoint(2, 11)
+TextPoint(-1, -1)
+保存時に
+GCにFileChooserDialogを
+かっさらえられてる問題
+4
+21
+11
+72
+
+
+Cell(14, 17)
+const(Cell)(8, 4)
+Cell(6, 13)
+[Cell(6, 13),1,1]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 0)
+TextPoint(-1, -1)
+
+0
+0
+
+
+Cell(18, 5)
+const(Cell)(8, 4)
+Cell(10, 1)
+[Cell(10, 1),1,2]
+TextBOX
+Sans Normal 12
+#696969
+1
+true
+TextPoint(0, 3)
+TextPoint(-1, -1)
+GUI
+3
+3
+<(1,(0,3),(0,3))*(foreground_tag:#696969)>
+TextSpan(TextPoint(0, 3), TextPoint(0, 3), 1)
+
+Cell(14, 17)
+const(Cell)(8, 4)
+Cell(6, 13)
+[Cell(6, 13),1,5]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 7)
+TextPoint(-1, -1)
+キーコンフィグ
+7
+21
+
+
+Cell(19, 6)
+const(Cell)(8, 4)
+Cell(11, 2)
+[Cell(11, 2),2,9]
+TextBOX
+Sans Normal 12
+#696969
+2
+false
+TextPoint(1, 13)
+TextPoint(-1, -1)
+IM Rectの描画位置が
+ときたま、入力位置にかぶる
+13
+13
+65
+
+
+Cell(20, 17)
+const(Cell)(8, 4)
+Cell(12, 13)
+[Cell(12, 13),1,1]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 0)
+TextPoint(-1, -1)
+
+0
+0
+
+
+Cell(17, 6)
+const(Cell)(8, 4)
+Cell(9, 2)
+[Cell(9, 2),1,7]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 10)
+TextPoint(-1, -1)
+BOXの色を保存する
+10
+24
+
+
+Cell(20, 18)
+const(Cell)(8, 4)
+Cell(12, 14)
+[Cell(12, 14),1,1]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 0)
+TextPoint(-1, -1)
+
+0
+0
+
+
+Cell(8, 16)
+const(Cell)(8, 4)
+Cell(0, 12)
 [Cell(0, 12),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 9),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 15),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 4),1,1]
-RectBOX
-#B22222
-[Cell(2, 14),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 14),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 10),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 2),1,1]
-RectBOX
-#B22222
-[Cell(3, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 14),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 5),1,1]
-RectBOX
-#B22222
-[Cell(4, 0),1,1]
-RectBOX
-#B22222
-[Cell(1, 14),1,1]
-RectBOX
-#FF8C00
-[Cell(0, 0),1,1]
-RectBOX
-#B22222
-[Cell(0, 11),1,1]
-RectBOX
-#FF8C00
+TextBOX
+Sans Normal 12
+#B8860B
+1
+false
+TextPoint(0, 0)
+TextPoint(-1, -1)
+
+0
+0
+
+
+Cell(20, 17)
+const(Cell)(8, 4)
+Cell(12, 13)
+[Cell(12, 13),1,7]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 13)
+TextPoint(-1, -1)
+Contentのグループ化
+13
+25
+
+
+Cell(8, 17)
+const(Cell)(8, 4)
+Cell(0, 13)
+[Cell(0, 13),1,7]
+TextBOX
+Sans Normal 12
+#B8860B
+1
+false
+TextPoint(0, 10)
+TextPoint(-1, -1)
+わりとどうでもいいの
+10
+30
+
+
+Cell(9, 17)
+const(Cell)(8, 4)
+Cell(1, 13)
+[Cell(1, 13),1,6]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 10)
+TextPoint(-1, -1)
+Arrowおける機能
+10
+20
+
+
+Cell(10, 17)
+const(Cell)(8, 4)
+Cell(2, 13)
+[Cell(2, 13),1,5]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 7)
+TextPoint(-1, -1)
+線分引ける機能
+7
+21
+
+
+Cell(8, 27)
+const(Cell)(8, 4)
+Cell(0, 23)
+[Cell(0, 23),1,4]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 6)
+TextPoint(-1, -1)
+やるきが必要
+6
+18
+
+
+Cell(9, 27)
+const(Cell)(8, 4)
+Cell(1, 23)
+[Cell(1, 23),1,3]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 6)
+TextPoint(-1, -1)
+MathML
+6
+6
+
+
+Cell(10, 27)
+const(Cell)(8, 4)
+Cell(2, 23)
+[Cell(2, 23),1,5]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 7)
+TextPoint(-1, -1)
+マウスサポート
+7
+21
+
+
+Cell(11, 27)
+const(Cell)(8, 4)
+Cell(3, 23)
+[Cell(3, 23),1,6]
+TextBOX
+Sans Normal 12
+#696969
+1
+false
+TextPoint(0, 8)
+TextPoint(-1, -1)
+保存フォーマット
+8
+24
+
+
+Cell(12, 27)
+const(Cell)(8, 4)
+Cell(4, 23)
+[Cell(4, 23),2,6]
+TextBOX
+Sans Normal 12
+#696969
+2
+false
+TextPoint(1, 8)
+TextPoint(-1, -1)
+Guide機能で
+できることを表示
+8
+8
+39
+
+
+

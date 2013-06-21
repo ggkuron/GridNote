@@ -154,7 +154,6 @@ private:
         _back_color.hold_tl(Cell(0,0),max_row()+1,max_col()+1);
         _back_color.set_drawer();
 
-        debug(gui) writeln("_holding w:",_holding_area.w, "h:",_holding_area.h);
     }
     CircleBOX[Color] _color_box;
     Color[int] _color_priority;
@@ -272,11 +271,9 @@ private:
     // double _debug_pos_div=3/10;
     string _debug_str;
     void _renderDebug(Context cr){
-        _render_text.fill(cr,_debug_msg,dimgray);
+        _render_text.fill(cr,_debug_msg,Color(dimgray,128));
         if(_debug_str)
             _render_text.render(cr,_debug_msg,true);
-        import std.stdio;
-        writeln(_debug_str);
     }
 
 public:
@@ -321,8 +318,8 @@ public:
         return _holding_area;
     }
     void display_color(in Color c){
-        // if(c !in _color_box)
-        //     add_color(c);
+        if(c !in _color_box)
+            add_color(c);
         _selected_color = c;
     }
     void display_color(){

@@ -55,7 +55,7 @@ public:
         _focused_table = table;
         _select = new SelectBOX(_focused_table);
 
-        _manip_textbox = new ManipTextBOX(this);
+        _manip_textbox = new ManipTextBOX();
         _pv =  p;
     }
     void move_focus(in Direct dir){
@@ -142,12 +142,13 @@ public:
             box[1].remove_from_table();
         }
     }
-    void grab_selectbox(){
+    auto grab_selectbox(){
         auto target = _focused_table.get_content(_select.focus);
         _box_type = target[0];
         _maniped_box = target[1];
         if(_box_type == "cell.textbox.TextBOX")
             _box_use_im = true;
+        return _maniped_box;
     }
     void move_selected(in Direct to){
         auto target = _focused_table.get_content(_select.focus)[1];
@@ -224,7 +225,6 @@ public:
         _mode = FocusMode.edit;
     }
     void create_TextBOX(){
-        debug(manip) writeln("start_insert_normal_text");
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
         auto tb = _select.create_TextBOX();
@@ -234,22 +234,28 @@ public:
         _box_type = tb.toString();
         _box_use_im = true;
         debug(manip) writeln("type in: ",tb.toString());
-        debug(manip) writeln("end");
     }
     void select_color(in Direct dir){
         _pv.guide_view.select_color(dir);
         _selected_color = get_selectedColor();
+        _set_color();
+    }
+    private void _set_color(){
+        if(_mode == FocusMode.normal)
+            if(grab_selectbox())
+                _maniped_box.set_color(_selected_color);
         if(_mode == FocusMode.edit)
-            _maniped_box.set_color(_selected_color);
+            if(auto tb = cast(TextBOX)(_maniped_box))
+                tb.set_foreground_color(_selected_color);
     }
     void select_color(in Color c){
         _selected_color = c;
+        _pv.guide_view.display_color(c);
     }
     const(Color) get_selectedColor(){
         return _pv.guide_view.get_selectedColor();
     }
     void create_CircleBOX(){
-        debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
         auto ib = _select.create_CircleCell(_selected_color,_pv);
@@ -257,10 +263,8 @@ public:
         _maniped_box = ib;
         _box_type = ib.toString();
         _box_use_im = false;
-        debug(manip) writeln("#### end create_ImageBOX ####");
     }
     void create_RectBOX(){
-        debug(manip) writeln("@@@@ start create_ImageBOX @@@@");
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
         auto ib = _select.create_RectCell(_selected_color,_pv);
@@ -268,7 +272,6 @@ public:
         _maniped_box = ib;
         _box_type = ib.toString();
         _box_use_im = false;
-        debug(manip) writeln("#### end create_ImageBOX ####");
     }
     void im_commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
@@ -298,22 +301,20 @@ public:
         }
     }
     void text_feed(){
-        auto tb = cast(TextBOX)_maniped_box;
-        _old_state ~= new TextBOX(_focused_table,tb);
-        if(_box_type == "cell.textbox.TextBOX")
+        if(auto tb = cast(TextBOX)_maniped_box)
+        {
+            _old_state ~= new TextBOX(_focused_table,tb);
             if(_manip_textbox.feed(tb))
                 move_focus(down);
-                
+        }
     }
     void edit_textbox(){
-        if(_box_type != "cell.textbox.TextBOX") 
-            return;
-        _old_state ~= _maniped_box;
-        if(_box_type != "cell.textbox.TextBOX") return;
+        if(auto tb = cast(TextBOX)_maniped_box) 
+            _old_state ~= _maniped_box;
     }
     void undo(){
         if(!_old_state.empty())
-        _maniped_box = _old_state[$-1];
+            _maniped_box = _old_state[$-1];
     }
     import gtk.FileChooserDialog;
     import gtk.Window;
@@ -321,7 +322,7 @@ public:
     private string _opened_file;
     string choose_save_file(){
         string file_name;
-        if(!_file_chooser)
+        // if(!_file_chooser)
         {
             string[] a;
             ResponseType[] r;
@@ -347,7 +348,8 @@ public:
             file_name = _opened_file;
         else 
             file_name = choose_save_file();
-        if(!file_name) 
+
+        if(!file_name || file_name.empty) 
             file_name = "tmp.dat";
 
         auto file = std.stdio.File(file_name,"w");
@@ -397,6 +399,7 @@ public:
             file_name = _opened_file;
         else 
             file_name = choose_open_file();
+        if(file_name.empty) return;
 
         _focused_table.clear();
         auto file = std.stdio.File(file_name,"r");
@@ -411,6 +414,7 @@ public:
         }
         foreach(l; line_buf)
         {
+            writeln(l);
             switch(chomp(l[1])){
                 case "RectBOX":
                     new RectBOX(_focused_table,_pv,l);
@@ -436,26 +440,9 @@ public:
         // ManipTable _manip_table;
         // IMMulticontext _imm;
         // 上2つ使ってないかもしれない
-        this(ManipTable mt){
+        this(){
             // _manip_table = mt;
         }
-        // void move_caret(TextBOX box, in Direct dir){
-        //     final switch(dir){
-        //         case right:
-        //             box.move_caretR(); return;
-        //             return;
-        //         case left:
-        //             box.move_caretL(); return;
-        //             return;
-        //         case up:
-        //             box.move_caretU(); return;
-        //             return;
-        //         case down:
-        //             box.move_caretD(); return;
-        //             return;
-        //     }
-        //     assert(0);
-        // }
         void append(TextBOX box,string str){
             debug(manip) writeln("text insert strat");
             box.append(str);

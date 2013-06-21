@@ -416,7 +416,8 @@ public:
                     _input_state = InputState.Edit;
                     _before_state = InputState.Normal;
                     change_mode_edit();
-                }else
+                }
+                else
                 {
                     _input_state = InputState.Normal;
                     _imm.focusOut();

@@ -128,6 +128,7 @@ public:
             const markup_len = cast(int)markup_str.length;
             PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
             _layout[box_id].setMarkup(markup_str,markup_len);
+
             if(!fixed)
             {   // 
                 _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
@@ -138,7 +139,6 @@ public:
                 caret.y = lines_y(_currentline);
                 caret.w = _gridSize * 3.0 / 2.0;
                 caret.h /= 1024;
-                _table_view.set_msg(to!string(box.get_caret));
                 caret.set_color(red);
                 fill(cr,caret);
             }

@@ -36,9 +36,12 @@ public:
         in{
         assert(range.empty);
         }
+        out{
+        assert(top_left != Cell.invalid);
+        }
     body{ // create initial box
         clear(); // <- range.clear()
-        add(c);
+        _inner_range_cell.add(c);
     }
     this(BoxTable t,in Cell ul,in int cw,in int rw){
         debug(cell){ 
@@ -141,11 +144,13 @@ public:
     // mixin-templateで分離するのには各実装ごとに差分存在するようなしないような
     // 妥協点は、各実装でこれをoverride
     bool require_create_in(in Cell c)
-    {
+        out{
+        // assert(top_left != Cell.invalid);
+        }
+    body{
         if(is_registered())
         {
             remove_from_table();
-            clear();
         }
         return _table.try_create_in(this,c);
     }
@@ -191,11 +196,22 @@ public:
     bool require_expand(in Direct to,in int width=1){
         return (_table.try_expand(this,to,width));
     }
-    bool require_hold(in Cell c,in int h,in int w){
-        return 
-            require_create_in(c)
-            && require_expand(right,w-1)
-            && require_expand(down,h-1);
+    bool require_hold(in Cell c,in int h,in int w)
+        out{
+        // assert(top_left != Cell(-1,-1));
+        }
+    body{
+        const h_ = h-1;
+        const w_ = w-1;
+        if(require_create_in(c))
+        {
+            if(w_)
+                require_expand(right,w-1);
+            if(h_)
+                require_expand(down,h-1);
+            return true;
+        }else
+            return false;
     }
     unittest{
         import cell.textbox;
@@ -291,7 +307,7 @@ public:
         return _inner_range_cell.edge_forward_cells(dir);
     }
     void set_color(in Color c){
-        _box_color = c;
+        _box_color = Color(c,96);
     }
     @property Color box_color()const{
         return _box_color;

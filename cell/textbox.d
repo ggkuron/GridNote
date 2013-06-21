@@ -84,7 +84,9 @@ public:
     }
     void set_foreground_color(in Color c){
         if(_text.empty)
+        {
             _box_foreground = c;
+        }
         else
             _text.set_foreground(c);
     }
@@ -93,11 +95,8 @@ public:
             set_color(c); 
         else // 文字の背景色を設定
             _text.set_background(c);
+        
     }
-
-    // override void set_color(in Color c){
-    //     set_foreground_color(c);
-    // }
     void set_heading(ubyte size)
         in{
         assert(size >= 0);
@@ -124,7 +123,6 @@ public:
             require_remove(down);
     }
     // 現状caretは改行時のみの使用になってる
-    // Text::TextPointをcaretとして扱う実装仕様にする
     bool expand_with_text_feed(){
         if(require_expand(down))
         {
@@ -140,8 +138,8 @@ public:
     string markup_string(){
         if(_text.empty) return null;
         SpanTag box_desc;
-        box_desc.font_desc(desc_str());
-        box_desc.foreground(_box_foreground);
+        box_desc.set_font_desc(desc_str());
+        box_desc.set_foreground(_box_foreground);
         auto tmp =  box_desc.tagging(_text.markup_string());
         return tmp;
     }
@@ -189,6 +187,8 @@ public:
     string dat(in Cell offset=Cell(0,0)){
         string result ="[";
         writeln(top_left());
+        writeln(offset);
+        writeln(top_left - offset);
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
         result ~= to!string(numof_col) ~ "]\n";
