@@ -127,6 +127,7 @@ final class Lines : Shape{
 }
 final class Rect : Shape{
     double x,y,w,h;
+    this(){};
     this(in double xx=0,in double yy=0,in double ww=0,in double hh=0){
         replace(xx,yy,ww,hh);
     }
@@ -136,21 +137,21 @@ final class Rect : Shape{
         w = ww;
         h = hh;
     }
-    private void set_gen(T)(T u){
+    private void set_by(T)(T u){
         x = cast(double)u.x;
         y = cast(double)u.y;
         w = cast(double)u.width;
         h = cast(double)u.height;
     }
     this(PangoRectangle pr){
-        set_gen(pr);
+        set_by(pr);
     }
     this(GtkAllocation ga){
-        set_gen(ga);
+        set_by(ga);
     }
-    void set_by(GtkAllocation ga){
-        set_gen(ga);
-    }
+    //uvoid set_by(GtkAllocation ga){
+    //     set_(ga);
+    // }
     // this(cairo_rectangle_int_t cr){
     //     set_gen(cr);
     // }

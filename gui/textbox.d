@@ -70,6 +70,16 @@ private:
     PgLayout[BoxId] _layout;
     PgAttributeList[BoxId] _attrilst;
     PgAttributeList _im_attr;
+    
+    IMContext _imc;
+    bool _preeditting;
+    bool is_preediting(){
+        return _preeditting;
+    }
+    void set_preeditting(in bool b){
+        _preeditting = b;
+    }
+    int _im_pos;
 
     string[BoxId] _strings;
     int _currentline; // preedit のために保持
@@ -81,12 +91,14 @@ private:
     int[BoxId][Line] _width;
     int[BoxId] _height;
     // 一応保持しとく
+    Rect _caret_rect;
     PangoRectangle[Line] _logicRect;
     PangoRectangle _caretRect;
     int _gridSize;
 public:
     this(TableView tv){
         super(tv);
+        _caret_rect = new Rect();
     }
     void render(Context cr, TextBOX box, bool fixed = false){
         // get info and update class holded info
@@ -115,52 +127,20 @@ public:
             foreach(l; 0 .. box.numof_lines)
                 _logicRect[l] = PangoRectangle.init;
         }
-
         double lines_y(in int l){
             return _box_pos[box_id].y + _gridSize * l;
         }
-        register_check(box);
-        // textを持っていなくてIM入力もしてないなら描画しない
-        // BOX生成直後のチェック後のここまでの処理は必要
-        if(box.text_empty() && !is_preediting)
-            return;
-        string markup_str = box.markup_string();
-        if(markup_str)
-        {
-            const markup_len = cast(int)markup_str.length;
-            PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
-            _layout[box_id].setMarkup(markup_str,markup_len);
-
-            if(!fixed)
-            {   // 
-                _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
-                auto caret = new Rect(_caretRect);
-                caret.x /= 1024;
-                caret.x += _box_pos[box_id].x;
-                caret.y /= 1024;
-                caret.y = lines_y(_currentline);
-                caret.w = _gridSize * 3.0 / 2.0;
-                caret.h /= 1024;
-                caret.set_color(red);
-                fill(cr,caret);
-            }
+        void _update_caret_rect(){
+            if(!is_preediting) _im_pos = 0;
+            _layout[box_id].getCursorPos(box.get_caret,null,&_caretRect);
+            _caret_rect.set_by(_caretRect);
+            _caret_rect.x /= 1024;
+            _caret_rect.x += _box_pos[box_id].x;
+            // _caret_rect.y /= 1024;
+            _caret_rect.y = lines_y(_currentline) - _gridSize;
+            _caret_rect.w = _gridSize*3/4;
+            _caret_rect.h = _gridSize;
         }
-        for(int line; line < box.numof_lines; ++line )
-        {
-            auto line_layout = _layout[box_id].getLineReadonly(line);
-            int newIndex,newTraing;
-
-            const line_y = lines_y(line);
-            cr.moveTo(_box_pos[box_id].x,line_y);
-            PgCairo.showLayoutLine(cr,line_layout);
-
-            // get real ocupied width and height
-            // render_preedit より前に取得する必要がある
-            line_layout.getPixelExtents(null,&_logicRect[line]);
-            _width[box_id][line] = _logicRect[line].width;
-            _height[box_id] = _logicRect[line].height;
-        }
-
         void render_preedit()
         {   // 固定化されているBOXならここを通らなくていい
             if(_im_target_id !in _width || _currentline !in _width[_im_target_id])   
@@ -170,6 +150,13 @@ public:
             layout.setAttributes(_im_attr);
             layout.setFontDescription(_im_target.font_desc());
             layout.setText(_preedit);
+
+            _update_caret_rect();
+        auto im_rect = _caret_rect.get_struct!(cairo_rectangle_int_t)();
+        im_rect.x += _table_view.get_holdingArea.x;
+        im_rect.width = 0;
+        im_rect.height = _gridSize;
+        _imc.setCursorLocation(im_rect);
 
             cr.set_color(box.current_foreground);
             cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
@@ -219,12 +206,50 @@ public:
 
             } while(1);
         }
+
+        register_check(box);
+        // textを持っていなくてIM入力もしてないなら描画しない
+        // BOX生成直後のチェック後のここまでの処理は必要
+        if(box.text_empty() && !is_preediting)
+            return;
+
         if(!fixed && is_preediting() && _im_target_id == box_id)
             render_preedit();
+
+        string markup_str = box.markup_string();
+        if(markup_str)
+        {
+            const markup_len = cast(int)markup_str.length;
+            PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
+            _layout[box_id].setMarkup(markup_str,markup_len);
+
+            if(!fixed)
+            {   // 
+                _update_caret_rect();
+                _caret_rect.set_color(Color(lime,128));
+                fill(cr,_caret_rect);
+            }
+        }
+        for(int line; line < box.numof_lines; ++line )
+        {
+            auto line_layout = _layout[box_id].getLineReadonly(line);
+            int newIndex,newTraing;
+
+            const line_y = lines_y(line);
+            cr.moveTo(_box_pos[box_id].x,line_y);
+            PgCairo.showLayoutLine(cr,line_layout);
+
+            // get real ocupied width and height
+            // render_preedit より前に取得する必要がある
+            line_layout.getPixelExtents(null,&_logicRect[line]);
+            _width[box_id][line] = _logicRect[line].width;
+            _height[box_id] = _logicRect[line].height;
+        }
         if(!fixed && !_render_target.empty)
             modify_boxsize();
+
     }
-    public void prepare_preedit(IMContext imc,TextBOX box)
+    void prepare_preedit(IMContext imc,TextBOX box)
         out{
         assert(_im_target_id == box.id);
         }
@@ -232,35 +257,18 @@ public:
         _im_target = box;
         immutable box_id = _im_target.id();
         _im_target_id = box_id;
-        _gridSize = get_gridSize();
+        _imc = imc;
 
-        auto box_pos = window_position(box);
-        auto logical = cast(cairo_rectangle_int_t)_logicRect[_currentline];
-        auto im_rect =
-            cairo_rectangle_int_t(
-                cast(int)(logical.width + box_pos.x),
-                cast(int)(logical.y + box_pos.y + _gridSize * (_currentline + 1)),
-                logical.width,
-                logical.height);
-
-        int cursor_pos;
-        imc.setCursorLocation(im_rect);
-        imc.getPreeditString(_preedit,_im_attr,cursor_pos);
+        imc.getPreeditString(_preedit,_im_attr,_im_pos);
         _im_attr.insert(PgAttribute.fontDescNew(_im_target.font_desc));
-        _im_target.set_cursor_pos(cursor_pos);
+        // _im_target.set_cursor_pos(box.get_caret);
+        writeln(_im_pos,' ',box.get_caret);
 
         set_preeditting(true);
     }
-    public void retrieve_surrouding(IMContext imc){
+    void retrieve_surrouding(IMContext imc){
     }
-    private bool _preeditting;
-    private bool is_preediting(){
-        return _preeditting;
-    }
-    private void set_preeditting(in bool b){
-        _preeditting = b;
-    }
-    public Tuple!(string,int) get_surrounding(){
+    Tuple!(string,int) get_surrounding(){
         // _im_target.set_cursor_pos(_im_target.getText.caret().column);
         // writeln("cursor_pos: ",_im_target.cursor_pos); 
         return tuple(_strings[_im_target_id],_im_target.cursor_pos);

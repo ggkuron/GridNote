@@ -119,21 +119,25 @@ private:
         imc.setSurrounding(surround[0],surround[1]);
         return true;
     }
+    import std.stdio;
     bool _focus_in(Event ev,Widget w){
-        _imm.focusIn();
+        // if(_interpreter.is_using_im)
+        _interpreter.im_focusIn();
         return true;
     }
+    // private bool _last_im_state;
     bool _focus_out(Event ev,Widget w){
-        _imm.focusOut();
+        if(!_interpreter.is_using_im)
+            _interpreter.im_focusOut();
         return true;
     }
     void _when_realize(Widget w){
         _imm.setClientWindow(getParentWindow());
-        _imm.focusOut();
+        _interpreter.im_focusIn();
     }
     void _when_unrealize(Widget w){
         _imm.focusOut();
-        _imm.reset();
+        // _imm.reset();
         _imm.setClientWindow(null);
     }
     void _set_holding_area()
@@ -258,9 +262,8 @@ private:
         _setGrid();
         _table.set_gridsize(_gridSpace);
     }
-public:
     // ConfigFileから読むようにしたい
-    void init_color_select(){
+    void _init_color_select(){
         _manip_table.select_color(dimgray);
         _guide_view.add_color(dimgray);
         _guide_view.add_color(darkorange);
@@ -279,6 +282,7 @@ public:
         _guide_view.add_color(forestgreen);
         _guide_view.display_color();
     }
+public:
     Window _main_window;
     this(Window w,GuideView guide,Cell start_offset = Cell(0,0))
         out{
@@ -303,10 +307,10 @@ public:
 
         _in_view = new ReferTable(_table,start_offset,1,1);
         _guide_view = guide;
-        init_color_select();
+        _init_color_select();
 
         addOnKeyPress(&_interpreter.key_to_cmd);
-        // addOnFocusIn(&focus_in);
+        addOnFocusIn(&_focus_in);
         addOnFocusOut(&_focus_out);
         addOnRealize(&_when_realize);
         addOnUnrealize(&_when_unrealize);

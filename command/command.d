@@ -23,10 +23,11 @@ private:
     const(KeyCombine)[] keys;
 public:
     void execute();
-    final void register_key(in KeyCombine ckc){
+final:
+    void register_key(in KeyCombine ckc){
         keys ~= ckc;
     }
-    final bool is_registered(in KeyCombine kc)const{
+    bool is_registered(in KeyCombine kc)const{
         foreach(k; keys)
         {
             if(k == kc)
@@ -34,7 +35,7 @@ public:
         }
         return false;
     }
-    final void clear(){
+    void clear(){
         keys.clear();
     }
 }
@@ -78,7 +79,7 @@ final class combined_COMMAND : COMMAND,AtomCMD{
             }
         }
     }
-    override void execute(){
+    final override void execute(){
         foreach(cmd; commands)
         {
             debug(cmd) writeln("exec: ",cmd);
@@ -170,7 +171,7 @@ private:
 
     uint[] keyState;
     uint modState;
-    bool im_driven;
+    bool _im_driven;
     COMMAND[KeyCombine][InputState] command_table;
 
     void register_key(COMMAND cmd, InputState state, in KeyCombine ckc){
@@ -208,8 +209,6 @@ private:
         else
             input = KeyCombine(keyState);
         debug(cmd) writeln("input: ",input);
-        // debug(cmd) writeln("state: ",_input_state);
-        // debug(cmd) writeln("state in: ",command_table[_input_state].keys);
         
         if(input in command_table[_input_state])
         {
@@ -278,7 +277,7 @@ public:
         register_key(move_selected_d,InputState.Normal,default_MOVE_BOX_D);
 
         create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,_manip,_view);
-        im_focus_out = cmd_template!("inp._imm.focusOut();")(this,_manip,_view);
+        im_focus_out = cmd_template!("inp.im_focusOut();")(this,_manip,_view);
         create_circle = cmd_template!("manip.create_RectBOX();")(this,_manip,_view);
         register_key(create_circle,InputState.Normal,default_ImageOpen);
         register_key(create_circle,InputState.Edit,default_ImageOpen);
@@ -317,7 +316,7 @@ public:
         text_feed = cmd_template!("manip.text_feed();")(this,_manip,_view);
         register_key(text_feed,InputState.Edit,return_key);
         text_edit = cmd_template!("manip.edit_textbox();")(this,_manip,_view);
-        im_focus_in = cmd_template!("inp._imm.focusIn();")(this,_manip,_view);
+        im_focus_in = cmd_template!("inp.im_focusIn();")(this,_manip,_view);
 
         save = cmd_template!("manip.preserve();")(this,_manip,_view);
         restore = cmd_template!("manip.restore();")(this,_manip,_view);
@@ -369,14 +368,14 @@ public:
         }
         final switch(_input_state){
             case InputState.Edit:
-                im_driven = cast(bool)_imm.filterKeypress(ev);
-                debug(cmd) writeln(im_driven);
-                if(im_driven) return true;
+                _im_driven = cast(bool)_imm.filterKeypress(ev);
+                debug(cmd) writeln(_im_driven);
+                if(_im_driven) return true;
                 break;
             case InputState.Normal:
             case InputState.CellSelect:
             case InputState.ColorSelect:
-                _imm.focusOut();
+                im_focusOut();
                 break; // ここで使われる値ではない
         }
         keyState ~= ev.keyval;
@@ -385,7 +384,7 @@ public:
             keyState = keyState[$-preserve_length .. $];
         control_input();
 
-        debug(cmd) writeln(keyState);
+        // debug(cmd) writeln(keyState);
         return true;
     }
     COMMAND[] command_queue;
@@ -410,7 +409,6 @@ public:
                 _imm.focusOut();
                 break;
             case InputState.ColorSelect:
-
                 break;
             case InputState.Edit:
                 keyState.clear();
@@ -461,6 +459,15 @@ public:
                 break;
         }
     }
+    void im_focusIn(){
+        _im_driven = true;
+        _imm.focusIn();
+    }
+    void im_focusOut(){
+        _im_driven = false;
+        _imm.focusOut();
+    }
+        
     void execute(){
 
         foreach(cmd; command_queue)
@@ -472,5 +479,8 @@ public:
     }
     @property InputState state()const{
         return _input_state;
+    }
+    bool is_using_im()const{
+        return _im_driven;
     }
 }
