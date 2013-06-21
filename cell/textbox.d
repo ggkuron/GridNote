@@ -193,7 +193,7 @@ public:
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
         result ~= to!string(numof_col) ~ "]\n";
-        result ~= "TextBOX\n";
+        result ~= "TextBOX * "~to!string(box_color)~"\n";
         result ~= desc_str ~ '\n';
         result ~= _box_foreground.hex_str ~'\n';
         result ~= _text.dat();

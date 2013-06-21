@@ -189,7 +189,7 @@ class RectBOX : ImageBOX{
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
         result ~= to!string(numof_col) ~ "]\n";
-        result ~= "RectBOX\n";
+        result ~= "RectBOX * " ~ to!string(box_color) ~ "\n";
         result ~= _image.color.hex_str ~ '\n';
         return result;
     }

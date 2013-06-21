@@ -415,12 +415,15 @@ public:
         foreach(l; line_buf)
         {
             writeln(l);
-            switch(chomp(l[1])){
+            auto box_type = split(chomp(l[1])," * ");
+            switch(box_type[0]){
                 case "RectBOX":
-                    new RectBOX(_focused_table,_pv,l);
+                    auto rb = new RectBOX(_focused_table,_pv,l);
+                    rb.set_color(Color(box_type[1]));
                     break;
                 case "TextBOX":
-                    new TextBOX(_focused_table,l);
+                    auto tb = new TextBOX(_focused_table,l);
+                    tb.set_color(Color(box_type[1]));
                     break;
                 default:
                     break;
