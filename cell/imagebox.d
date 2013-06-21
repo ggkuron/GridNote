@@ -131,7 +131,7 @@ import std.array;
 import std.stdio;
 import std.ascii;
 
-class RectBOX : ImageBOX{
+final class RectBOX : ImageBOX{
     RectDrawer _rect_d;
     this(BoxTable table,TableView tv){
         super(table,tv);
@@ -194,7 +194,7 @@ class RectBOX : ImageBOX{
         return result;
     }
 }
-class PointBOX : ImageBOX{
+final class PointBOX : ImageBOX{
     PointDrawer _point_d;
     this(BoxTable table,TableView tv){
         super(table,tv);
@@ -214,6 +214,7 @@ class PointBOX : ImageBOX{
         (cast(Point)_image).replace(tl);
     }
 }
+
 class CircleBOX : ImageBOX{
     CircleDrawer _circle_d;
     this(BoxTable table,TableView tv){
@@ -238,7 +239,7 @@ class CircleBOX : ImageBOX{
 // ContentBOX実装というよりCellStructure版のような実装しかしてない
 // PageViewのGridsのための手抜きしてるんで気力あるときに書き換えよう
 // というかそんな多様性ほしくないかも
-class LinesBOX : ImageBOX{
+final class LinesBOX : ImageBOX{
     LinesDrawer _lines_d;
     LinesDrawerEach _linesE_d;
     this(BoxTable table,TableView tv){

@@ -240,6 +240,7 @@ public:
     unittest{
         auto table = new BoxTable();
         auto cb = new TextBOX(table,Cell(5,5),5,5);
+        cb.append("no text went down table to discard box");
         writeln(table.edge(left));
         writeln(table.edge(right));
         writeln(table.edge(up));

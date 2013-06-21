@@ -203,4 +203,14 @@ public:
     void text_clear(){
         _text.clear();
     }
+    override void clear(){
+        super.clear();
+        _text.clear();
+    }
+    bool text_empty()const{
+        return _text.empty();
+    }
+    override bool empty()const{
+        return super.empty && _text.empty;
+    }
 }

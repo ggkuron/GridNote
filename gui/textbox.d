@@ -88,10 +88,8 @@ public:
     this(TableView tv){
         super(tv);
     }
-    void render(Context cr,TextBOX box,bool fixed = false){
-
+    void render(Context cr, TextBOX box, bool fixed = false){
         // get info and update class holded info
-        if(box.empty()) return;
         immutable box_id = box.id();
         _gridSize = get_gridSize();
         _box_pos[box_id] = context_position(box); // gui.render_box::get_position
@@ -122,6 +120,10 @@ public:
             return _box_pos[box_id].y + _gridSize * l;
         }
         register_check(box);
+        // textを持っていなくてIM入力もしてないなら描画しない
+        // BOX生成直後のチェック後のここまでの処理は必要
+        if(box.text_empty() && !is_preediting)
+            return;
         string markup_str = box.markup_string();
         if(markup_str)
         {
