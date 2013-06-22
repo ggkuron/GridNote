@@ -7,6 +7,7 @@ import util.direct;
 import util.color;
 import util.span;
 import gtkc.pangotypes;
+import glib.SimpleXML;
 import std.string;
 import std.algorithm;
 import std.exception;
@@ -479,6 +480,7 @@ private:
     }
     // lineが存在しないなら""を返す
     // これに依存、str(TextPoint,TextPoint)
+    // escapeされてない文字が返る
     @property string _str(in int line)const{
         if(_writing
         && !_writing.keys.empty()
@@ -671,7 +673,7 @@ public:
             }
         }
         foreach(span; _tag_pool.keys)
-        {
+        {   // "</span>" for opened span
             if(span.is_opened)
                 ++opened_cnt;
         }
@@ -688,7 +690,7 @@ public:
                     foreach(tag; tag_pos[tp].sort)
                         result ~= tag;
                 }
-                result ~= _writing[line][pos];
+                result ~= SimpleXML.escapeText([cast(char)(_writing[line][pos])],1);
             }
         }
         auto end_of_buffer = _forward_point(end);
@@ -703,9 +705,9 @@ public:
         return result;
     }
     // .. カプセル化壊すがCell.TextBOXでappendするときにbyte数をとれるから
-    void impel_caret(in ulong s){
-        _caret += s;
-    }
+    // void impel_caret(in ulong s){
+    //     _caret += s;
+    // }
     void move_caret(in Direct dir){
     }
     // 改行文字
@@ -725,7 +727,6 @@ public:
         _writing[current_line][_current.pos] = c;
         if(c != '\n')
             ++_current.pos;
-        // ++_caret;
         
         if(c == '\n')   line_feed;
         const cp = current_pos;
@@ -736,13 +737,17 @@ public:
 
         return _current.pos;
     }
+    void caret_move_forward(in ulong u){
+        _caret += u;
+    }
     // TextBOXとは別パス。BOXの大きさの制約を受けないとき用途。TextBOXからは呼んではいけない。
     void append(string s){
+        caret_move_forward(s.length);
         foreach(dchar c; s)
         {
             append(c);
         }
-        _caret += s.length;
+        // _caret += s.length;
     }
     @property bool empty()const{
         return (_writing.keys.empty())
@@ -773,7 +778,6 @@ public:
             }
             _caret -= byte_size(pos_next);
             _deleteChar(--_current.pos);
-            // writeln(_writing[current_line]);
             if(_line_length[current_line])
                 --_line_length[current_line]; // pos に一致してるから負数にはならないとおもいきや、削除後に0になってるところでbackすると0になってるので
             return true;
@@ -781,7 +785,6 @@ public:
         else if(_current.line)
         {
             line_join();
-            --_caret;
         }
         return false;
     }

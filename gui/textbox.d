@@ -134,6 +134,7 @@ public:
             if(!is_preediting) _im_pos = 0;
             _layout[box_id].getCursorPos(box.get_caret,null,&_caretRect);
             _caret_rect.set_by(_caretRect);
+            writeln(_caret_rect.x);
             _caret_rect.x /= 1024;
             _caret_rect.x += _box_pos[box_id].x;
             // _caret_rect.y /= 1024;
@@ -152,11 +153,11 @@ public:
             layout.setText(_preedit);
 
             _update_caret_rect();
-        auto im_rect = _caret_rect.get_struct!(cairo_rectangle_int_t)();
-        im_rect.x += _table_view.get_holdingArea.x;
-        im_rect.width = 0;
-        im_rect.height = _gridSize;
-        _imc.setCursorLocation(im_rect);
+            auto im_rect = _caret_rect.get_struct!(cairo_rectangle_int_t)();
+            im_rect.x += _table_view.get_holdingArea.x;
+            im_rect.width = 0;
+            im_rect.height = _gridSize;
+            _imc.setCursorLocation(im_rect);
 
             cr.set_color(box.current_foreground);
             cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
@@ -247,7 +248,6 @@ public:
         }
         if(!fixed && !_render_target.empty)
             modify_boxsize();
-
     }
     void prepare_preedit(IMContext imc,TextBOX box)
         out{

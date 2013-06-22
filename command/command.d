@@ -20,23 +20,23 @@ private import stdlib = core.stdc.stdlib : exit;
 // COMMANDの粒度を細くして、組み合わせて使う方向で
 abstract class COMMAND{
 private:
-    const(KeyCombine)[] keys;
+    bool[KeyCombine] _table;
 public:
     void execute();
 final:
-    void register_key(in KeyCombine ckc){
-        keys ~= ckc;
+    void register_key(in KeyCombine ckc,bool invert = false){
+        _table[ckc] = invert;
     }
     bool is_registered(in KeyCombine kc)const{
-        foreach(k; keys)
+        foreach(k; _table)
         {
-            if(k == kc)
-                return true;
+            if(kc !in _table)
+                return _table[kc];
         }
-        return false;
+        return !_table[kc];
     }
     void clear(){
-        keys.clear();
+        _table.clear();
     }
 }
 
@@ -101,7 +101,7 @@ immutable preserve_length = 1;
 public:
 //  内部使用
 
-//  ユーザー入力に対する
+//  ユーザー入力に対すして発動するfunction直通
     COMMAND zoom_in;
     COMMAND zoom_out;
 
@@ -174,8 +174,8 @@ private:
     bool _im_driven;
     COMMAND[KeyCombine][InputState] command_table;
 
-    void register_key(COMMAND cmd, InputState state, in KeyCombine ckc){
-        cmd.register_key(ckc);
+    void register_key(COMMAND cmd, in InputState state, in KeyCombine ckc,bool invert= false){
+        cmd.register_key(ckc,invert);
         // 重複してはいけない
         import std.stdio;
         writeln("regist ",cmd);
@@ -186,7 +186,8 @@ private:
         if(!command_table.keys.empty 
                 && state in command_table 
                 && !command_table[state].keys.empty 
-                && ckc in command_table[state]) // <- KeyConfig実装するときにException飛ばす,もしくは上書きするためにtableから現在のKeyCombineを消して
+                && ckc in command_table[state] // <- KeyConfig実装するときにException飛ばす,もしくは上書きするためにtableから現在のKeyCombineを消して
+                && command_table[state][ckc].is_registered(ckc))
             throw new Exception("alredy used this keycombined");
         command_table[state][ckc] = cmd;
     }
@@ -330,7 +331,6 @@ public:
         register_key(restore,InputState.Normal,default_RESTORE);
 
         // combined_COMMAND
-
         normal_edit_textbox = new combined_COMMAND(grab_target,text_edit);
         register_key(normal_edit_textbox,InputState.Normal,default_EDIT);
         normal_start_edit_text = new combined_COMMAND(input_mode_edit,create_TextBOX,im_focus_in);
@@ -347,8 +347,8 @@ public:
         mode_cell_select_from_color_select = new combined_COMMAND(input_mode_select,manip_mode_select);
         register_key(mode_edit_from_color_select,InputState.ColorSelect,escape_key);
         register_key(mode_edit_from_color_select,InputState.ColorSelect,alt_escape);
-        register_key(mode_cell_select_from_color_select,InputState.CellSelect,escape_key);
-        register_key(mode_cell_select_from_color_select,InputState.CellSelect,alt_escape);
+        // register_key(mode_cell_select_from_color_select,InputState.CellSelect,escape_key);
+        // register_key(mode_cell_select_from_color_select,InputState.CellSelect,alt_escape);
 
         // open_imagefile = cmd_template!("manip.select_file();")(this,manip,_view);
         // register_key(open_imagefile,InputState.Normal,default_ImageOpen);
