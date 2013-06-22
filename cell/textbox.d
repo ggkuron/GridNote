@@ -10,6 +10,7 @@ import std.utf;
 import std.conv;
 import std.stdio;
 import std.ascii;
+import glib.SimpleXML;
 import util.direct;
 import shape.shape;
 debug(cell) import std.stdio;
@@ -108,15 +109,20 @@ public:
     {
     }
     void append(string s){
+        // s = SimpleXML.escapeText(s,s.length);
+
+        int feed_cnt;
         foreach(dchar c; s)
         {
             if(c == '\n') // 入力中は作動せず(改行文字は直接渡されない)、存在するstringを渡した時を想定している
+            {
                 expand_with_text_feed();
-
+                ++ feed_cnt;
+            }
             else
                 _text.append(c);
         }
-        _text.impel_caret(s.length);
+        _text.caret_move_forward(s.length - feed_cnt);
     }
     void backspace(){
         if(!_text.backspace()) // 行始でfalse
