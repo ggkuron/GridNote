@@ -25,16 +25,15 @@ struct KeyCombine{
     { 
         hash_t hash;
         foreach (k; keys)
-        hash = (hash * 9) + k + mod*25;
+            hash += (hash * 255) + k + mod*13;
         return hash;
     }
 }                            
 unittest{
-    import std.stdio;
     assert(default_MOVE_FOCUS_L == default_MOVE_FOCUS_L);
-    writeln(default_MOVE_FOCUS_L);
-    writeln(default_MOVE_BOX_L);
-    writefln("%d",ModifierType.SHIFT_MASK);
+    // writeln(default_MOVE_FOCUS_L);
+    // writeln(default_MOVE_BOX_L);
+    // writefln("%d",ModifierType.SHIFT_MASK);
     assert(default_MOVE_FOCUS_L != default_MOVE_BOX_L);
     assert(default_MOVE_FOCUS_L.toHash() != default_MOVE_BOX_L.toHash());
 
@@ -91,9 +90,14 @@ immutable default_Point= KeyCombine(GdkKeysyms.GDK_p);
 immutable default_MODE_COLOR = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_c]);
 // CLEARに当たる操作
 immutable default_RESTORE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_0]);
-immutable default_RESTORE_FILE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_O]);
+immutable default_RESTORE_FILE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_o]);
 immutable default_SAVE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_s]);
-immutable default_SAVE_NEW = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_S]);
+immutable default_SAVE_NEW = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_S]);
 immutable default_heading1 = KeyCombine([GdkKeysyms.GDK_numbersign]);
 immutable default_heading2 = KeyCombine([GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign]);
 immutable default_heading3 = KeyCombine([GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign]);
+
+immutable default_CMOVE_L = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_H]);
+immutable default_CMOVE_R = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_L]);
+immutable default_CMOVE_U = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_K]);
+immutable default_CMOVE_D = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_J]);

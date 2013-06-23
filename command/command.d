@@ -70,7 +70,7 @@ final class combined_COMMAND : COMMAND,AtomCMD{
             auto casted = cast(AtomCMD)cmd;
             debug(cmd) writeln("composed ",cmd);
             commands ~= casted;
-            assert(casted);
+            assert(casted); // だいたい宣言順見なおして
         }
         debug(cmd){
             foreach(cmd; commands)
@@ -132,6 +132,7 @@ public:
     COMMAND input_mode_select;
     COMMAND input_mode_edit;
     COMMAND input_mode_color;
+    COMMAND input_mode_before;
     COMMAND mode_normal;
     COMMAND mode_edit;
     COMMAND mode_select;
@@ -161,8 +162,12 @@ public:
     COMMAND edit_to_normal_state; 
     COMMAND normal_start_edit_text;
     COMMAND normal_edit_textbox;
-    COMMAND mode_edit_from_color_select;
-    COMMAND mode_cell_select_from_color_select;
+    // COMMAND mode_edit_from_color_select;
+    // COMMAND mode_cell_select_from_color_select;
+    COMMAND change_color_L;
+    COMMAND change_color_R;
+    COMMAND change_color_U;
+    COMMAND change_color_D;
 private:
     InputState _input_state = InputState.Normal;
     ManipTable _manip;
@@ -172,7 +177,7 @@ private:
     uint[] keyState;
     uint modState;
     bool _im_driven;
-    COMMAND[KeyCombine][InputState] command_table;
+    COMMAND[KeyCombine][InputState] _command_table;
 
     void register_key(COMMAND cmd, in InputState state, in KeyCombine ckc,bool invert= false){
         cmd.register_key(ckc,invert);
@@ -183,13 +188,13 @@ private:
         writefln("kc %s \n",ckc);
 
         // 同一のキーバインドを許さない
-        if(!command_table.keys.empty 
-                && state in command_table 
-                && !command_table[state].keys.empty 
-                && ckc in command_table[state] // <- KeyConfig実装するときにException飛ばす,もしくは上書きするためにtableから現在のKeyCombineを消して
-                && command_table[state][ckc].is_registered(ckc))
+        if(!_command_table.keys.empty 
+            && state in _command_table 
+            && !_command_table[state].keys.empty 
+            && ckc in _command_table[state] // <- KeyConfig実装するときにException飛ばす,もしくは上書きするためにtableから現在のKeyCombineを消して
+            && _command_table[state][ckc].is_registered(ckc))
             throw new Exception("alredy used this keycombined");
-        command_table[state][ckc] = cmd;
+        _command_table[state][ckc] = cmd;
     }
     void control_input(){
         debug(cmd) writeln(keyState);
@@ -208,15 +213,13 @@ private:
             input = KeyCombine([cast(ModifierType)modState],keyState);
         else
             input = KeyCombine(keyState);
-        import std.stdio;
-        writeln(default_BOX_DELETE);
-        writeln("input: ",input);
         
-        if(input in command_table[_input_state])
+        if(_input_state in _command_table  // 上段は
+                && input in _command_table[_input_state])
         {
             debug(cmd) writeln("parsed: ",input);
             keyState.clear();
-            add_to_queue(command_table[_input_state][input]);
+            add_to_queue(_command_table[_input_state][input]);
         }else if(!modState)
             keyState.clear();
 
@@ -302,10 +305,6 @@ public:
         color_select_R = cmd_template!("manip.select_color(right);")(this,_manip,_view);
         color_select_U = cmd_template!("manip.select_color(up);")(this,_manip,_view);
         color_select_D = cmd_template!("manip.select_color(down);")(this,_manip,_view);
-        register_key(color_select_L,InputState.ColorSelect,default_MOVE_FOCUS_L);
-        register_key(color_select_R,InputState.ColorSelect,default_MOVE_FOCUS_R);
-        register_key(color_select_U,InputState.ColorSelect,default_MOVE_FOCUS_U);
-        register_key(color_select_D,InputState.ColorSelect,default_MOVE_FOCUS_D);
 
         quit = cmd_template!("stdlib.exit(0);")(this,_manip,_view);
         grab_target = cmd_template!("manip.grab_selectbox();")(this,_manip,_view);
@@ -334,6 +333,7 @@ public:
         normal_start_edit_text = new combined_COMMAND(input_mode_edit,create_TextBOX,im_focus_in);
         register_key(normal_start_edit_text,InputState.Normal,default_INSERT);
 
+        input_mode_before = cmd_template!("inp.change_mode_before();")(this,_manip,_view);
         mode_normal = new combined_COMMAND(input_mode_normal,manip_mode_normal);
         mode_edit = new combined_COMMAND(input_mode_edit,manip_mode_edit);
         mode_select = new combined_COMMAND(input_mode_select,manip_mode_select);
@@ -341,15 +341,29 @@ public:
         register_key(mode_normal,InputState.Edit,escape_key);
         register_key(mode_normal,InputState.Normal,alt_escape);
         register_key(mode_normal,InputState.Edit,alt_escape);
-        mode_edit_from_color_select = new combined_COMMAND(input_mode_edit);
-        mode_cell_select_from_color_select = new combined_COMMAND(input_mode_select,manip_mode_select);
-        register_key(mode_edit_from_color_select,InputState.ColorSelect,escape_key);
-        register_key(mode_edit_from_color_select,InputState.ColorSelect,alt_escape);
+        // mode_edit_from_color_select = new combined_COMMAND(input_mode_edit);
+        // mode_cell_select_from_color_select = new combined_COMMAND(input_mode_select,manip_mode_select);
+        // register_key(mode_edit_from_color_select,InputState.ColorSelect,escape_key);
+        // register_key(mode_edit_from_color_select,InputState.ColorSelect,alt_escape);
         // register_key(mode_cell_select_from_color_select,InputState.CellSelect,escape_key);
         // register_key(mode_cell_select_from_color_select,InputState.CellSelect,alt_escape);
 
         // open_imagefile = cmd_template!("manip.select_file();")(this,manip,_view);
         // register_key(open_imagefile,InputState.Normal,default_ImageOpen);
+        change_color_L = new combined_COMMAND(input_mode_color,color_select_L,input_mode_before);
+        change_color_R = new combined_COMMAND(input_mode_color,color_select_R,input_mode_before);
+        change_color_U = new combined_COMMAND(input_mode_color,color_select_U,input_mode_before);
+        change_color_D = new combined_COMMAND(input_mode_color,color_select_D,input_mode_before);
+
+        register_key(change_color_L,InputState.Normal,default_CMOVE_L);
+        register_key(change_color_R,InputState.Normal,default_CMOVE_R);
+        register_key(change_color_U,InputState.Normal,default_CMOVE_U);
+        register_key(change_color_D,InputState.Normal,default_CMOVE_D);
+        register_key(change_color_L,InputState.Edit,default_CMOVE_L);
+        register_key(change_color_R,InputState.Edit,default_CMOVE_R);
+        register_key(change_color_U,InputState.Edit,default_CMOVE_U);
+        register_key(change_color_D,InputState.Edit,default_CMOVE_D);
+
     }
     bool key_to_cmd(Event event, Widget w)
         in{
@@ -374,7 +388,7 @@ public:
             case InputState.CellSelect:
             case InputState.ColorSelect:
                 im_focusOut();
-                break; // ここで使われる値ではない
+                break;
         }
         keyState ~= ev.keyval;
         modState = ev.state;
@@ -393,25 +407,43 @@ public:
         }
     }
 public:
-    bool can_edit()const{
+    private InputState _state_memento = InputState.Normal;
+    private void _add_in_memento(in InputState bis){
+        // 格納数増やせるように一応
+        import std.stdio;
+        // writeln(_input_state);
+        _state_memento = bis;
+        writeln(_input_state);
+    }
+    bool is_enable_to_edit()const{
         return _input_state == InputState.Edit
             && _manip.mode == FocusMode.edit;
+    }
+    void change_mode_before(){
+        import std.stdio;
+        _input_state = _state_memento;
+        if(_im_driven) 
+            im_focusIn();
+        writeln(_input_state);
     }
     void change_mode_normal(){
         final switch(_input_state){
             case InputState.Normal:
-                _imm.focusOut();
+                im_focusOut();
                 break;
             case InputState.CellSelect:
+                _add_in_memento(_input_state);
                 _input_state = InputState.Normal;
-                _imm.focusOut();
+                im_focusOut();
                 break;
             case InputState.ColorSelect:
+                _add_in_memento(_input_state);
                 break;
             case InputState.Edit:
                 keyState.clear();
+                im_focusOut();
+                _add_in_memento(_input_state);
                 _input_state = InputState.Normal;
-                _imm.focusOut();
                 break;
         }
     }
@@ -419,15 +451,14 @@ public:
         final switch(_input_state){
             case InputState.Normal:
             case InputState.CellSelect:
+                _add_in_memento(_input_state);
             case InputState.ColorSelect:
                 _input_state = InputState.Edit;
-                _imm.focusIn();
-                add_to_queue(
-                    manip_mode_edit
-                    );
+                im_focusIn();
+                add_to_queue( manip_mode_edit );
                 break;
             case InputState.Edit:
-                _imm.focusIn();
+                im_focusIn();
                 break;
         }
     }
@@ -438,7 +469,8 @@ public:
                 break;
             case InputState.Normal:
             case InputState.Edit:
-                _imm.focusOut();
+                im_focusOut();
+                _add_in_memento(_input_state);
                 _input_state = InputState.CellSelect;
                 add_to_queue(
                 manip_mode_select);
@@ -452,7 +484,8 @@ public:
             case InputState.CellSelect:
             case InputState.Normal:
             case InputState.Edit:
-                _imm.focusOut();
+                // _imm.focusOut(); // _im_drivenを維持
+                _add_in_memento(_input_state);
                 _input_state = InputState.ColorSelect;
                 break;
         }

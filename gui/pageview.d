@@ -88,14 +88,14 @@ private:
         return false;
     }
     void _when_commit(string str,IMContext imc){
-        if(_interpreter.can_edit())
+        if(_interpreter.is_enable_to_edit())
         {
             _manip_table.im_commit_to_box(str);
             queueDraw();
         }
     }
     void _when_preedit_changed(IMContext imc){
-        if(_interpreter.can_edit())
+        if(_interpreter.is_enable_to_edit())
         {
             auto inputted_box = cast(TextBOX)_manip_table.get_target();
             assert(inputted_box !is null);
@@ -103,7 +103,7 @@ private:
             // レイアウトのことは投げる
             // IMContextごと
             queueDraw();
-            // Preeditを描かせる必要
+            // Preeditを描かせるため必要
         }
     }
     // ascii mode に切り替わったことを期待してみるようなところ
