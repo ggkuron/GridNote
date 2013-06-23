@@ -6,20 +6,17 @@ import gtkc.gdktypes;
 alias uint KeySym;
 struct KeyCombine{
     const(KeySym)[] keys;
-    ModifierType mod;
-    private bool _use_mod;
+    ubyte mod;
     this(in KeySym[] k...){
         keys = k;
     }
-    this(ModifierType m,in KeySym[] k...){
-        _use_mod = true;
-        mod = m;
+    this(ModifierType[] m,in KeySym[] k...){
+        foreach(mm; m)
+            mod |= mm;
         keys = k;
     }
     bool opEquals(const KeyCombine kc)const{
-        if(_use_mod || kc._use_mod)
-            return (mod & kc.mod) && (keys == kc.keys);
-        else return keys == kc.keys;
+        return (mod == kc.mod) && (keys == kc.keys);
     }
     int opCmp(ref const KeyCombine rhs)const{
         return cast(int)(toHash() - rhs.toHash());
@@ -33,7 +30,11 @@ struct KeyCombine{
     }
 }                            
 unittest{
+    import std.stdio;
     assert(default_MOVE_FOCUS_L == default_MOVE_FOCUS_L);
+    writeln(default_MOVE_FOCUS_L);
+    writeln(default_MOVE_BOX_L);
+    writefln("%d",ModifierType.SHIFT_MASK);
     assert(default_MOVE_FOCUS_L != default_MOVE_BOX_L);
     assert(default_MOVE_FOCUS_L.toHash() != default_MOVE_BOX_L.toHash());
 
@@ -56,10 +57,10 @@ immutable default_MOVE_FOCUS_R = KeyCombine(GdkKeysyms.GDK_l);
 immutable default_MOVE_FOCUS_U = KeyCombine(GdkKeysyms.GDK_k);
 immutable default_MOVE_FOCUS_D = KeyCombine(GdkKeysyms.GDK_j);
 
-immutable default_MOVE_BOX_L = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_h]);
-immutable default_MOVE_BOX_R = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_l]);
-immutable default_MOVE_BOX_U = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_k]);
-immutable default_MOVE_BOX_D = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_j]);
+immutable default_MOVE_BOX_L = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_h]);
+immutable default_MOVE_BOX_R = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_l]);
+immutable default_MOVE_BOX_U = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_k]);
+immutable default_MOVE_BOX_D = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_j]);
 
 immutable default_SELECT_PIVOT_L = KeyCombine([GdkKeysyms.GDK_H]);
 immutable default_SELECT_PIVOT_R = KeyCombine([GdkKeysyms.GDK_L]);
@@ -69,9 +70,9 @@ immutable default_SELECT_PIVOT_U = KeyCombine([GdkKeysyms.GDK_K]);
 immutable default_TOGGLE_GRID_RENDER = KeyCombine(GdkKeysyms.GDK_0);
 immutable default_TOGGLE_BOX_BORDER_RENDER = KeyCombine(GdkKeysyms.GDK_9);
 
-immutable default_UNDO = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_z]);
-immutable default_REDO = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_r]);
-immutable default_BOX_DELETE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_x]);
+immutable default_UNDO = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_z]);
+immutable default_REDO = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_r]);
+immutable default_BOX_DELETE = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_X]);
 
 immutable default_MODE_NORMAL = KeyCombine(GdkKeysyms.GDK_Escape);
 immutable default_start_insert = KeyCombine(GdkKeysyms.GDK_i);
@@ -82,17 +83,17 @@ immutable return_key = KeyCombine(GdkKeysyms.GDK_Return);
 immutable shift_key = KeyCombine(GdkKeysyms.GDK_Shift_L);
 immutable control_key = KeyCombine(GdkKeysyms.GDK_Control_L);
 immutable escape_key = KeyCombine(GdkKeysyms.GDK_Escape);
-immutable alt_escape = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_bracketleft]);
+immutable alt_escape = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_bracketleft]);
 
 immutable default_ImageOpen= KeyCombine(GdkKeysyms.GDK_I);
 immutable default_Point= KeyCombine(GdkKeysyms.GDK_p);
 
-immutable default_MODE_COLOR = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_c]);
+immutable default_MODE_COLOR = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_c]);
 // CLEARに当たる操作
-immutable default_RESTORE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_0]);
-immutable default_RESTORE_FILE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_O]);
-immutable default_SAVE = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_s]);
-immutable default_SAVE_NEW = KeyCombine(ModifierType.CONTROL_MASK,[GdkKeysyms.GDK_S]);
+immutable default_RESTORE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_0]);
+immutable default_RESTORE_FILE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_O]);
+immutable default_SAVE = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_s]);
+immutable default_SAVE_NEW = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_S]);
 immutable default_heading1 = KeyCombine([GdkKeysyms.GDK_numbersign]);
 immutable default_heading2 = KeyCombine([GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign]);
 immutable default_heading3 = KeyCombine([GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign,GdkKeysyms.GDK_numbersign]);

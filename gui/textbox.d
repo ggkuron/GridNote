@@ -134,7 +134,6 @@ public:
             if(!is_preediting) _im_pos = 0;
             _layout[box_id].getCursorPos(box.get_caret,null,&_caretRect);
             _caret_rect.set_by(_caretRect);
-            writeln(_caret_rect.x);
             _caret_rect.x /= 1024;
             _caret_rect.x += _box_pos[box_id].x;
             // _caret_rect.y /= 1024;
@@ -262,7 +261,6 @@ public:
         imc.getPreeditString(_preedit,_im_attr,_im_pos);
         _im_attr.insert(PgAttribute.fontDescNew(_im_target.font_desc));
         // _im_target.set_cursor_pos(box.get_caret);
-        writeln(_im_pos,' ',box.get_caret);
 
         set_preeditting(true);
     }

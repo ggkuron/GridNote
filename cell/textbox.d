@@ -109,8 +109,6 @@ public:
     {
     }
     void append(string s){
-        // s = SimpleXML.escapeText(s,s.length);
-
         int feed_cnt;
         foreach(dchar c; s)
         {

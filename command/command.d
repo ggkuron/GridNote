@@ -9,7 +9,7 @@ import gdk.Keysyms; // Keysyms
 import gdk.Event;
 import gtk.Widget;
 import gui.pageview;
-// import gtkc.gdktypes;  // ModifierType
+import gtkc.gdktypes;  // ModifierType
 import gtk.IMMulticontext;
 import command.keycombine;
 debug(cmd) import std.stdio;
@@ -203,13 +203,14 @@ private:
     void parse_input(){
 
         KeyCombine input;
-        if(modState & ModifierType.CONTROL_MASK)
-            input = KeyCombine(ModifierType.CONTROL_MASK,keyState);
-        else if(modState & ModifierType.SHIFT_MASK)
-            input = KeyCombine(keyState);
+        if(modState)
+            // この生成方法はKeyCombine::opEqualsに依る。
+            input = KeyCombine([cast(ModifierType)modState],keyState);
         else
             input = KeyCombine(keyState);
-        debug(cmd) writeln("input: ",input);
+        import std.stdio;
+        writeln(default_BOX_DELETE);
+        writeln("input: ",input);
         
         if(input in command_table[_input_state])
         {
@@ -227,8 +228,6 @@ public:
         _imm = im;
         _view = pv;
 
-        // 内部使用
-        // ユーザー入力に対応した挙動のための定義
         zoom_in = cmd_template!("view.zoom_in();")(this,_manip,_view);
         zoom_out = cmd_template!("view.zoom_out();")(this,_manip,_view);
         register_key(zoom_in,InputState.Normal,default_ZOOM_IN);
@@ -285,7 +284,6 @@ public:
 
         // 内部使用
         // mode遷移はもっと包んだ方が良さそう
-        // ModifierKeyとModeは括りつけない方がいいと確信した
         input_mode_edit = cmd_template!("inp.change_mode_edit();")(this,_manip,_view);
         input_mode_normal = cmd_template!("inp.change_mode_normal();")(this,_manip,_view);
         input_mode_select = cmd_template!("inp.change_mode_select();")(this,_manip,_view);
