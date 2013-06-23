@@ -59,7 +59,9 @@ struct TextPoint{
         line = l;
         pos = p;
     }
+    // 渡すstring例: "(12,4)" 
     this(string dat){
+        writeln(dat);
         dat = dat[1 .. $-1];
         auto lpstr = split(dat,",");
         line = to!int(lpstr[0]);
@@ -281,23 +283,26 @@ struct Text
         _line_length = t._line_length;
     }
     this(string[] dat){
-        _lines = to!int(chomp(dat[4]));
-        foreach(l; 8 .. 8 + _lines)
+        const lines = to!int(chomp(dat[0]));
+        int ln;
+        writeln("l:",_lines);
+        foreach(l; 0 .. lines)
         {
-            if(l == 8 + _lines -1
-            && dat[l][$-1] == '\n')
-                dat[l] = dat[l][0 .. $-1];
+            writeln(dat[4+l]);
 
-            append(dat[l]);
+            auto line_str = dat[4+l];
+            if(l == lines -1)
+                append(chomp(line_str)); // dat()時に仕込んだ改行文字を取り除く
+            else
+                append(line_str);
+            writeln("per line length:",dat[l+lines+5]);
+            _line_length[l+lines] = to!int(chomp(dat[l+lines+5]));
         }
-        foreach(l; 0  ..  _lines)
-        {
-            writeln(dat[9+_lines + l]);
-            _line_length[l] = to!int(chomp(dat[9+_lines+l]));
-        }
-        _caret = to!int(chomp(dat[9+_lines])); 
+        _lines = lines; // append後の値と一致してればそれはそれでいい assert(lines == _lines); 
+        writeln("caret:",dat[5+_lines*2]);
+        _caret = to!int(chomp(dat[5+_lines*2])); 
 
-        auto tag_line = chomp(dat[9+_lines*2]);
+        auto tag_line = chomp(dat[5+_lines*2+1]);
         if(!tag_line.empty && tag_line != "\n")
         {
             tag_line = tag_line[1 .. $-1];
@@ -319,6 +324,10 @@ struct Text
                 _tag_pool[span] = tag;
             }
         }
+        // set _current
+        auto c_str = (chomp(dat[2]))["TextPoint".length .. $];
+        _current = TextPoint(removechars(c_str," "));
+        // _current = TextPoint(c_str);
     }
 private:
     TextSpan[TagType] _current_opened_span;
@@ -408,7 +417,7 @@ private:
         foreach(tt; EnumMembers!(TagType))
         {
             auto span = _used_span_in_tags(tp,tt);
-            writeln("hit span is ",span);
+            // writeln("hit span is ",span);
             _current_opened_span[tt] = span;
             if(span == TextSpan.invalid) continue;
             auto tag = _tag_pool[span];
@@ -420,7 +429,7 @@ private:
             _current_opened_span[tt] = span;
             _tag_pool[span] = tag;
             assert(span.is_opened);
-            writeln("set opened ",span);
+            // writeln("set opened ",span);
             switch(tt){
                 case foreground_tag:
                     _set_current_value(tt,tag.foreground[1]);
@@ -449,14 +458,14 @@ private:
                 // _apply_tags(_backward_pos(snap.min));
                 // _tag_pool.remove(ts);
                 // ts.re_open();
-                writeln(snap," is set and has no span");
+                // writeln(snap," is set and has no span");
                 _tag_pool.remove(ts);
                 _apply_tags(_backward_pos(snap.min));
             }
             else 
             {
                 // ts.re_open();
-                writeln(snap," is not set and has span");
+                // writeln(snap," is not set and has span");
                 ts.set_end(_backward_pos(ts.max));
                 _apply_tags(ts.min);
             }
@@ -465,13 +474,13 @@ private:
         {  
             if(snap.has_no_span)
             {
-                writeln(snap," is opened and has no span");
+                // writeln(snap," is opened and has no span");
                 _tag_pool.remove(snap);
                 _apply_tags(_backward_pos(snap.min));
             }
             else
             {
-                writeln(snap," is opened and has span");
+                // writeln(snap," is opened and has span");
                 ts.set_end(_backward_pos(ts.max));
                 _apply_tags(ts.max);
             }
@@ -505,7 +514,7 @@ private:
         string result;
         foreach(l; 0 .. _lines)
             result ~= _str(l);
-        return result;
+        return SimpleXML.escapeText(result,result.length);
     }
     bool _is_valid_pos(in TextPoint tp)const{
         return tp.line in _writing && tp.pos in _writing[tp.line];
@@ -576,7 +585,7 @@ private:
         else
             return TextPoint(endp.line,endp.pos-1);
     }
-    bool _is_line_end(in TextPoint tp)const{
+    bool _is_line_end(in TextPoint tp )const{
         return tp.pos == _line_length[tp.line];
     }
     bool _is_line_head(in TextPoint tp)const{
@@ -586,7 +595,7 @@ private:
         return l != 0;
     }
     bool _next_line_exist(in int l)const{
-        return cast(bool)((l+1) in _writing);
+        return l < _lines-1;
     }
     int line_length(in int line)const{
         assert(line in _line_length); 
@@ -609,22 +618,48 @@ private:
     TextPoint _line_head(in int line)const{
         return TextPoint(line,0);
     }
-    TextPoint _forward_point(in TextPoint tp)const{
-        TextPoint result = tp;
-        if(_is_line_end(result))
+    TextPoint _forward_point(in TextPoint tp = _current)const{
+        TextPoint p = tp;
+        if(_is_line_end(p))
         {
-            if(_next_line_exist(result.line)) 
-                return _line_head(result.line+1);
+            if(_next_line_exist(p.line)) 
+                return _line_head(p.line+1);
             else
-                return _line_end(result.line);
+                return _line_end(p.line);
         }
         else
         {
-            ++result.pos;
-            assert(result.line in _line_length);
-            return result;
+            ++p.pos;
+            assert(p.line in _line_length);
+            return p;
         }
     }
+    unittest{
+        import std.stdio;
+        Text text;
+        text.append("123456789");
+        writeln(text._current);
+        assert(text._current == TextPoint(0,9));
+        assert(text._backward_point(text._current) == TextPoint(0,8));
+        assert(text._is_line_end(text._current));
+        text.line_feed();
+        assert(text._line_end(0) == TextPoint(0,9));
+        assert(text._is_line_end(TextPoint(0,9)));
+        // assert(text._is_line_end(TextPoint(0,10)));
+        assert(text.numof_lines == 2);
+        assert(text._next_line_exist(0));
+        assert(text._current == TextPoint(1,0));
+        text.backspace();
+        assert(text.numof_lines == 1);
+        assert(!text._next_line_exist(0));
+        text.line_feed();
+        text.append("123456789\n");
+        writeln(text._current);
+        // assert(text._current == TextPoint(1,9));
+        // assert(text._backward_point(text._current) == TextPoint(0,8));
+        // assert(text._is_line_end(text._current));
+    }
+
     TextPoint _backward_point(in TextPoint tp)const{
         TextPoint result = tp;
         if(_is_line_head(result))
@@ -690,7 +725,14 @@ public:
                     foreach(tag; tag_pos[tp].sort)
                         result ~= tag;
                 }
-                result ~= SimpleXML.escapeText([cast(char)(_writing[line][pos])],1);
+                // 一文字ずつエスケープしてる効率は
+                string one_char = [cast(char)(_writing[line][pos])];
+                writef("%s",one_char);
+                // 二重にエスケープしてしまわないようにはじければいらない
+                if(one_char == "&" || one_char == "<" || one_char == ">")
+                    result ~= SimpleXML.escapeText(one_char,one_char.length);
+                else
+                    result ~= _writing[line][pos];
             }
         }
         auto end_of_buffer = _forward_point(end);
@@ -700,6 +742,7 @@ public:
         // writeln("opened:",opened_cnt);
         foreach(i;0 .. opened_cnt)
             result ~= "</span>";
+        writeln(_tag_pool);
         writeln(_writing);
         writeln(result);
         return result;
@@ -710,6 +753,10 @@ public:
     // }
     void move_caret(in Direct dir){
     }
+
+    // private void _char_in(in TextPoint tp,in dchar c){
+    //     _writing[tp.line][tp.pos] = c;
+    // }
     // 改行文字
     // _writing行終に'\n'として入れてる
     // _writingが行ごとに分割したテーブルになってるので
@@ -734,6 +781,8 @@ public:
             _line_length[current_line] = cp;
         else if(_line_length[current_line] < cp) 
             _line_length[current_line] = cp;
+        if(_current > _text_end)
+            _text_end = _current;
 
         return _current.pos;
     }
@@ -956,10 +1005,8 @@ public:
     @property ubyte current_fontsize()const{
         return _current_fontsize.value;
     }
-    @property Tuple!(bool,const Color) current_foreground()const{
-        if(_color_is_set) 
-            return tuple(true,_current_foreground.value);
-        else return tuple(false,_current_foreground.value); 
+    @property Tuple!(const bool,const Color) current_foreground()const{
+        return tuple(_color_is_set,_current_foreground.value);
     }
     @property int numof_lines()const{
         return _lines;
@@ -979,6 +1026,7 @@ public:
         result ~= to!string(_color_is_set) ~ '\n';
         result ~= to!string(_current) ~ '\n';
         result ~= to!string(_text_end) ~ '\n';
+        _writing[_text_end.line][_text_end.pos] = '\n'; // !!!currentが行終端い
         foreach(l; 0 .. _lines)
             result ~= _str(l);
         result ~= '\n';
@@ -986,14 +1034,27 @@ public:
             if(l in _line_length)
                 result ~= to!string(_line_length[l]) ~ '\n';
             else
-                result ~= "0\n";
+                result ~= '\n';
         result ~= to!string(_caret) ~ '\n';
         foreach(span,tag; _tag_pool)
+            if(!(span.is_set && span.has_no_span))
             result ~= "<"~span.dat ~"*"~tag.dat() ~">";
         result ~= "\n";
         foreach(span; _current_opened_span)
             result ~= to!string(span) ~ '\n';
         return result;
     }
+    // unittest{
+    //     Text t1;
+    //     t1.append("123456789");
+    //     t1.line_feed();
+    //     t1.set_foreground(red);
+    //     string t1_dat = t1.dat();
+    //     auto dat = split(t1_dat,"\n");
+    //     foreach(d; dat)
+    //         writeln(d);
+
+    //     Text t2 = Text(dat);
+    // }
 }
 

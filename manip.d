@@ -277,6 +277,7 @@ public:
         debug(manip) writeln("send to box start with :",str);
         if(_mode!=FocusMode.edit)
         {   // 本当はこんな状態になってるのがおかしいわけで
+            assert(0);
             _pv.IM_FocusOut();
             return;
         }
@@ -367,6 +368,7 @@ public:
         auto all_txt = _focused_table.get_textBoxes();
         foreach(tb; all_txt)
         {
+            if(!tb.text_empty())
             file.write(tb.dat(offset));
         }
         return true;

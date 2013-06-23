@@ -49,6 +49,9 @@ public:
 
         super(table,tb);
     }
+    this(BoxTable table,string markup){
+        super(table);
+    }
     this(BoxTable table,string[] dat){
         super(table);
         dat[0] = dat[0][6 .. $-1];
@@ -73,7 +76,7 @@ public:
         _box_style = chomp(desc[1]);
         _box_font_size = to!ubyte(chomp(desc[2]));
         _box_foreground = Color(chomp(dat[3]));
-        _text = Text(dat);
+        _text = Text(dat[4..$]);
     }        
     bool mark_caret = false;
 
@@ -104,6 +107,7 @@ public:
         assert(size <= 6);
         }
     body{
+        assert(0);
     }
     void set_font_bigger()
     {
