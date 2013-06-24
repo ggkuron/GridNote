@@ -5,6 +5,7 @@ import std.array;
 import manip;
 import env;
 import util.direct;
+import util.color;
 import gdk.Keysyms; // Keysyms
 import gdk.Event;
 import gtk.Widget;
@@ -17,7 +18,14 @@ private import stdlib = core.stdc.stdlib : exit;
 
 // すべての実行可能な操作
 // 直通。TODO:各機構との調停を挟む
-// COMMANDの粒度を細くして、組み合わせて使う方向で
+//      Keycombinedから操作対象を判別して（一段 ここ
+//      操作自体は捜査対象ごとの操作オブジェクトにKeycombinedを受け渡し（二段
+//      実行（三段
+//    のほうが柔軟性ある
+// Text操作をしているとして、いまやりたいのが入力か入力位置の移動なのかをここで管理したくない
+// Text操作の状態はManipTextに管理させるべき
+// 少なくともカーソル移動キーは汎用的に使えるべきで、そのための状態を持つ責任はどこかには生じる
+
 abstract class COMMAND{
 private:
     bool[KeyCombine] _table;
@@ -144,6 +152,7 @@ public:
     COMMAND color_select_D;
 
     COMMAND create_TextBOX;
+    COMMAND create_MonoTextBOX;
     COMMAND text_backspace;
     COMMAND text_feed;
     COMMAND im_focus_in;
@@ -157,10 +166,12 @@ public:
     COMMAND restore;
     COMMAND save_to_file;
     COMMAND restore_from_file;
+    COMMAND insert_tab;
 
     // combined_COMMAND
     COMMAND edit_to_normal_state; 
     COMMAND normal_start_edit_text;
+    COMMAND normal_start_edit_text_mono;
     COMMAND normal_edit_textbox;
     // COMMAND mode_edit_from_color_select;
     // COMMAND mode_cell_select_from_color_select;
@@ -236,6 +247,9 @@ public:
         register_key(zoom_in,InputState.Normal,default_ZOOM_IN);
         register_key(zoom_out,InputState.Normal,default_ZOOM_OUT);
 
+        insert_tab = cmd_template!(`manip.commit_to_box("\t");`)(this,_manip,_view);
+        register_key(insert_tab,InputState.Edit,tab_key);
+
         move_focus_l = cmd_template!("manip.move_focus(left);")(this,_manip,_view);
         move_focus_r = cmd_template!("manip.move_focus(right);")(this,_manip,_view);
         move_focus_d = cmd_template!("manip.move_focus(down);")(this,_manip,_view);
@@ -280,6 +294,7 @@ public:
         register_key(move_selected_d,InputState.Normal,default_MOVE_BOX_D);
 
         create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,_manip,_view);
+        create_MonoTextBOX = cmd_template!(`manip.create_TextBOX("Monospace","Normal",darkslateblue);`)(this,_manip,_view);
         im_focus_out = cmd_template!("inp.im_focusOut();")(this,_manip,_view);
         create_circle = cmd_template!("manip.create_RectBOX();")(this,_manip,_view);
         register_key(create_circle,InputState.Normal,default_ImageOpen);
@@ -331,7 +346,9 @@ public:
         normal_edit_textbox = new combined_COMMAND(grab_target,text_edit);
         register_key(normal_edit_textbox,InputState.Normal,default_EDIT);
         normal_start_edit_text = new combined_COMMAND(input_mode_edit,create_TextBOX,im_focus_in);
+        normal_start_edit_text_mono = new combined_COMMAND(input_mode_edit,create_MonoTextBOX,im_focus_in);
         register_key(normal_start_edit_text,InputState.Normal,default_INSERT);
+        register_key(normal_start_edit_text_mono,InputState.Normal,default_mono_insert);
 
         input_mode_before = cmd_template!("inp.change_mode_before();")(this,_manip,_view);
         mode_normal = new combined_COMMAND(input_mode_normal,manip_mode_normal);

@@ -224,10 +224,10 @@ public:
     body{
         _mode = FocusMode.edit;
     }
-    void create_TextBOX(){
+    void create_TextBOX(string family="Sans",string style="Norml",in Color fore=black){
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
-        auto tb = _select.create_TextBOX();
+        auto tb = _select.create_TextBOX(family,style,fore);
         tb.set_box_default_color(_selected_color);
 
         _maniped_box = tb;
@@ -273,7 +273,7 @@ public:
         _box_type = ib.toString();
         _box_use_im = false;
     }
-    void im_commit_to_box(string str){
+    void commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);
         if(_mode!=FocusMode.edit)
         {   // 本当はこんな状態になってるのがおかしいわけで

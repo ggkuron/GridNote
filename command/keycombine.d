@@ -40,6 +40,16 @@ unittest{
     assert(default_MOVE_FOCUS_L == KeyCombine([104]));
 }
 
+// wrap
+immutable backspace = KeyCombine(GdkKeysyms.GDK_BackSpace);
+immutable delete_key = KeyCombine(GdkKeysyms.GDK_Delete);
+immutable return_key = KeyCombine(GdkKeysyms.GDK_Return);
+immutable shift_key = KeyCombine(GdkKeysyms.GDK_Shift_L);
+immutable control_key = KeyCombine(GdkKeysyms.GDK_Control_L);
+immutable tab_key = KeyCombine(GdkKeysyms.GDK_Tab);
+immutable escape_key = KeyCombine(GdkKeysyms.GDK_Escape);
+immutable alt_escape = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_bracketleft]);
+
 // table 上に登録しない値として
 immutable INVALID = KeyCombine();
 
@@ -61,10 +71,10 @@ immutable default_MOVE_BOX_R = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysym
 immutable default_MOVE_BOX_U = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_k]);
 immutable default_MOVE_BOX_D = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_j]);
 
-immutable default_SELECT_PIVOT_L = KeyCombine([GdkKeysyms.GDK_H]);
-immutable default_SELECT_PIVOT_R = KeyCombine([GdkKeysyms.GDK_L]);
-immutable default_SELECT_PIVOT_D = KeyCombine([GdkKeysyms.GDK_J]);
-immutable default_SELECT_PIVOT_U = KeyCombine([GdkKeysyms.GDK_K]);
+immutable default_SELECT_PIVOT_L = KeyCombine([ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_H]);
+immutable default_SELECT_PIVOT_R = KeyCombine([ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_L]);
+immutable default_SELECT_PIVOT_D = KeyCombine([ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_J]);
+immutable default_SELECT_PIVOT_U = KeyCombine([ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_K]);
 
 immutable default_TOGGLE_GRID_RENDER = KeyCombine(GdkKeysyms.GDK_0);
 immutable default_TOGGLE_BOX_BORDER_RENDER = KeyCombine(GdkKeysyms.GDK_9);
@@ -74,17 +84,10 @@ immutable default_REDO = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_
 immutable default_BOX_DELETE = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_X]);
 
 immutable default_MODE_NORMAL = KeyCombine(GdkKeysyms.GDK_Escape);
-immutable default_start_insert = KeyCombine(GdkKeysyms.GDK_i);
+// immutable default_start_insert = KeyCombine(GdkKeysyms.GDK_i);
+immutable default_mono_insert = KeyCombine(GdkKeysyms.GDK_m);
 
-immutable backspace = KeyCombine(GdkKeysyms.GDK_BackSpace);
-immutable delete_key = KeyCombine(GdkKeysyms.GDK_Delete);
-immutable return_key = KeyCombine(GdkKeysyms.GDK_Return);
-immutable shift_key = KeyCombine(GdkKeysyms.GDK_Shift_L);
-immutable control_key = KeyCombine(GdkKeysyms.GDK_Control_L);
-immutable escape_key = KeyCombine(GdkKeysyms.GDK_Escape);
-immutable alt_escape = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_bracketleft]);
-
-immutable default_ImageOpen= KeyCombine(GdkKeysyms.GDK_I);
+immutable default_ImageOpen= KeyCombine([ModifierType.SHIFT_MASK],GdkKeysyms.GDK_I);
 immutable default_Point= KeyCombine(GdkKeysyms.GDK_p);
 
 immutable default_MODE_COLOR = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_c]);

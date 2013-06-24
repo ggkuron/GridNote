@@ -109,7 +109,7 @@ public:
         _currentline = box.getText().current_line();
         const numof_lines = box.getText().numof_lines();
             
-        void register_check(TextBOX box)
+        void _register_check(TextBOX box)
         {
             if(box_id !in _box_pos)
                 _box_pos[box_id] = Rect.init;
@@ -207,7 +207,7 @@ public:
             } while(1);
         }
 
-        register_check(box);
+        _register_check(box);
         // textを持っていなくてIM入力もしてないなら描画しない
         // BOX生成直後のチェック後のここまでの処理は必要
         if(box.text_empty() && !is_preediting)

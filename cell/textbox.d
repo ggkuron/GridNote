@@ -10,6 +10,7 @@ import std.utf;
 import std.conv;
 import std.stdio;
 import std.ascii;
+import std.exception;
 import glib.SimpleXML;
 import util.direct;
 import shape.shape;
@@ -36,8 +37,11 @@ private:
         return _box_fontfamly~' '~_box_style~' '~to!string(_box_font_size);
     }
 public:
-    this(BoxTable table){ 
+    this(BoxTable table,string family = "Sans",string style = "Normal",in Color c = black){ 
         super(table);
+        _box_fontfamly = family;
+        _box_style = style;
+        _box_foreground = c;
     }
     this(BoxTable table,in Cell tl,in int w,in int h){
         super(table,tl,w,h);
@@ -69,7 +73,7 @@ public:
             writeln(pos_num);
         }
 
-        assert(pos_num.length == 4);
+        enforce(pos_num.length == 4);
         require_hold(Cell(pos_num[0],pos_num[1]),pos_num[2],pos_num[3]);
         auto desc = std.string.split(dat[2]," ");
         _box_fontfamly = chomp(desc[0]);

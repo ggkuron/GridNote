@@ -348,6 +348,54 @@ private:
     invariant(){
         assert(_current.line < _lines);
     }
+    void deleteChar(in TextPoint tp){
+        assert(_is_valid_pos(tp));
+        const line = tp.line;
+        const bytesize = _byte_size(tp);
+        const line_len = _line_length[line];
+        auto line_save = _writing[line];
+        
+        foreach_reverse(ref span;_tag_pool.keys)
+        {
+            const snap = span;
+            if(span.max == pos_next)
+            {
+                _move_back(span);
+                writefln("move at %s",_current);
+                writefln("flg %s",span._set_flg);
+                writefln("max : %s",span.max);
+                writefln("min : %s",span.min);
+            }
+            else if(span.min == pos_next && span.has_no_span)
+                _tag_pool.remove(span);
+        }
+        deleteChar(pos_next);
+        return true;
+        }
+        return false;
+
+        foreach(p; tp.pos .. line_len-1)
+            _writing[line][p] = _writing[line][p+1];
+        enforce(_writing[line].remove(line_len-1));
+
+        --_line_length[line];
+        _caret -= bytesize;
+        if(!_line_length[current_line])
+        {
+            line_join(current_line);
+        }
+    }
+    unittest{
+        Text t1;
+        t1.append("0123456789");
+        assert(t1._line_length[0] == 10);
+        assert(t1._caret == 10);
+        t1.deleteChar(TextPoint(0,5));
+        writeln(t1._plane_string());
+        assert(t1._plane_string == "012346789");
+        assert(t1._line_length[0] == 9);
+        assert(t1._caret == 9);
+    }
     // current line のposを指定して削除
     void _deleteChar(in int pos){
         _writing[current_line].remove(pos);
@@ -447,6 +495,10 @@ private:
         _apply_tags(_backward_pos(ts.min));
         _tag_pool.remove(snap);
     }
+    /+ tag_pool内のspanの後ろ側終端を
+       閉じたspan
+     
+    +/
     void _move_back(ref TextSpan ts){
         const snap = ts;
         auto tg = _tag_pool[ts];
@@ -455,16 +507,11 @@ private:
         {   
             if(snap.has_no_span)
             {
-                // _apply_tags(_backward_pos(snap.min));
-                // _tag_pool.remove(ts);
-                // ts.re_open();
-                // writeln(snap," is set and has no span");
                 _tag_pool.remove(ts);
                 _apply_tags(_backward_pos(snap.min));
             }
             else 
             {
-                // ts.re_open();
                 // writeln(snap," is not set and has span");
                 ts.set_end(_backward_pos(ts.max));
                 _apply_tags(ts.min);
@@ -786,6 +833,26 @@ public:
 
         return _current.pos;
     }
+    void insert(in TextPoint tp,in dchar c){
+        assert(_is_valid_pos(tp));
+        const line_len = _line_length[tp.line];
+        auto line_p = _writing[tp.line].dup;
+        _writing[tp.line][tp.pos] = c;
+        foreach(p; tp.pos+1 .. line_len +1)
+            _writing[tp.line][p] = line_p[p-1];
+        assert(_line_length[tp.line] == line_len);
+        ++_line_length[tp.line];
+    }
+    unittest{
+        Text t1;
+        t1.append("0123456789");
+        assert(t1._line_length[0] == 10);
+        writeln(t1._plane_string);
+        t1.insert(TextPoint(0,5),'x');
+        writeln(t1._plane_string);
+        assert(t1._plane_string == "01234x56789");
+        assert(t1._line_length[0] == 11);
+    }
     void caret_move_forward(in ulong u){
         _caret += u;
     }
@@ -803,39 +870,52 @@ public:
         || (_lines == 1 && _writing[0].keys.empty());
     }
     // Writing内文字のbyte数
-    ulong byte_size(in TextPoint tp){
+    ulong _byte_size(in TextPoint tp){
         return to!string(_get_char(tp)).length;
     }
     // 行始でfalse 通常true
+    void move_caret(in Direct dir){
+        final switch(dir){
+            case right:
+                if(_line_length[current_line] == current_pos)
+                    return;
+                else
+                {
+                    ++_current.pos;
+                    _caret += _byte_size(_forward_point(_current));
+                }
+                break;
+            case left:
+               if(!current_pos)
+                   return;
+               else
+               {
+                   --_current.pos;
+                   _caret += _byte_size(_current);
+               }
+               break;
+            case up:
+                if(_above_line_exist(current_line))
+                {   // バイト数カウントすべきところあとでまとめる
+                    const str = _ranged_str(TextPoint(current_line-1,current_pos),
+                                            _backward_pos(_current));
+                    --_current.line;
+                }
+                break;
+            case down:
+                if(_next_line_exist(current_line))
+                {
+                    const str = _ranged_str(_current,TextPoint(current_line+1,current_pos-1));                                                 _backward_pos(_currentline));
+                    _caret += str.length;
+                    ++_current.line;
+                }
+                break;
+        }
+    }
     bool backspace(){
         const pos_next = _backward_pos(_current);
-        if(current_pos)
-        {
-            foreach_reverse(ref span;_tag_pool.keys)
-            {
-                const snap = span;
-                if(span.max == pos_next)
-                {
-                    _move_back(span);
-                    writefln("move at %s",_current);
-                    writefln("flg %s",span._set_flg);
-                    writefln("max : %s",span.max);
-                    writefln("min : %s",span.min);
-                }
-                else if(span.min == pos_next && span.has_no_span)
-                    _tag_pool.remove(span);
-            }
-            _caret -= byte_size(pos_next);
-            _deleteChar(--_current.pos);
-            if(_line_length[current_line])
-                --_line_length[current_line]; // pos に一致してるから負数にはならないとおもいきや、削除後に0になってるところでbackすると0になってるので
-            return true;
-        }
-        else if(_current.line)
-        {
-            line_join();
-        }
-        return false;
+        if(deleteChar(pos_next))
+
     }
     @property string[int] strings(){
         string[int] result;
@@ -864,27 +944,29 @@ public:
         }
         return false;
     }
-    bool line_join(){
-        // 0行目とでは結合できない
-        if(current_line == 0) 
+    bool line_join(in int line){
+        // 0行目では結合できない
+        if(line == 0) 
             return false;
  
-        immutable cl = _str(current_line);
-        immutable upper_line = current_line-1;
-        if(upper_line in _writing 
-        && !(_writing[upper_line].keys.empty())
-        && current_pos == 0)
+        immutable cl = _str(line);
+        immutable upper_line = line-1;
+        if(upper_line in _writing)
         {
-            _writing.remove(current_line);
-            --_current.line;
+            auto c_line = _writing[line];
+            foreach(l; line .. _lines)
+                _writing[l] = _writing[l+1];
+            _writing.remove(_lines);
             --_lines;
-            auto sorted_upper = _writing[upper_line].keys.sort();
-            const upper_last_pos = sorted_upper[$-1];
-            _current.pos = upper_last_pos + 1;
+            const upper_len = _line_length[line-1];
+            const join_len = _line_length[line];
+
+            foreach(p; 0 .. join_len)
+                _writing[line-1][upper_len+p] = _writing[line][p];
+            _line_length[line-1] += join_len;
+            return true;
         }
-        foreach(dchar dc; cl)
-            append(dc);
-        return true;
+        return false;
     }
     // int right_edge_pos()const{
     //     auto current_line_positions = _writing[_current.line].keys.dup;

@@ -87,10 +87,11 @@ private:
         }
         return false;
     }
+    // IM起動時以外でも入力はここを通る
     void _when_commit(string str,IMContext imc){
         if(_interpreter.is_enable_to_edit())
         {
-            _manip_table.im_commit_to_box(str);
+            _manip_table.commit_to_box(str);
             queueDraw();
         }
     }

@@ -98,12 +98,10 @@ public:
     bool is_on_edge(in Direct dir)const{
         return super.is_on_edge(_focus,dir);
     }
-    TextBOX create_TextBOX(){
-        debug(cell) writeln("create_TextBOX start");
-        auto tb = new TextBOX(_table);
+    TextBOX create_TextBOX(string family ="Sans",string style="Normal",in Color fore = black){
+        auto tb = new TextBOX(_table,family,style,fore);
         if(!tb.require_create_in(_focus)) return null;
         selection_clear();
-        debug(cell) writeln("end");
         return tb;
     }
     // ImageBOX create_ImageBOX(string filepath){
