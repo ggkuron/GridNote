@@ -451,41 +451,19 @@ private:
         const snap = ts;
         auto tg = _tag_pool[ts];
         auto tts = tg.tag_types();
-        if(snap.is_set)
-        {   
-            if(snap.has_no_span)
-            {
-                // _apply_tags(_backward_pos(snap.min));
-                // _tag_pool.remove(ts);
-                // ts.re_open();
-                // writeln(snap," is set and has no span");
-                _tag_pool.remove(ts);
-                _apply_tags(_backward_pos(snap.min));
-            }
-            else 
-            {
-                // ts.re_open();
-                // writeln(snap," is not set and has span");
-                ts.set_end(_backward_pos(ts.max));
-                _apply_tags(ts.min);
-            }
+        
+        if(snap.has_no_span)
+        {
+            // writeln(snap," is set and has no span");
+            _tag_pool.remove(ts);
+            _apply_tags(_backward_pos(snap.min));
         }
-        else if(snap.is_opened)
-        {  
-            if(snap.has_no_span)
-            {
-                // writeln(snap," is opened and has no span");
-                _tag_pool.remove(snap);
-                _apply_tags(_backward_pos(snap.min));
-            }
-            else
-            {
-                // writeln(snap," is opened and has span");
-                ts.set_end(_backward_pos(ts.max));
-                _apply_tags(ts.max);
-            }
+        else 
+        {
+            // writeln(snap," is not set and has span");
+            ts.set_end(_backward_pos(ts.max));
+            _apply_tags(ts.min);
         }
-        // writeln(_tag_pool);
     }
     // lineが存在しないなら""を返す
     // これに依存、str(TextPoint,TextPoint)
