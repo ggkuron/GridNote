@@ -348,6 +348,54 @@ private:
     invariant(){
         assert(_current.line < _lines);
     }
+    void deleteChar(in TextPoint tp){
+        assert(_is_valid_pos(tp));
+        const line = tp.line;
+        const bytesize = byte_size(tp);
+        const line_len = _line_length[line];
+        auto line_save = _writing[line];
+        const fp = _forward_point(tp);
+        
+        foreach_reverse(ref span;_tag_pool.keys)
+        {
+            const snap = span;
+            if(span.is_hold(tp))
+            {
+                if(span.max == fp)
+                {
+                    _move_back(span);
+                }
+                else if(span.min == fp && span.has_no_span)
+                {
+                    _tag_pool.remove(span);
+                }
+            }
+        }
+
+        foreach(p; tp.pos .. line_len-1)
+            _writing[line][p] = _writing[line][p+1];
+        enforce(_writing[line].remove(line_len-1));
+
+        --_line_length[line];
+        _caret -= bytesize;
+        if(!_line_length[current_line])
+        {
+            _line_join(tp.line);
+        }
+    }
+    unittest{
+        Text t1;
+        t1.append("0123456789");
+        assert(t1._line_length[0] == 10);
+        assert(t1._caret == 10);
+        t1.deleteChar(TextPoint(0,5));
+        writeln(t1._plane_string());
+        assert(t1._plane_string == "012346789");
+        assert(t1._line_length[0] == 9);
+        assert(t1._caret == 9);
+        t1.set_foreground(red);
+    }
+
     // current line のposを指定して削除
     void _deleteChar(in int pos){
         _writing[current_line].remove(pos);
@@ -451,18 +499,35 @@ private:
         const snap = ts;
         auto tg = _tag_pool[ts];
         auto tts = tg.tag_types();
-        
-        if(snap.has_no_span)
-        {
-            // writeln(snap," is set and has no span");
-            _tag_pool.remove(ts);
-            _apply_tags(_backward_pos(snap.min));
+        if(snap.is_set)
+        {   
+            if(snap.has_no_span)
+            {
+                // writeln(snap," is set and has no span");
+                _tag_pool.remove(ts);
+                _apply_tags(_backward_pos(snap.min));
+            }
+            else 
+            {
+                // writeln(snap," is not set and has span");
+                ts.set_end(_backward_pos(ts.max));
+                _apply_tags(ts.min);    // <-
+            }
         }
-        else 
-        {
-            // writeln(snap," is not set and has span");
-            ts.set_end(_backward_pos(ts.max));
-            _apply_tags(ts.min);
+        else if(snap.is_opened)
+        {  
+            if(snap.has_no_span)
+            {
+                // writeln(snap," is opened and has no span");
+                _tag_pool.remove(snap);
+                _apply_tags(_backward_pos(snap.min));
+            }
+            else
+            {
+                // writeln(snap," is opened and has span");
+                ts.set_end(_backward_pos(ts.max));
+                _apply_tags(ts.max);    // <- 
+            }
         }
     }
     // lineが存在しないなら""を返す
@@ -786,13 +851,13 @@ public:
     }
     // 行始でfalse 通常true
     bool backspace(){
-        const pos_next = _backward_pos(_current);
+        const bp = _backward_pos(_current);
         if(current_pos)
         {
             foreach_reverse(ref span;_tag_pool.keys)
             {
                 const snap = span;
-                if(span.max == pos_next)
+                if(span.max == bp)
                 {
                     _move_back(span);
                     writefln("move at %s",_current);
@@ -800,20 +865,38 @@ public:
                     writefln("max : %s",span.max);
                     writefln("min : %s",span.min);
                 }
-                else if(span.min == pos_next && span.has_no_span)
+                else if(span.min == bp && span.has_no_span)
                     _tag_pool.remove(span);
             }
-            _caret -= byte_size(pos_next);
+            _caret -= byte_size(bp);
             _deleteChar(--_current.pos);
+            _current = bp;
             if(_line_length[current_line])
                 --_line_length[current_line]; // pos に一致してるから負数にはならないとおもいきや、削除後に0になってるところでbackすると0になってるので
             return true;
         }
         else if(_current.line)
         {
-            line_join();
+            _line_join(current_line);
+            --_current.line;
+            _current.pos = _line_length[_current.line];
+            _caret -= byte_size(bp);
+            return true;
         }
-        return false;
+        else 
+            return false;
+    }
+    unittest{
+        Text t1;
+        t1.append("01234");
+        assert(t1.numof_lines == 1);
+        t1.line_feed();
+        assert(t1.numof_lines == 2);
+        t1.backspace();
+        assert(t1.numof_lines == 1);
+        auto plane = t1._plane_string;
+        writeln(plane);
+        assert(plane == "01234\n");
     }
     @property string[int] strings(){
         string[int] result;
@@ -842,27 +925,40 @@ public:
         }
         return false;
     }
-    bool line_join(){
+    // 指定行を上の行と結合.指定行より下の行は繰り上がり
+    private bool _line_join(in int line){
         // 0行目とでは結合できない
-        if(current_line == 0) 
+        if(line == 0) 
             return false;
  
-        immutable cl = _str(current_line);
-        immutable upper_line = current_line-1;
-        if(upper_line in _writing 
-        && !(_writing[upper_line].keys.empty())
-        && current_pos == 0)
+        immutable cl = _str(line);
+        immutable upper_line = line-1;
+        if(upper_line in _writing)
         {
-            _writing.remove(current_line);
-            --_current.line;
+            auto c_line = _writing[line];
+            foreach(l; line .. _lines-1)
+                _writing[l] = _writing[l+1];
+            _writing.remove(_lines);
             --_lines;
-            auto sorted_upper = _writing[upper_line].keys.sort();
-            const upper_last_pos = sorted_upper[$-1];
-            _current.pos = upper_last_pos + 1;
+            const upper_len = _line_length[line-1];
+            const join_len = _line_length[line];
+
+            foreach(p; 0 .. join_len)
+                _writing[upper_line][upper_len+p] = _writing[line][p];
+            _line_length[upper_line] += join_len;
+            return true;
         }
-        foreach(dchar dc; cl)
-            append(dc);
-        return true;
+        return false;
+    }
+    unittest{
+        Text t1;
+        t1.append("01234");
+        t1.line_feed();
+        t1.append("56789");
+        t1._line_join(1);
+        auto plane = t1._plane_string();
+        writeln(plane);
+        assert(plane == "0123456789");
     }
     // int right_edge_pos()const{
     //     auto current_line_positions = _writing[_current.line].keys.dup;
