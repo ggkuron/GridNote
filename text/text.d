@@ -78,7 +78,6 @@ struct TextPoint{
     }
 }
 
-
 // Span!(int)のような操作は提供しない
 // lineの持つpos幅を知る必要があるため
 // 範囲を特定するためのマーカーとしてTextが使う
@@ -156,7 +155,6 @@ public:
         else if(is_hold(i)) return 0;
         assert(0);
     }
-    // 等価比較はできない
     int opCmp(in TextSpan rhs)const{
         if(_min < rhs._min)
         {
@@ -194,7 +192,7 @@ public:
     bool opEquals(in TextPoint rhs)const{
         return is_hold(rhs);
     }
-    // 完全に同じ範囲を指しているか
+    // 完全に指す範囲が一致しているか
     bool opEquals(in TextSpan rhs)const{
         return _min == rhs._min && _max == rhs._max;
     }
@@ -378,14 +376,30 @@ private:
 
         --_line_length[line];
         _caret -= bytesize;
-        if(!_line_length[current_line])
-        {
+        if(!_line_length[tp.line])
+        {   // 行がもはやなければ上行と結合
             _line_join(tp.line);
+            if(tp.line == 0)
+            {   // 0行目がなくなったときは下からスライド
+                foreach(l; 1 .. _lines)
+                    _writing[l-1] = _writing[l];
+                _writing.remove(_lines);
+                _line_length.remove(_lines);
+                --_lines;
+            }
         }
+    }
+    void deleteChar(){
+        deleteChar(_current);
+        if(_current.pos == 0)
+            return; // else is 節でどうなるかわかったものではないので
+        else if(_current.pos > _line_length[_current.line] - 1)
+            _current.pos = _line_length[_current.line] - 1;
     }
     unittest{
         Text t1;
         t1.append("0123456789");
+        t1.set_foreground(red);
         assert(t1._line_length[0] == 10);
         assert(t1._caret == 10);
         t1.deleteChar(TextPoint(0,5));
@@ -396,7 +410,6 @@ private:
         t1.set_foreground(red);
     }
 
-    // current line のposを指定して削除
     void _deleteChar(in int pos){
         _writing[current_line].remove(pos);
     }
@@ -770,7 +783,6 @@ public:
                 }
                 // 一文字ずつエスケープしてる効率は
                 string one_char = [cast(char)(_writing[line][pos])];
-                writef("%s",one_char);
                 // 二重にエスケープしてしまわないようにはじければいらない
                 if(one_char == "&" || one_char == "<" || one_char == ">")
                     result ~= SimpleXML.escapeText(one_char,one_char.length);
@@ -785,9 +797,9 @@ public:
         // writeln("opened:",opened_cnt);
         foreach(i;0 .. opened_cnt)
             result ~= "</span>";
-        writeln(_tag_pool);
-        writeln(_writing);
-        writeln(result);
+        // writeln(_tag_pool);
+        // writeln(_writing);
+        // writeln(result);
         return result;
     }
     // .. カプセル化壊すがCell.TextBOXでappendするときにbyte数をとれるから
@@ -795,6 +807,76 @@ public:
     //     _caret += s;
     // }
     void move_caret(in Direct dir){
+        const back_pos = _backward_pos(_current);
+        final switch(dir){
+            case right:
+                if(_is_line_end(_current))
+                    return; // 下の行に行く処理atode書くよ
+                _caret += byte_size(_current);
+                ++_current.pos;
+                break;
+            case left:
+                if(_is_line_head(_current))
+                    return;
+                _caret += byte_size(back_pos);
+                --_current.pos;
+                break;
+            case up:
+                if(current_line == 0)
+                    return;
+                const up_pos = TextPoint(_current.line-1,_current.pos);
+                _caret += _ranged_str(up_pos,back_pos).length;
+                --_current.line;
+                break;
+            case down:
+                if(!_next_line_exist(current_line))
+                    return;
+                auto d_pos = _current.pos;
+                auto d_lin = _current.line + 1;
+                const d_length = _line_length[d_lin];
+                if(d_length < d_pos)
+                    d_pos = d_length;
+                const down_pos = TextPoint(d_lin,d_pos);
+                _caret += _ranged_str(_current,down_pos).length;
+                --_current.line;
+                break;
+        }
+    }
+    unittest{
+        Text t1;
+        t1.append("012");
+        t1.set_foreground(red);
+        t1.append("34");
+        t1.line_feed();
+        t1.append("56");
+        t1.set_foreground(blue);
+        t1.append("789");
+        writeln(t1._current);
+        assert(t1._current == TextPoint(1,5));
+        t1.move_caret(left);
+        assert(t1._current == TextPoint(1,4));
+        t1.move_caret(up);
+        assert(t1._current == TextPoint(0,4));
+        t1.move_caret(left);
+        assert(t1._current == TextPoint(0,3));
+        t1.deleteChar();
+        assert(t1._current == TextPoint(0,3));
+        assert(t1._line_length[0] == 4);
+        write("\n");
+        writeln(t1.markup_string());
+        t1.deleteChar();
+        assert(t1._line_length[0] == 3);
+        assert(t1._current == TextPoint(0,2));
+        t1.deleteChar();
+        assert(t1._current == TextPoint(0,1));
+        t1.deleteChar();
+        assert(t1._current == TextPoint(0,0));
+        t1.deleteChar();
+        write("\n");
+        writeln(t1._current);
+        writeln(t1.markup_string());
+
+        assert(0);
     }
 
     // private void _char_in(in TextPoint tp,in dchar c){
@@ -877,11 +959,11 @@ public:
         }
         else if(_current.line)
         {
-            _line_join(current_line);
-            --_current.line;
+            _line_join(current_line); // _currentは操作されて上の行に移動する
             _current.pos = _line_length[_current.line];
             _caret -= byte_size(bp);
-            return true;
+            _writing[current_line].remove(current_pos);
+            return false;
         }
         else 
             return false;
@@ -894,9 +976,19 @@ public:
         assert(t1.numof_lines == 2);
         t1.backspace();
         assert(t1.numof_lines == 1);
+        assert(t1.current_line == 0);
+        assert(t1.current_pos == 5);
+        assert(t1._caret == 5);
         auto plane = t1._plane_string;
         writeln(plane);
-        assert(plane == "01234\n");
+        writeln(t1._writing);
+        assert(plane == "01234");
+        t1.append("56789");
+        plane = t1._plane_string();
+        writeln(t1._writing);
+        writeln(t1._current);
+        writeln(plane);
+        assert(plane == "0123456789");
     }
     @property string[int] strings(){
         string[int] result;
@@ -926,19 +1018,20 @@ public:
         return false;
     }
     // 指定行を上の行と結合.指定行より下の行は繰り上がり
+    // 同一行に_currentがあれば移動させる
     private bool _line_join(in int line){
         // 0行目とでは結合できない
         if(line == 0) 
             return false;
  
         immutable cl = _str(line);
+        immutable bottom_line = _lines-1;
         immutable upper_line = line-1;
         if(upper_line in _writing)
         {
             auto c_line = _writing[line];
             foreach(l; line .. _lines-1)
                 _writing[l] = _writing[l+1];
-            _writing.remove(_lines);
             --_lines;
             const upper_len = _line_length[line-1];
             const join_len = _line_length[line];
@@ -946,6 +1039,10 @@ public:
             foreach(p; 0 .. join_len)
                 _writing[upper_line][upper_len+p] = _writing[line][p];
             _line_length[upper_line] += join_len;
+            enforce(_writing.remove(bottom_line));
+            enforce(_line_length.remove(bottom_line));
+            if(_current.line == line)
+                --_current.line;
             return true;
         }
         return false;
@@ -1068,6 +1165,19 @@ public:
     }
     void set_fontsize(in ubyte fsz){
         _set_tag!(font_size_tag,ubyte)(fsz,_current_fontsize.value);
+    }
+    unittest{
+        Text t1;
+        t1.append("012345");
+        t1.set_foreground(red);
+        t1.line_feed();
+        t1.append("5");
+        assert(t1.markup_string() == "012345<span foreground=\"red\">\n5</span>");
+        t1.backspace();
+        assert(t1.markup_string() == "012345<span foreground=\"red\">\n</span>");
+        t1.backspace();
+        assert(t1.markup_string() == "012345<span foreground=\"red\"></span>");
+        t1.markup_string();
     }
     // アクセサ
     @property int current_line()const{
