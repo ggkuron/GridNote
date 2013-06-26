@@ -280,6 +280,7 @@ struct Text
         _writing = t._writing.dup;
         _line_length = t._line_length;
     }
+    // 一時しのぎフォーマットもうかえない
     this(string[] dat){
         const lines = to!int(chomp(dat[0]));
         int ln;
@@ -325,12 +326,11 @@ struct Text
         // set _current
         auto c_str = (chomp(dat[2]))["TextPoint".length .. $];
         _current = TextPoint(removechars(c_str," "));
-        // _current = TextPoint(c_str);
     }
 private:
     TextSpan[TagType] _current_opened_span;
     TextPoint _current = TextPoint(0,0);
-    TextPoint _text_end;
+    TextPoint _text_end = TextPoint(0,0);
     int _caret; // byte数でのカウント.pangoのせい
 
     alias int Pos;
@@ -346,12 +346,12 @@ private:
     invariant(){
         assert(_current.line < _lines);
     }
-    void deleteChar(in TextPoint tp){
-        assert(_is_valid_pos(tp));
+    bool deleteChar(in TextPoint tp){
+        if(!_is_valid_pos(tp))
+            return false;
         const line = tp.line;
         const bytesize = _byte_size(tp);
         const line_len = _line_length[line];
-        auto line_save = _writing[line];
         const fp = _forward_point(tp);
         
         foreach_reverse(ref span;_tag_pool.keys)
@@ -376,10 +376,16 @@ private:
 
         --_line_length[line];
         _caret -= bytesize;
-        if(!_line_length[tp.line])
+        if(_text_end.line == line)
+            --_text_end.pos;
+        if(!_line_length[line])
         {   // 行がもはやなければ上行と結合
-            _line_join(tp.line);
-            if(tp.line == 0)
+            if(_line_join(line)) // 同一行に_currentがあれば--_current.line
+            {
+                if(_current.line == _lines) // _line_join側
+                    --_current.line;
+            }
+            else if(line == 0)
             {   // 0行目がなくなったときは下からスライド
                 foreach(l; 1 .. _lines)
                 {
@@ -389,30 +395,13 @@ private:
                 _writing.remove(_lines);
                 _line_length.remove(_lines);
                 --_lines;
+                if(_current.line == _lines) // 最下段に_currentあればスライド
+                    --_current.line;
             }
-        }
-    }
-    void deleteChar(){
-        deleteChar(_current);
-        if(_current.pos == 0)
-            return; // else is 節でどうなるかわかったものではないので
-        else if(_current.pos > _line_length[_current.line] - 1)
-            _current.pos = _line_length[_current.line] - 1;
-    }
-    unittest{
-        Text t1;
-        t1.append("0123456789");
-        t1.set_foreground(red);
-        assert(t1._line_length[0] == 10);
-        assert(t1._caret == 10);
-        t1.deleteChar(TextPoint(0,5));
-        writeln(t1._plane_string());
-        assert(t1._plane_string == "012346789");
-        assert(t1._line_length[0] == 9);
-        assert(t1._caret == 9);
-        t1.set_foreground(red);
-    }
 
+        }
+        return true;
+    }
     void _deleteChar(in int pos){
         _writing[current_line].remove(pos);
     }
@@ -466,7 +455,6 @@ private:
                 assert(0);
         }
     }
-
     TextSpan _used_span_in_tags(in TextPoint tp,TagType tt){
         TextSpan itr;
         foreach(span; _tag_pool.keys.sort)
@@ -554,15 +542,12 @@ private:
     // これに依存、str(TextPoint,TextPoint)
     // escapeされてない文字が返る
     @property string _str(in int line)const{
-        if(_writing
-        && !_writing.keys.empty()
-        && line in _writing
-        && !_writing[line].values.empty())
+        if(!line_empty(line))
         {
-            dstring s;   
+            string s;   
             foreach(i; _writing[line].keys.sort())
                 s ~= _writing[line][i];
-            return toUTF8(s);
+            return s;
         }else return "";
     }   
     dchar _get_char(in TextPoint tp)const{
@@ -586,8 +571,8 @@ private:
     string _ranged_str(in TextPoint start,in TextPoint end)const{
         if(!_is_valid_pos(start) || !_is_valid_pos(end))
         {
-            // writeln("start pos ",start);
-            // writeln("end pos ",end);
+            writeln("start pos ",start);
+            writeln("end pos ",end);
             throw new Exception("not in range"); 
         }
         auto start_line = _writing[start.line];
@@ -627,12 +612,13 @@ private:
         assert(result == "人生");
     }
     @property TextPoint _end_point(){
-        auto line = _line_length.keys.sort[$-1];
-        auto pos = line_length(line);
-        if(pos)
-            return TextPoint(line,pos-1);
-        else
-            return TextPoint(line,0);
+        return _text_end;
+        // auto line = _line_length.keys.sort[$-1];
+        // auto pos = line_length(line);
+        // if(pos)
+        //     return TextPoint(line,pos-1);
+        // else
+        //     return TextPoint(line,0);
     }
     @property TextPoint _back_point(){
         auto endp = _end_point();
@@ -649,7 +635,7 @@ private:
             return TextPoint(endp.line,endp.pos-1);
     }
     bool _is_line_end(in TextPoint tp )const{
-        return tp.pos == _line_length[tp.line];
+        return empty || (tp.line in _line_length && tp.pos == _line_length[tp.line]);
     }
     bool _is_line_head(in TextPoint tp)const{
         return tp.pos == 0;
@@ -718,9 +704,6 @@ private:
         text.line_feed();
         text.append("123456789\n");
         writeln(text._current);
-        // assert(text._current == TextPoint(1,9));
-        // assert(text._backward_point(text._current) == TextPoint(0,8));
-        // assert(text._is_line_end(text._current));
     }
 
     TextPoint _backward_point(in TextPoint tp)const{
@@ -738,6 +721,98 @@ private:
             assert(result.pos >= 0);
             return result;
         }
+    }
+    text.tag.Foreground _current_foreground;
+    text.tag.Background _current_background;
+    text.tag.FontSize _current_fontsize;
+    text.tag.Underline _current_underline;
+    text.tag.Weight _current_weight;
+
+    // 色の未定義値表現がないからこんなことに
+    // optionalかnullableで包みたい
+    // 上の層に設定されてるかどうか知らせる必要がある
+    // 入力中の文字色をこの層で設定してなくて上の層で設定している状態を持てるように設計してるから
+    // 階層的にtag適用できる設計は必要だと思う
+
+    bool _color_is_set = false;
+    ref TextSpan _opened(TagType t){
+        assert(t in _current_opened_span);
+        return _current_opened_span[t];
+    }
+    auto _opened_tag(TagType t){
+        assert(t in _current_opened_span);
+        return _tag_pool[_current_opened_span[t]];
+    }
+    void _set_pooled_tag(TagType t,in TextSpan s,Color v){
+        assert(s in _tag_pool);
+        switch(t){
+            case foreground_tag:
+                _tag_pool[s].set_foreground(v);
+                break;
+            case background_tag:
+                _tag_pool[s].set_background(v);
+                break;
+            default:
+                assert(0);
+                break;
+        }
+    }
+    void _set_pooled_tag(TagType t,in TextSpan s,ubyte v){
+        assert(s in _tag_pool);
+        switch(t){
+            case font_size_tag:
+                _tag_pool[s].set_font_size(v);
+                break;
+            default:
+                assert(0);
+                break;
+        }
+    }
+    void _cut_tagpool(in TextPoint end){
+        foreach(span; _tag_pool.keys)
+        {
+            if(span.is_set && span.max < end)
+            {
+                auto tag = _tag_pool[span];
+                _tag_pool.remove(span);
+                span.re_open();
+                _tag_pool[span] = tag;
+            }
+        }
+    }
+    // current位置に適用する
+    void _set_tag(TagType tt,T)(in T val,ref T state_val){
+        if(tt !in _current_opened_span)
+        {   // この初期化は初回一回だけなのでctorに移動したい。
+            _current_opened_span[tt] = TextSpan.init;
+        }
+        if(val == state_val) return;
+        const opened = _opened(tt); 
+        if(opened.is_opened)
+        {   
+            assert(opened in _tag_pool);
+            _opened(tt).set_end(_backward_pos(_current));
+            const closed = _opened(tt); 
+            auto current_opened = _tag_pool[opened];
+            if(closed in _tag_pool)
+            {   // 同じ期間で閉じているtag-span対があればそのtagに属性を追加する
+                current_opened = _tag_pool[closed];
+                enforce(_tag_pool.remove(closed));
+            }
+            enforce(_tag_pool.remove(opened));
+            if(closed.is_set())
+            {
+                _tag_pool[closed] = current_opened;
+                _set_pooled_tag(tt,closed,state_val);
+            }
+        }
+        _opened(tt).clear();
+        _opened(tt).set_start(_current);
+        const opened_new = _opened(tt);
+        if(opened_new !in _tag_pool)
+            _tag_pool[opened_new] = SpanTag.init;
+        _set_pooled_tag(tt,_opened(tt),val);
+        state_val = val;
     }
 public:
     string markup_string(){
@@ -806,7 +881,7 @@ public:
             result ~= "</span>";
         // writeln(_tag_pool);
         // writeln(_writing);
-        // writeln(result);
+        writeln(result);
         return result;
     }
     // .. カプセル化壊すがCell.TextBOXでappendするときにbyte数をとれるから
@@ -819,35 +894,29 @@ public:
             case right:
                 if(_is_line_end(_current))
                     return; // 下の行に行く処理atode書くよ
-                _caret += _byte_size(_current);
                 ++_current.pos;
                 break;
             case left:
                 if(_is_line_head(_current))
                     return;
-                _caret += _byte_size(back_pos);
                 --_current.pos;
                 break;
             case up:
                 if(current_line == 0)
                     return;
-                const up_pos = TextPoint(_current.line-1,_current.pos);
-                _caret += _ranged_str(up_pos,back_pos).length;
                 --_current.line;
                 break;
             case down:
                 if(!_next_line_exist(current_line))
                     return;
-                auto d_pos = _current.pos;
-                auto d_lin = _current.line + 1;
-                const d_length = _line_length[d_lin];
-                if(d_length < d_pos)
-                    d_pos = d_length;
-                const down_pos = TextPoint(d_lin,d_pos);
-                _caret += _ranged_str(_current,down_pos).length;
-                --_current.line;
+                ++_current.line;
+                if(_current > _text_end)
+                    _current = _text_end;
                 break;
         }
+        auto str = _ranged_str(TextPoint(0,0),_backward_pos(_current));
+        writeln(str);
+        _caret = cast(int)str.length;
     }
     unittest{
         Text t1;
@@ -895,6 +964,36 @@ public:
         write("\n");
         writeln(t1._current);
         writeln(t1.markup_string());
+        write("\n");
+        writeln(t1._current);
+        writeln(t1.markup_string());
+
+    }
+
+    bool deleteChar(){
+        if(deleteChar(_current))
+        {
+            if(_current.pos == 0)
+                return false; // else is 節でどうなるかわかったものではないので
+            else if(_current.pos > _line_length[_current.line] - 1)
+                _current.pos = _line_length[_current.line] - 1;
+            return true;
+        }
+        return true;
+
+    }
+    unittest{
+        Text t1;
+        t1.append("0123456789");
+        t1.set_foreground(red);
+        assert(t1._line_length[0] == 10);
+        assert(t1._caret == 10);
+        t1.deleteChar(TextPoint(0,5));
+        writeln(t1._plane_string());
+        assert(t1._plane_string == "012346789");
+        assert(t1._line_length[0] == 9);
+        assert(t1._caret == 9);
+        t1.set_foreground(red);
     }
 
     // private void _char_in(in TextPoint tp,in dchar c){
@@ -913,19 +1012,21 @@ public:
 
     // _line_lengthの伸ばす方向の変更は今のところここのみ
     // Textに文字を入れる操作は最終的にここを通る
+    // byte数ここではもうとらない
     ulong append(in dchar c){
+        // assert(_text_end == _current);
         _writing[current_line][_current.pos] = c;
         if(c != '\n')
             ++_current.pos;
-        
-        if(c == '\n')   line_feed;
+        if(c == '\n')
+            line_feed();
         const cp = current_pos;
-        if(current_line !in _line_length)
+        // if(current_line !in _line_length)
+        //     _line_length[current_line] = cp;
+        // else if(_line_length[current_line] < cp) 
             _line_length[current_line] = cp;
-        else if(_line_length[current_line] < cp) 
-            _line_length[current_line] = cp;
-        if(_current > _text_end)
-            _text_end = _current;
+        // if(_current > _text_end)
+        _text_end = _current;
 
         return _current.pos;
     }
@@ -937,12 +1038,27 @@ public:
         foreach(p; tp.pos+1 .. line_len +1)
             _writing[tp.line][p] = line_p[p-1];
         assert(_line_length[tp.line] == line_len);
+        writeln(_text_end.line);
+        writeln(tp.line);
+        if(tp.line != _text_end.line)
+        {
+            _writing[tp.line][line_len+1] = '\n';
+        }
+
         ++_line_length[tp.line];
+        if(tp.line == _text_end.line)
+            ++_text_end.pos;
+        writeln(_writing);
     }
     void insert(in dchar c){
+        const cp = current_pos;
+        if(current_line !in _line_length)
+            _line_length[current_line] = cp;
+
         insert(_current,c);
         _caret += toUTF8([c]).length;
         ++_current.pos;
+
     }
     unittest{
         Text t1;
@@ -964,12 +1080,19 @@ public:
         {
             append(c);
         }
-        // _caret += s.length;
     }
     @property bool empty()const{
         return (_writing.keys.empty())
-        || (_lines == 1 && _writing[0].keys.empty());
+        || (_lines == 1 && _writing[0].keys.empty())
+        || _line_length.keys.empty;
     }
+    bool line_empty(in int line)const{
+        return !(_writing
+        && !_writing.keys.empty()
+        && line in _writing
+        && !_writing[line].values.empty());
+    }
+
     // Writing内文字のbyte数
     ulong _byte_size(in TextPoint tp){
         return to!string(_get_char(tp)).length;
@@ -977,6 +1100,10 @@ public:
     // 行始でfalse 通常true
     bool backspace(){
         const bp = _backward_pos(_current);
+        if(_text_end != _current)
+        {
+            return deleteChar();
+        }
         if(current_pos)
         {
             foreach_reverse(ref span;_tag_pool.keys)
@@ -991,10 +1118,16 @@ public:
                     _tag_pool.remove(span);
             }
             _caret -= _byte_size(bp);
+            writeln("del :",_writing[_current.line][_current.pos-1]);
             _deleteChar(--_current.pos);
+            writeln(_writing);
             _current = bp;
             if(_line_length[current_line])
+            {
                 --_line_length[current_line]; // pos に一致してるから負数にはならないとおもいきや、削除後に0になってるところでbackすると0になってるので
+                if(current_line == _text_end.line)
+                    --_text_end.pos;
+            }
             return true;
         }
         else if(_current.line)
@@ -1036,6 +1169,16 @@ public:
             result[line_num] = _str(line_num);
         return result;
     }
+    private void init(){
+        _line_length[0] = 0;
+    }
+    bool is_in_end(){
+        if(empty)
+            init();
+        writeln(_text_end);
+        writeln(_current);
+        return _text_end == _current;
+    }
     // この関数内ではinvariantは成立していないので
     // アクセサを使ってはだめ
     bool line_feed(){ // 新しい行を作ったか
@@ -1047,6 +1190,7 @@ public:
         ++_current.line;
         ++_caret;
         _current.pos = 0;
+        _text_end = _current;
         _line_length[_current.line] = 0;
         if(_current.line !in _writing)
             _writing[_current.line] = null;
@@ -1060,6 +1204,7 @@ public:
 
     // 指定行を上の行と結合.指定行より下の行は繰り上がり
     // 同一行に_currentがあれば移動させる
+    // 結合したらtrue
     private bool _line_join(in int line){
         // 0行目とでは結合できない
         if(line == 0) 
@@ -1084,9 +1229,17 @@ public:
             enforce(_line_length.remove(bottom_line));
             if(_current.line == line)
                 --_current.line;
+            if(_text_end.line == line)
+            {
+                --_text_end.line;
+                _text_end.pos = _line_length[upper_line];
+            }
             return true;
         }
         return false;
+    }
+    bool line_join(){
+        return _line_join(_current.line);
     }
     unittest{
         Text t1;
@@ -1096,6 +1249,7 @@ public:
         t1._line_join(1);
         auto plane = t1._plane_string();
         writeln(plane);
+        writeln(t1._current);
         assert(plane == "0123456789");
     }
     // int right_edge_pos()const{
@@ -1104,99 +1258,6 @@ public:
     //     return sorted_positions[$-1];
     //     debug(text) writefln("type:%s",typeid(linepos));
     // }
-    private text.tag.Foreground _current_foreground;
-    private text.tag.Background _current_background;
-    private text.tag.FontSize _current_fontsize;
-    private text.tag.Underline _current_underline;
-    private text.tag.Weight _current_weight;
-
-    // 色の未定義値表現がないからこんなことに
-    // optionalかnullableで包みたい
-    // 上の層に設定されてるかどうか知らせる必要がある
-    // 入力中の文字色をこの層で設定してなくて上の層で設定している状態を持てるように設計してるから
-    // 階層的にtag適用できる設計は必要だと思う
-    // さもなくば文字列の修飾なんてつまらないものになるか、制御が難しくなるか
-
-    private bool _color_is_set = false;
-    private ref TextSpan _opened(TagType t){
-        assert(t in _current_opened_span);
-        return _current_opened_span[t];
-    }
-    private auto _opened_tag(TagType t){
-        assert(t in _current_opened_span);
-        return _tag_pool[_current_opened_span[t]];
-    }
-    private void _set_pooled_tag(TagType t,in TextSpan s,Color v){
-        assert(s in _tag_pool);
-        switch(t){
-            case foreground_tag:
-                _tag_pool[s].set_foreground(v);
-                break;
-            case background_tag:
-                _tag_pool[s].set_background(v);
-                break;
-            default:
-                assert(0);
-                break;
-        }
-    }
-    private void _set_pooled_tag(TagType t,in TextSpan s,ubyte v){
-        assert(s in _tag_pool);
-        switch(t){
-            case font_size_tag:
-                _tag_pool[s].set_font_size(v);
-                break;
-            default:
-                assert(0);
-                break;
-        }
-    }
-    private void _cut_tagpool(in TextPoint end){
-        foreach(span; _tag_pool.keys)
-        {
-            if(span.is_set && span.max < end)
-            {
-                auto tag = _tag_pool[span];
-                _tag_pool.remove(span);
-                span.re_open();
-                _tag_pool[span] = tag;
-            }
-        }
-    }
-    // current位置に適用する
-    private void _set_tag(TagType tt,T)(in T val,ref T state_val){
-        if(tt !in _current_opened_span)
-        {   // この初期化は初回一回だけなのでctorに移動したい。
-            _current_opened_span[tt] = TextSpan.init;
-        }
-        if(val == state_val) return;
-        const opened = _opened(tt); 
-        if(opened.is_opened)
-        {   
-            assert(opened in _tag_pool);
-            _opened(tt).set_end(_backward_pos(_current));
-            const closed = _opened(tt); 
-            auto current_opened = _tag_pool[opened];
-            if(closed in _tag_pool)
-            {   // 同じ期間で閉じているtag-span対があればそのtagに属性を追加する
-                current_opened = _tag_pool[closed];
-                enforce(_tag_pool.remove(closed));
-            }
-            enforce(_tag_pool.remove(opened));
-            if(closed.is_set())
-            {
-                _tag_pool[closed] = current_opened;
-                _set_pooled_tag(tt,closed,state_val);
-            }
-        }
-        _opened(tt).clear();
-        _opened(tt).set_start(_current);
-        const opened_new = _opened(tt);
-        if(opened_new !in _tag_pool)
-            _tag_pool[opened_new] = SpanTag.init;
-        _set_pooled_tag(tt,_opened(tt),val);
-        state_val = val;
-    }
     void set_foreground(in Color c){
         _set_tag!(foreground_tag,Color)(c,_current_foreground.value);
         _color_is_set = true;

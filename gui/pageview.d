@@ -380,7 +380,11 @@ public:
     Cell get_view_min()const{
         return _in_view.min_cell();
     }
-    // アクセサにする意味ないかもしれません
+    Cell get_holdingSize()const{
+        return Cell(cast(int)(_holding_area.h / _gridSpace),
+                    cast(int)(_holding_area.w / _gridSpace));
+    }
+    // アクセサにする意味はない
     @property GuideView guide_view(){
         return _guide_view;
     }

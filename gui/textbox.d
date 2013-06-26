@@ -29,6 +29,7 @@ import pango.PgLayout;
 import pango.PgFontDescription;
 import pango.PgAttribute;
 import pango.PgAttributeList;
+import pango.PgTabArray;
 
 import shape.shape;
 
@@ -136,7 +137,6 @@ public:
             _caret_rect.set_by(_caretRect);
             _caret_rect.x /= 1024;
             _caret_rect.x += _box_pos[box_id].x;
-            // _caret_rect.y /= 1024;
             _caret_rect.y = lines_y(_currentline) - _gridSize;
             _caret_rect.w = _gridSize*3/4;
             _caret_rect.h = _gridSize;
@@ -203,8 +203,7 @@ public:
                 // 整形後と前が揺らがず一致したら終了
                 if(cells_snap == box.get_cells())
                     break;
-
-            } while(1);
+            }while(1);
         }
 
         _register_check(box);
@@ -217,6 +216,7 @@ public:
             render_preedit();
 
         string markup_str = box.markup_string();
+        writeln(markup_str);
         if(markup_str)
         {
             const markup_len = cast(int)markup_str.length;
@@ -230,7 +230,12 @@ public:
                 fill(cr,_caret_rect);
             }
         }
-        for(int line; line < box.numof_lines; ++line )
+        const box_lines = box.numof_lines;
+        const layout_lines = _layout[box_id].getLineCount();
+        writeln(box_lines);
+        writeln(layout_lines);
+        // assert(box_lines == layout_lines);
+        for(int line; line < box_lines; ++line )
         {
             auto line_layout = _layout[box_id].getLineReadonly(line);
             int newIndex,newTraing;
@@ -260,7 +265,6 @@ public:
 
         imc.getPreeditString(_preedit,_im_attr,_im_pos);
         _im_attr.insert(PgAttribute.fontDescNew(_im_target.font_desc));
-        // _im_target.set_cursor_pos(box.get_caret);
 
         set_preeditting(true);
     }

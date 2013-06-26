@@ -26,11 +26,11 @@ import pango.PgAttributeList;
 final class TextBOX : ContentBOX{  
 private:
     Text _text;
-    int _cursor_pos; // 描画側（IM)が教えるために使う
     string _box_fontfamly = "Sans";
     string _box_style = "Normal";
     ubyte  _box_font_size;
     Color _box_foreground = black;
+    bool _color_fixed = false;
 
     string desc_str(){
         _box_font_size = cast(ubyte)_table.grid_size / 2 ;
@@ -42,13 +42,18 @@ public:
         _box_fontfamly = family;
         _box_style = style;
         _box_foreground = c;
+        if(family == "Monospace")
+        {   // あとで追い出すけどMonospace 用の設定
+            set_background_color(black);
+            _box_foreground = lightyellow;
+            _color_fixed = true;
+        }
     }
     this(BoxTable table,in Cell tl,in int w,in int h){
         super(table,tl,w,h);
     }
     this(BoxTable table,TextBOX tb){
         _text = tb._text;
-        _cursor_pos = tb.cursor_pos;
         _box_foreground = tb._box_foreground;
 
         super(table,tb);
@@ -83,15 +88,25 @@ public:
         _text = Text(dat[4..$]);
     }        
     bool mark_caret = false;
+    void move_caret(in Direct dir){
+        _text.move_caret(dir);
+    }
+    void delete_char(){
+        _text.deleteChar();
+        if(_text.numof_lines < this.numof_row)
+            require_remove(down);
+    }
 
     override bool require_create_in(in Cell c)
     {
         return _table.try_create_in!(TextBOX)(this,c);
     }
     void set_box_default_color(in Color c){
+        if(_color_fixed) return;
         _box_foreground = c;
     }
     void set_foreground_color(in Color c){
+        if(_color_fixed) return;
         if(_text.empty)
         {
             _box_foreground = c;
@@ -105,7 +120,7 @@ public:
         else // 文字の背景色を設定
             _text.set_background(c);
     }
-    void set_heading(ubyte size)
+    void set_heading(in ubyte size)
         in{
         assert(size >= 0);
         assert(size <= 6);
@@ -113,10 +128,26 @@ public:
     body{
         assert(0);
     }
-    void set_font_bigger()
-    {
+    void set_font_bigger(){
     }
-    void append(string s){
+    void input(string s){
+        if(s == "\t" && _box_fontfamly == "Monospace")
+            s = "    ";
+        if(_text.is_in_end)
+            append(s);
+        else
+            insert(s);
+    }
+    void insert(in string s){
+        foreach(dchar c; s)
+        {
+            if(c == '\n')
+                expand_with_text_feed();
+            else
+                _text.insert(c);
+        }
+    }
+    void append(in string s){
         int feed_cnt;
         foreach(dchar c; s)
         {
@@ -134,19 +165,19 @@ public:
         if(!_text.backspace()) // 行始でfalse
             require_remove(down);
     }
+    void join(){
+        if(_text.line_join())
+            require_remove(down);
+    }
     // 現状caretは改行時のみの使用になってる
     bool expand_with_text_feed(){
         if(require_expand(down))
         {
-            // _text.line_feed();
             _text.append('\n');
             return true;
         }else 
             return false;
     }
-//     void set_caret()(in int pos){
-//         _text.set_caret(pos); // 
-//     }
     string markup_string(){
         if(_text.empty) return null;
         SpanTag box_desc;
@@ -162,9 +193,6 @@ public:
     }
     Text getText(){
         return _text;
-    }
-    void set_cursor_pos(in int p){
-        _cursor_pos = p;
     }
     @property int cursor_pos()const{
         return _text.current_pos;

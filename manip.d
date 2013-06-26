@@ -264,6 +264,19 @@ public:
         _box_type = ib.toString();
         _box_use_im = false;
     }
+    void page_eject(in Direct dir){
+        const size = _pv.get_holdingSize();
+        int travel;
+        if(dir.is_horizontal)
+            travel = size.column;
+        else
+            travel = size.row;
+        _select.move(dir,travel);
+
+        foreach(i; 0 .. travel)
+            _pv.move_view(dir);
+
+    }
     void create_RectBOX(){
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
@@ -291,7 +304,6 @@ public:
         }
     }
     void backspace(){
-        debug(manip) writeln("back space start");
         _old_state ~= _maniped_box;
         switch(_box_type){
             case "cell.textbox.TextBOX":
@@ -313,6 +325,19 @@ public:
         if(auto tb = cast(TextBOX)_maniped_box) 
             _old_state ~= _maniped_box;
     }
+    void move_caret(in Direct dir){
+        if(auto tb = cast(TextBOX)_maniped_box) 
+            tb.move_caret(dir);
+    }
+    void delete_char(){
+         if(auto tb = cast(TextBOX)_maniped_box) 
+            tb.delete_char();
+    }
+    void join(){
+         if(auto tb = cast(TextBOX)_maniped_box) 
+            tb.join();
+    }
+
     void undo(){
         if(!_old_state.empty())
             _maniped_box = _old_state[$-1];
@@ -448,13 +473,11 @@ public:
         this(){
             // _manip_table = mt;
         }
-        void append(TextBOX box,string str){
-            debug(manip) writeln("text insert strat");
-            box.append(str);
-            debug(manip) writeln("end");
+        void input(TextBOX box,string str){
+            box.input(str);
         }
         void with_commit(string str,TextBOX box){
-            append(box,str);
+            input(box,str);
         }
         void backspace(TextBOX box){
             box.backspace();
@@ -467,6 +490,9 @@ public:
         }
         void set_color(TextBOX box,in Color c){
             box.set_foreground_color(c);
+        }
+        void move_caret(TextBOX box,in Direct dir){
+            box.move_caret(dir);
         }
     }
 }

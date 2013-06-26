@@ -153,8 +153,16 @@ public:
 
     COMMAND create_TextBOX;
     COMMAND create_MonoTextBOX;
+    COMMAND text_move_caretL;
+    COMMAND text_move_caretR;
+    COMMAND text_move_caretU;
+    COMMAND text_move_caretD;
+    COMMAND table_page_ejectD;
+    COMMAND table_page_ejectU;
     COMMAND text_backspace;
+    COMMAND text_deletechar;
     COMMAND text_feed;
+    COMMAND text_join;
     COMMAND im_focus_in;
     COMMAND im_focus_out;
     COMMAND text_edit;
@@ -300,6 +308,13 @@ public:
         register_key(create_circle,InputState.Normal,default_ImageOpen);
         register_key(create_circle,InputState.Edit,default_ImageOpen);
 
+        table_page_ejectD = cmd_template!("manip.page_eject(down);")(this,_manip,_view);
+        table_page_ejectU = cmd_template!("manip.page_eject(up);")(this,_manip,_view);
+        // table_page_ejectL = cmd_template!("manip.page_eject(left);")(this,_manip,_view);
+        // table_page_ejectR = cmd_template!("manip.page_eject(right);")(this,_manip,_view);
+        register_key(table_page_ejectD,InputState.Normal,default_PAGE_D);
+        register_key(table_page_ejectU,InputState.Normal,default_PAGE_U);
+
         // 内部使用
         // mode遷移はもっと包んだ方が良さそう
         input_mode_edit = cmd_template!("inp.change_mode_edit();")(this,_manip,_view);
@@ -324,7 +339,19 @@ public:
         quit = cmd_template!("stdlib.exit(0);")(this,_manip,_view);
         grab_target = cmd_template!("manip.grab_selectbox();")(this,_manip,_view);
 
+        text_move_caretL = cmd_template!("manip.move_caret(left);")(this,_manip,_view);
+        text_move_caretR = cmd_template!("manip.move_caret(right);")(this,_manip,_view);
+        text_move_caretU = cmd_template!("manip.move_caret(up);")(this,_manip,_view);
+        text_move_caretD = cmd_template!("manip.move_caret(down);")(this,_manip,_view);
+        text_join = cmd_template!("manip.join();")(this,_manip,_view);
+        register_key(text_join,InputState.Normal,default_JOIN);
+        register_key(text_move_caretL,InputState.Edit,default_MOVE_BOX_L);
+        register_key(text_move_caretR,InputState.Edit,default_MOVE_BOX_R);
+        register_key(text_move_caretU,InputState.Edit,default_MOVE_BOX_U);
+        register_key(text_move_caretD,InputState.Edit,default_MOVE_BOX_D);
         text_backspace = cmd_template!("manip.backspace();")(this,_manip,_view);
+        text_deletechar = cmd_template!("manip.delete_char();")(this,_manip,_view);
+        register_key(text_deletechar,InputState.Edit,default_EDIT_DELETE);
         register_key(text_backspace,InputState.Edit,backspace);
         text_feed = cmd_template!("manip.text_feed();")(this,_manip,_view);
         register_key(text_feed,InputState.Edit,return_key);
