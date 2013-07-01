@@ -98,9 +98,9 @@ span内(先頭要素から末尾要素位置まで）に要素を追加する
     (1)先頭!=末尾
     >>(先頭と末尾) 末尾位置方向へシフト
     (2)先頭==末尾
-    >>末尾に追加
+    >>(末尾位置) 末尾位置方向へシフト
 -末尾位置
-    (1)先頭!=末尾
+    (2)先頭!=末尾
     (2)先頭==末尾
     >>(末尾位置) 末尾位置方向へシフト
 -(3)先頭要素(の前）より前
@@ -398,9 +398,18 @@ private:
         TextSpan[] result;
         foreach(span; _tag_pool.keys)
             if(span.is_hold(tp))
-                result ~= tp;
+                result ~= span;
         return result;
     }
+    TextSpan[] _tag_span_in(in TextPoint tp,in TagType tt)const{
+        TextSpan[] result;
+        foreach(span; _tag_pool.keys)
+            if(span.is_hold(tp) 
+                    && _tag_pool[span].is_set(tt))
+                result ~= span;
+        return result;
+    }
+
     public bool deleteChar(){
         if(_current == _text_end)
             return false;
@@ -945,6 +954,11 @@ private:
         }
     }
     // current位置に適用する
+    /+
+        現在位置を始点にtagを設定する
+        現在のspanが開いていれば現在位置手前で閉じる
+
+    +/
     void _set_tag(TagType tt,T)(in T val,ref T state_val){
         if(tt !in _opened_span)
         {   // この初期化は初回一回だけなのでctorに移動したい。
@@ -1619,9 +1633,6 @@ public:
     @property int caret()const{
         return _caret;
     }
-    // @property auto writing()const{
-    //     return _writing;
-    // }
     void clear(){
         this = Text();
     }
