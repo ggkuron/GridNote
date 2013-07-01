@@ -121,10 +121,9 @@ public:
             if(box_id !in _strings)
                 _strings[box_id] = string.init;
             if(_render_target != box)
-            {
                 _render_target = box;
+            if(box_id !in _layout)
                 _layout[box_id] = PgCairo.createLayout(cr);
-            }
             foreach(l; 0 .. box.numof_lines)
                 _logicRect[l] = PangoRectangle.init;
         }

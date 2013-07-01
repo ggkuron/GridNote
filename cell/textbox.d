@@ -108,12 +108,12 @@ public:
     }
     void set_foreground_color(in Color c){
         if(_color_fixed) return;
-        if(_text.empty)
+        // if(_text.empty)
         {
             _box_foreground = c;
         }
-        else
-            _text.set_foreground(c);
+        // else
+            // _text.set_foreground(c);
     }
     void set_background_color(in Color c){
         if(_text.empty) // box_colorを設定

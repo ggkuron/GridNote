@@ -3,3 +3,6 @@
 *.o
 exe
 save/*
+memo
+tmp.dat
+ruby/*

@@ -178,8 +178,8 @@ private:
                 _render_text.fill(cr,tb,tb.box_color);
                 _render_text.stroke(cr,tb,Color(gold,128),1);
             }
-            if(manip_t) //  今の実装だと、描画前に舐めてるからmanip_tには何かしら入ってるというだけのあれ
-            _render(cr,tb,(manip_t.id != tb.id));
+            // if(manip_t) //  今の実装だと、描画前に舐めてるからmanip_tには何かしら入ってるというだけのあれ
+            _render(cr,tb,(manip_t && manip_t.id != tb.id));
         }
         foreach(ib; _in_view.get_imageBoxes())
         {
