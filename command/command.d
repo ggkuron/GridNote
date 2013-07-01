@@ -187,6 +187,7 @@ public:
     COMMAND change_color_R;
     COMMAND change_color_U;
     COMMAND change_color_D;
+    COMMAND toggle_transparent;
 private:
     InputState _input_state = InputState.Normal;
     ManipTable _manip;
@@ -408,6 +409,8 @@ public:
         register_key(change_color_U,InputState.Edit,default_CMOVE_U);
         register_key(change_color_D,InputState.Edit,default_CMOVE_D);
 
+        toggle_transparent = cmd_template!("view.parent_window.toggle_opacity();")(this,_manip,_view);
+        register_key(toggle_transparent,InputState.Edit,default_toggle_transparent);
     }
     bool key_to_cmd(Event event, Widget w)
         in{

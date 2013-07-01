@@ -41,7 +41,6 @@ private:
 
     Color  _selected_color;
     string _box_type;
-    bool   _box_use_im;
     ManipTextBOX _manip_textbox;
 public:
     this(BoxTable table,PageView p)
@@ -146,8 +145,7 @@ public:
         auto target = _focused_table.get_content(_select.focus);
         _box_type = target[0];
         _maniped_box = target[1];
-        if(_box_type == "cell.textbox.TextBOX")
-            _box_use_im = true;
+        // if(_box_type == "cell.textbox.TextBOX")
         return _maniped_box;
     }
     void move_selected(in Direct to){
@@ -210,7 +208,6 @@ public:
             _focused_table.try_remove(_maniped_box);
         }
         _select.selection_clear();
-        _box_use_im = false;
         debug(manip) writeln("returned");
     }
     void change_mode_point(){
@@ -232,7 +229,6 @@ public:
 
         _maniped_box = tb;
         _box_type = tb.toString();
-        _box_use_im = true;
         debug(manip) writeln("type in: ",tb.toString());
     }
     void select_color(in Direct dir){
@@ -262,7 +258,6 @@ public:
 
         _maniped_box = ib;
         _box_type = ib.toString();
-        _box_use_im = false;
     }
     void page_eject(in Direct dir){
         const size = _pv.get_holdingSize();
@@ -284,7 +279,6 @@ public:
 
         _maniped_box = ib;
         _box_type = ib.toString();
-        _box_use_im = false;
     }
     void commit_to_box(string str){
         debug(manip) writeln("send to box start with :",str);

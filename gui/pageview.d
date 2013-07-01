@@ -114,6 +114,7 @@ private:
         }
     }
     void _when_preedit_start(IMContext imc){
+        _when_preedit_changed(imc);
     }
     bool _when_retrieve_surrounding(IMContext imc){
         auto surround = _render_text.get_surrounding();
@@ -161,7 +162,7 @@ private:
     // void backDesign(Context cr){
     // }
     bool _show_contents_border = true;
-    void _renderTable(Context cr,bool modify= false){
+    void _renderTable(Context cr){
         if(_in_view.empty) return;
         auto manip_t = _manip_table.get_target();
 
@@ -177,7 +178,8 @@ private:
                 _render_text.fill(cr,tb,tb.box_color);
                 _render_text.stroke(cr,tb,Color(gold,128),1);
             }
-            _render(cr,tb,(manip_t !is tb)||modify);
+            if(manip_t) //  今の実装だと、描画前に舐めてるからmanip_tには何かしら入ってるというだけのあれ
+            _render(cr,tb,(manip_t.id != tb.id));
         }
         foreach(ib; _in_view.get_imageBoxes())
         {
@@ -194,8 +196,8 @@ private:
     //      迂回してでも責任の分離はしておくべきやも
     // BoxSizeの修正くらいならいいだろう
             // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
-    void _render(Context cr,TextBOX b,bool focused = false){
-        _render_text.render(cr,b,focused);
+    void _render(Context cr,TextBOX b,bool fixed = false){
+        _render_text.render(cr,b,fixed);
     }
     
     bool _draw_callback(Context cr,Widget widget){
@@ -284,7 +286,7 @@ private:
         _guide_view.display_color();
     }
 public:
-    Window _main_window;
+    Window parent_window;
     this(Window w,GuideView guide,Cell start_offset = Cell(0,0))
         out{
         assert(_table);
@@ -293,7 +295,7 @@ public:
         assert(_guide_view);
         }
     body{ 
-        _main_window = w;
+        parent_window = w;
         void set_view_offset(){
             // TODO: set start_offset 
         }
@@ -326,7 +328,7 @@ public:
         _imm.addOnPreeditChanged(&_when_preedit_changed);
         _imm.addOnPreeditStart(&_when_preedit_start);
         _imm.addOnPreeditEnd(&_when_preedit_end);
-        _imm.addOnRetrieveSurrounding(&_when_retrieve_surrounding);
+        // _imm.addOnRetrieveSurrounding(&_when_retrieve_surrounding);
 
         _menu.append( new ImageMenuItem(StockID.CUT, cast(AccelGroup)null) );
         _menu.append( new ImageMenuItem(StockID.COPY, cast(AccelGroup)null) );

@@ -58,7 +58,7 @@ immutable default_ZOOM_OUT = KeyCombine(GdkKeysyms.GDK_2);
 
 immutable default_EXIT = KeyCombine(GdkKeysyms.GDK_w);
 immutable default_DELETE = KeyCombine(GdkKeysyms.GDK_x);
-immutable default_EDIT_DELETE = KeyCombine([ModifierType.CONTROL_MASK],GdkKeysyms.GDK_x);
+immutable default_EDIT_DELETE = delete_key;
 immutable default_INSERT = KeyCombine(GdkKeysyms.GDK_i);
 immutable default_EDIT = KeyCombine(GdkKeysyms.GDK_e);
 
@@ -110,3 +110,5 @@ immutable default_PAGE_D = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GD
 immutable default_PAGE_U = KeyCombine([ModifierType.CONTROL_MASK],[GdkKeysyms.GDK_b]);
 
 immutable default_JOIN = KeyCombine([ModifierType.SHIFT_MASK],GdkKeysyms.GDK_U);
+
+immutable default_toggle_transparent = KeyCombine([ModifierType.CONTROL_MASK,ModifierType.SHIFT_MASK],[GdkKeysyms.GDK_A]);

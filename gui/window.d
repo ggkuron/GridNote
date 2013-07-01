@@ -38,12 +38,25 @@ class Window : MainWindow{
         box.packStart(page_view,1,1,0);
         guide_view.setSizeRequest(100,-1);
         page_view.setSizeRequest(start_size_w,-1);
+        // setOpacity(0.5);
 
         add(box);
         // add(page_view);
 
         box.showAll();
         showAll();
+    }
+    void set_opacity(in double a){
+        setOpacity(a);
+    }
+    void toggle_opacity(){
+        static bool swt;
+        swt = !swt;
+        if(swt)
+        {
+            setOpacity(0.5);
+        }else
+            setOpacity(1);
     }
 }
 

@@ -133,19 +133,25 @@ public:
         }
         void _update_caret_rect(){
             if(!is_preediting) _im_pos = 0;
-            _layout[box_id].getCursorPos(box.get_caret,null,&_caretRect);
+            assert(box_id == _im_target_id);
+            // _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
+            _layout[box_id].indexToPos(box.get_caret,&_caretRect);
+            writeln(_caretRect);
             _caret_rect.set_by(_caretRect);
             _caret_rect.x /= 1024;
             _caret_rect.x += _box_pos[box_id].x;
             _caret_rect.y = lines_y(_currentline) - _gridSize;
-            _caret_rect.w = _gridSize*3/4;
+            _caret_rect.w /= 1024; // = _gridSize*3/4;
             _caret_rect.h = _gridSize;
+            if(_caret_rect.w == 0) // 挿入位置に何もまだ入ってない状態
+                _caret_rect.w = _gridSize/4;
         }
         void render_preedit()
         {   // 固定化されているBOXならここを通らなくていい
             if(_im_target_id !in _width || _currentline !in _width[_im_target_id])   
                 _width[_im_target_id][_currentline] = 0;
 
+            assert(box_id == _im_target_id);
             auto layout = PgCairo.createLayout(cr);
             layout.setAttributes(_im_attr);
             layout.setFontDescription(_im_target.font_desc());
@@ -154,15 +160,15 @@ public:
             _update_caret_rect();
             auto im_rect = _caret_rect.get_struct!(cairo_rectangle_int_t)();
             im_rect.x += _table_view.get_holdingArea.x;
-            im_rect.width = 0;
             im_rect.height = _gridSize;
             _imc.setCursorLocation(im_rect);
 
             cr.set_color(box.current_foreground);
-            cr.moveTo(_box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
-                      _box_pos[_im_target_id].y + _currentline * _gridSize - _im_target.current_fontsize() - 5);
+            cr.moveTo(_caret_rect.x,// _box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
+                      _caret_rect.y);//_box_pos[_im_target_id].y + _currentline * _gridSize - _im_target.current_fontsize() - 5);
             PgCairo.updateLayout(cr,layout);
             PgCairo.showLayout(cr,layout);
+            // layout.getPixelExtents(null,&_caretRect);
 
             set_preeditting(false);
         }
@@ -212,11 +218,16 @@ public:
         if(box.text_empty() && !is_preediting)
             return;
 
+        string markup_str;
         if(!fixed && is_preediting() && _im_target_id == box_id)
+        {
+            markup_str = box.markup_string(_preedit);
             render_preedit();
+        }
+        else
+            markup_str = box.markup_string("");
 
-        string markup_str = box.markup_string();
-        writeln(markup_str);
+        // writeln(markup_str);
         if(markup_str)
         {
             const markup_len = cast(int)markup_str.length;
@@ -225,6 +236,7 @@ public:
 
             if(!fixed)
             {   // 
+                _im_target_id = box.id;
                 _update_caret_rect();
                 _caret_rect.set_color(Color(lime,128));
                 fill(cr,_caret_rect);
@@ -232,9 +244,9 @@ public:
         }
         const box_lines = box.numof_lines;
         const layout_lines = _layout[box_id].getLineCount();
-        writeln(box_lines);
-        writeln(layout_lines);
-        // assert(box_lines == layout_lines);
+        // writeln(box_lines);
+        // writeln(layout_lines);
+        // assert(box_lines == layout_lines); // 改行文字をただしく捌いてないと..
         for(int line; line < box_lines; ++line )
         {
             auto line_layout = _layout[box_id].getLineReadonly(line);
@@ -244,8 +256,6 @@ public:
             cr.moveTo(_box_pos[box_id].x,line_y);
             PgCairo.showLayoutLine(cr,line_layout);
 
-            // get real ocupied width and height
-            // render_preedit より前に取得する必要がある
             line_layout.getPixelExtents(null,&_logicRect[line]);
             _width[box_id][line] = _logicRect[line].width;
             _height[box_id] = _logicRect[line].height;
@@ -273,6 +283,8 @@ public:
     Tuple!(string,int) get_surrounding(){
         // _im_target.set_cursor_pos(_im_target.getText.caret().column);
         // writeln("cursor_pos: ",_im_target.cursor_pos); 
+        if(_im_target_id !in _strings)
+            _strings[_im_target_id] = "";
         return tuple(_strings[_im_target_id],_im_target.cursor_pos);
     }
 }

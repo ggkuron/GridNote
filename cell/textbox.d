@@ -92,6 +92,7 @@ public:
         _text.move_caret(dir);
     }
     void delete_char(){
+        // backspace();
         _text.deleteChar();
         if(_text.numof_lines < this.numof_row)
             require_remove(down);
@@ -162,7 +163,8 @@ public:
         _text.caret_move_forward(s.length - feed_cnt);
     }
     void backspace(){
-        if(!_text.backspace()) // 行始でfalse
+        _text.backspace(); // 行始でfalse
+        if(_text.numof_lines < this.numof_row)
             require_remove(down);
     }
     void join(){
@@ -173,18 +175,18 @@ public:
     bool expand_with_text_feed(){
         if(require_expand(down))
         {
-            _text.append('\n');
+            _text.line_feed();
             return true;
         }else 
             return false;
     }
-    string markup_string(){
+    string markup_string(string p){
         if(_text.empty) return null;
         SpanTag box_desc;
         box_desc.set_font_desc(desc_str());
         box_desc.set_foreground(_box_foreground);
-        auto tmp =  box_desc.tagging(_text.markup_string());
-        return tmp;
+        return  box_desc.tagging(_text.markup_string(p));
+
     }
     // 操作が終わった時にTableから取り除くべきか
     // super.is_to_spoil()は強制削除のためにはかます必要がある
