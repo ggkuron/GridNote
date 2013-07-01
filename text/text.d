@@ -129,14 +129,14 @@ struct TextSpan{
 private:
     TextPoint _min ;
     TextPoint _max ;
-    ubyte _set_flg = not_set;
-    enum ubyte
-      not_set = 0,
-      one_hand_set = 1,
-      set_finish = 2;      
+    // ubyte _set_flg = not_set;
+//     enum ubyte
+//       not_set = 0,
+//       one_hand_set = 1,
+//       set_finish = 2;      
     invariant(){
-        assert(_set_flg >= not_set);
-        assert(_set_flg <= set_finish);
+        // assert(_set_flg >= not_set);
+        // assert(_set_flg <= set_finish);
     }
 public:
     void set(in TextPoint s,in TextPoint e)
@@ -146,37 +146,37 @@ public:
     body{
         _min = s;
         _max = e;
-        _set_flg = set_finish;
+        // _set_flg = set_finish;
     }
     void set_start(in TextPoint s){
         _min = s;
-        if(_set_flg == one_hand_set)
-        {
-            if(_min > _max && _max != TextPoint.init)
-                _set_flg = not_set;
-            else
-                _set_flg = set_finish;
-        }
-        else if(_set_flg == not_set)
-        {
-            _set_flg = one_hand_set;
-            _max = s;
-        }
+//         if(_set_flg == one_hand_set)
+//         {
+//             if(_min > _max && _max != TextPoint.init)
+//                 _set_flg = not_set;
+//             else
+//                 _set_flg = set_finish;
+//         }
+//         else if(_set_flg == not_set)
+//         {
+//             _set_flg = one_hand_set;
+//             _min = s;
+//         }
     }
     void set_end(in TextPoint e){
         _max = e;
-        if(_set_flg == one_hand_set)
-        {
-            if(_min > _max)
-                _set_flg = not_set;
-            else
-                _set_flg = set_finish;
-        }
-        else if(_set_flg == not_set)
-        {
-            _set_flg = one_hand_set;
-            _max = e;
-        }
+//         if(_set_flg == one_hand_set)
+//         {
+//             if(_min > _max)
+//                 _set_flg = not_set;
+//             else
+//                 _set_flg = set_finish;
+//         }
+//         else if(_set_flg == not_set)
+//         {
+//             _set_flg = one_hand_set;
+//             _max = e;
+//         }
     }
     // has_no_spanとis_openedの違い
     // is_opened ならば has_no_span
@@ -191,7 +191,7 @@ public:
             _max = TextPoint(-1,-1);
         else
             _min = TextPoint(-1,-1);
-        _set_flg = one_hand_set;
+        // _set_flg = one_hand_set;
     }
     int opCmp(in TextPoint i)const{
         if(_max < i) return -1;
@@ -202,9 +202,10 @@ public:
     int opCmp(in TextSpan rhs)const{
         if(_min < rhs._min)
         {
-            if(_max < rhs._max)
+            if(_max < rhs._max
+                    || rhs._max == invalid)
                 return -1;
-            else
+            else 
                 return 0;
         }else if(_min > rhs._min)
         {
@@ -230,7 +231,7 @@ public:
     }
     const hash_t toHash(){
         hash_t hash;
-        hash = _min.line * 31 + _min.pos * 19 + _set_flg;
+        hash = _min.line * 31 + _min.pos * 19; // + _set_flg;
         return hash;
     }
     bool opEquals(in TextPoint rhs)const{
@@ -255,15 +256,16 @@ public:
         return _max;
     }
     bool is_set()const{
-        return _set_flg == set_finish;
+        // return _set_flg == set_finish;
+        return (_min != invalid) && (_max != invalid) && (_min <= _max);
     }
     bool is_opened()const{
         return 
-            (_set_flg == one_hand_set)
-            && 
+            // (_set_flg == one_hand_set)
+            // && 
             (
-                (_min <= _max)
-                || 
+                // (_min <= _max)
+                // || 
                 ( 
                     (_min != TextPoint.init && _max == TextPoint.init)
                     ||
@@ -272,19 +274,20 @@ public:
             );
     }
     @property bool is_not_set()const{
-        return _set_flg == not_set;
+        // return _set_flg == not_set;
+        return _min == invalid && _max == invalid;
     }
     this(string dat){
         dat = dat[1 .. $-1];
-        _set_flg = to!ubyte([dat[0]]);
-        dat = dat[2 .. $];
+        // _set_flg = to!ubyte([dat[0]]);
+        // dat = dat[2 .. $];
         auto elems = split(dat,"),(");
         _min = TextPoint(elems[0]~')');
         _max = TextPoint('('~elems[1]);
     }
     string dat()const{
         string result = "(";
-        result ~= to!string(_set_flg)~",";
+        // result ~= to!string(_set_flg)~",";
         result ~= _min.dat() ~",";
         result ~= _max.dat() ;
         return result ~ ")";
@@ -292,7 +295,7 @@ public:
     void clear(){
         _min = TextPoint(-1,-1);
         _max = TextPoint(-1,-1);
-        _set_flg = not_set;
+        // _set_flg = not_set;
     }
     // この２つを違う値にするとText::_apply_tagsとかが死ぬ
     static TextSpan init(){
@@ -306,10 +309,11 @@ public:
         span.set_start(TextPoint(0,0));
         assert(span.is_opened);
         auto dat = span.dat();
-        assert(dat == "(1,(0,0),(0,0))");
+        writeln(dat);
+        assert(dat == "((0,0),(-1,-1))");
         span.set_end(TextPoint(2,2));
         assert(span.is_set());
-        auto dspan = TextSpan("(2,(0,0),(2,2))");
+        auto dspan = TextSpan("((0,0),(2,2))");
         assert(span == dspan);
     }
 }
