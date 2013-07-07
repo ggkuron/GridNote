@@ -63,6 +63,10 @@ public:
     override TextBOX[] get_textBoxes(){
         return _master.get_textBoxes(_offset,_max_range);
     }
+    override CodeBOX[] get_codeBoxes(){
+        return _master.get_codeBoxes(_offset,_max_range);
+    }
+
     override ImageBOX[] get_imageBoxes(){
         return _master.get_imageBoxes(_offset,_max_range);
     }

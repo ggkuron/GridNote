@@ -29,6 +29,7 @@ private:
 
     CellContent[KEY] _content_table;
     TextBOX[KEY] _text_table;
+    CodeBOX[KEY] _code_table;
     ImageBOX[KEY] _image_table;
     string[KEY] _type_table;
     KEY[Cell] _keys;
@@ -41,7 +42,7 @@ private:
         {   // throw exception
             throw new Exception("table buffer size overflow");
         }
-        // 0は欠番にしておく null的に扱う
+        // 0は欠番 nullつめとく
         c.set_id(++_content_counter);
     }
     bool cell_forward(ref Cell start,in Cell end){
@@ -113,9 +114,10 @@ public:
     }
     final bool try_expand(ContentBOX cb,in Direct to,in int width=1)
         in{
-        assert(cb.id in _content_table);
+        // assert(cb.id in _content_table);
         }
     body{
+        if(cb.id !in _content_table) return false;
         if(to == Direct.left && cb.min_col==0
         || to == Direct.up && cb.min_row == 0)
             return false;
@@ -351,24 +353,28 @@ public:
     TextBOX[] get_textBoxes(){
         return _text_table.values;
     }
+    CodeBOX[] get_codeBoxes(){
+        return _code_table.values;
+    }
     ImageBOX[] get_imageBoxes(){
         return _image_table.values;
     }
-    TextBOX[] get_textBoxes(in Cell s,in Cell e){
+    private BOXTYPE[] _get_boxes(BOXTYPE)(in Cell s,in Cell e,ref BOXTYPE[int] TABLE){
         auto _keys = ranged_keys(s,e);
-        TextBOX[] result;
+        BOXTYPE[] result;
         foreach(k; _keys)
-            if(k in _text_table)
-            result ~= _text_table[k];
+            if(k in TABLE)
+            result ~= TABLE[k];
         return result;
     }
-    ImageBOX[] get_imageBoxes(in Cell s,in Cell e){
-        auto _keys = ranged_keys(s,e);
-        ImageBOX[] result;
-        foreach(k; _keys)
-            if(k in _image_table)
-            result ~= _image_table[k];
-        return result;
+    auto get_textBoxes(in Cell s,in Cell e){
+        return _get_boxes!(TextBOX)(s,e,_text_table);
+    }
+    auto get_imageBoxes(in Cell s,in Cell e){
+        return _get_boxes!(ImageBOX)(s,e,_image_table);
+    }
+    auto get_codeBoxes(in Cell s,in Cell e){
+        return _get_boxes!(CodeBOX)(s,e,_code_table);
     }
 
     bool is_hold(in Cell c){
@@ -475,14 +481,19 @@ public:
         }
 
         _content_table[box_id] = u;
-        static if(is(T == TextBOX)) 
-            _text_table[box_id] = u;
-        else static if(is(T == ImageBOX)) 
+
+        static if(is(T == ImageBOX)) 
             _image_table[box_id] = u;
+        else static if(is(T == CodeBOX))
+            _code_table[box_id] = u;
+        else static if(is(T == TextBOX)) 
+            _text_table[box_id] = u;
+
         u.create_in(c);
         // writeln("table:",_content_table.values);
         // writeln("text:",_text_table.values);
         // writeln("image:",_image_table.values);
+        writeln(_code_table);
 
         return true;
     }
@@ -500,6 +511,7 @@ public:
         {
             _box_edges[box_id][dir] ~= c;
         }
+
         u.create_in(c);
         import std.stdio;
         return true;

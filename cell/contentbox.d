@@ -174,7 +174,6 @@ public:
     }
     unittest{
         debug(cell) writeln("@@@@ TableBOX unittest start @@@@");
-        import cell.textbox;
         BoxTable table = new BoxTable;
         auto cb = new TextBOX(table);
         assert(cb.require_create_in(Cell(3,3)));
@@ -214,7 +213,6 @@ public:
             return false;
     }
     unittest{
-        import cell.textbox;
         BoxTable table = new BoxTable;
         auto cb = new TextBOX(table);
         assert(cb.require_hold(Cell(3,3),8,8));
@@ -307,7 +305,7 @@ public:
         return _inner_range_cell.edge_forward_cells(dir);
     }
     void set_color(in Color c){
-        _box_color = Color(c,96);
+        _box_color = c;
     }
     @property Color box_color()const{
         return _box_color;

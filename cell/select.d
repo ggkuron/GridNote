@@ -98,12 +98,19 @@ public:
     bool is_on_edge(in Direct dir)const{
         return super.is_on_edge(_focus,dir);
     }
-    TextBOX create_TextBOX(string family ="Sans",string style="Normal",in Color fore = black){
-        auto tb = new TextBOX(_table,family,style,fore);
+    TextBOX create_TextBOX(string family ="Sans",string style="Normal",in Color back=white,in Color fore = black){
+        auto tb = new TextBOX(_table,family,style,back,fore);
         if(!tb.require_create_in(_focus)) return null;
         selection_clear();
         return tb;
     }
+    CodeBOX create_CodeBOX(string family ="Monospace",string style="Normal",in Color back=black,in Color fore = lightyellow){
+        auto cb = new CodeBOX(_table,family,style,back,fore);
+        if(!cb.require_create_in(_focus)) return null;
+        selection_clear();
+        return cb;
+    }
+
     // ImageBOX create_ImageBOX(string filepath){
     //     debug(cell) writeln("@@@@ create_ImageBOX @@@@");
     //     auto ib = new ImageBOX(_table,filepath);

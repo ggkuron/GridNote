@@ -23,9 +23,8 @@ import pango.PgAttribute;
 import pango.PgAttributeList;
 
 // Text自体をTableに取り付けるためにBOX領域を管理する
-final class TextBOX : ContentBOX{  
+class TextBOX : ContentBOX{  
 private:
-    Text _text;
     string _box_fontfamly = "Sans";
     string _box_style = "Normal";
     ubyte  _box_font_size;
@@ -36,19 +35,28 @@ private:
         _box_font_size = cast(ubyte)_table.grid_size / 2 ;
         return _box_fontfamly~' '~_box_style~' '~to!string(_box_font_size);
     }
+protected:
+    Text _text;
 public:
-    this(BoxTable table,string family = "Sans",string style = "Normal",in Color c = black){ 
+    this(BoxTable table){ 
+        super(table);
+    }
+    this(BoxTable table,string family,string style,in Color back,in Color fore,bool color_fixed){ 
         super(table);
         _box_fontfamly = family;
         _box_style = style;
-        _box_foreground = c;
-        if(family == "Monospace")
-        {   // あとで追い出すけどMonospace 用の設定
-            set_background_color(black);
-            _box_foreground = lightyellow;
-            _color_fixed = true;
-        }
+        _box_foreground = fore;
+        super.set_color(back);
+        _color_fixed = color_fixed;
     }
+    this(BoxTable table,string family,string style,in Color back,in Color fore){ 
+        super(table);
+        _box_fontfamly = family;
+        _box_style = style;
+        _box_foreground = fore;
+        this.set_color(back);
+    }
+ 
     this(BoxTable table,in Cell tl,in int w,in int h){
         super(table,tl,w,h);
     }
@@ -92,14 +100,12 @@ public:
         _text.move_caret(dir);
     }
     void delete_char(){
-        // backspace();
         _text.deleteChar();
         if(_text.numof_lines < this.numof_row)
             require_remove(down);
     }
 
-    override bool require_create_in(in Cell c)
-    {
+    override bool require_create_in(in Cell c){
         return _table.try_create_in!(TextBOX)(this,c);
     }
     void set_box_default_color(in Color c){
@@ -108,12 +114,12 @@ public:
     }
     void set_foreground_color(in Color c){
         if(_color_fixed) return;
-        // if(_text.empty)
         {
             _box_foreground = c;
         }
-        // else
-            // _text.set_foreground(c);
+    }
+    override void set_color(in Color c){
+        super.set_color(Color(c,128));
     }
     void set_background_color(in Color c){
         if(_text.empty) // box_colorを設定
@@ -226,7 +232,7 @@ public:
     int get_caret()const{
         return _text.caret;
     }
-    string dat(in Cell offset=Cell(0,0)){
+    string dat(in Cell offset,string T){
         string result ="[";
         writeln(top_left());
         writeln(offset);
@@ -234,12 +240,15 @@ public:
         result ~= to!string(top_left()-offset) ~',';
         result ~= to!string(numof_row) ~ ',';
         result ~= to!string(numof_col) ~ "]\n";
-        result ~= "TextBOX * "~to!string(box_color)~"\n";
+        result ~= T~" * "~to!string(box_color)~"\n";
         result ~= desc_str ~ '\n';
         result ~= _box_foreground.hex_str ~'\n';
         result ~= _text.dat();
         writeln(result);
         return result;
+    }
+    string dat(in Cell offset=Cell(0,0)){
+        return dat(offset,"TextBOX");
     }
     void text_clear(){
         _text.clear();
@@ -253,5 +262,21 @@ public:
     }
     override bool empty()const{
         return super.empty && _text.empty;
+    }
+}
+class CodeBOX : TextBOX{  
+public:
+    this(BoxTable table,string family,string style,in Color back,in Color fore){ 
+        super(table,family,style,back,fore,true);
+    }
+    this(BoxTable table,string[] dat){
+        super(table,dat);
+    }        
+    alias TextBOX.set_color set_color;
+    override bool require_create_in(in Cell c){
+        return _table.try_create_in!(CodeBOX)(this,c);
+    }
+    override string dat(in Cell offset=Cell(0,0)){
+        return super.dat(offset,"CodeBOX");
     }
 }

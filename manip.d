@@ -30,6 +30,7 @@ enum FocusMode{ normal,select,edit,point }
    // 表示位置の移動ってここでやってしまおうか
    // 指示棒をここがもってるから
    // 指示棒自体はCell::SelectBOX
+// 
 final class ManipTable{
 private:
     BoxTable  _focused_table;
@@ -41,7 +42,7 @@ private:
 
     Color  _selected_color;
     string _box_type;
-    ManipTextBOX _manip_textbox;
+    TextController _manip_textbox;
 public:
     this(BoxTable table,PageView p)
         out{
@@ -54,7 +55,7 @@ public:
         _focused_table = table;
         _select = new SelectBOX(_focused_table);
 
-        _manip_textbox = new ManipTextBOX();
+        _manip_textbox = new TextController();
         _pv =  p;
     }
     void move_focus(in Direct dir){
@@ -76,9 +77,6 @@ public:
             _select.move(dir);
         debug(manip) writefln("focus: %s",_select.focus);
     }
-    CellContent get_target(){
-        return _maniped_box;
-    }
     void change_mode_select()
         in{
         assert(_mode != FocusMode.select);
@@ -90,10 +88,12 @@ public:
         _mode = FocusMode.select;
         _select.set_pivot();
     }
-    @property auto targetbox(){
+    auto targetbox(){
         switch(_box_type){
             case "cell.textbox.TextBOX":
                 return cast(TextBOX)_maniped_box;
+            case "cell.textbox.CodeBOX":
+                return cast(CodeBOX)_maniped_box;
             default:
                 return null;
         }
@@ -145,7 +145,7 @@ public:
         auto target = _focused_table.get_content(_select.focus);
         _box_type = target[0];
         _maniped_box = target[1];
-        // if(_box_type == "cell.textbox.TextBOX")
+
         return _maniped_box;
     }
     void move_selected(in Direct to){
@@ -221,16 +221,37 @@ public:
     body{
         _mode = FocusMode.edit;
     }
-    void create_TextBOX(string family="Sans",string style="Norml",in Color fore=black){
+    void create_TextBOX(){
+        string family="Sans"; // このパラメータは設定ファイルから読めるようにする
+        string style="Norml"; // 設定を読み出すのはここで、読む機能は別のところに。
+        const Color fore=black;
+        const Color back=linen;
+
         _mode = FocusMode.edit;
         if(_focused_table.has(_select.focus)) return;
-        auto tb = _select.create_TextBOX(family,style,fore);
+        auto tb = _select.create_TextBOX(family,style,back,fore);
         tb.set_box_default_color(_selected_color);
 
         _maniped_box = tb;
         _box_type = tb.toString();
         debug(manip) writeln("type in: ",tb.toString());
     }
+    void create_CodeBOX(){
+        // TODO back_color と fore_colorの設定読み出し
+        string family="Monospace"; // このパラメータは設定ファイルから読めるようにする
+        string style="Norml"; // 設定を読み出すのはここで、読む機能は別のところに。
+        const Color fore=white;
+        const Color back=Color(48,48,48,210);
+
+        _mode = FocusMode.edit;
+        if(_focused_table.has(_select.focus)) return;
+        auto tb = _select.create_CodeBOX(family,style,back,fore);
+
+        _maniped_box = tb;
+        _box_type = tb.toString();
+        debug(manip) writeln("type in: ",tb.toString());
+    }
+
     void select_color(in Direct dir){
         _pv.guide_view.select_color(dir);
         _selected_color = get_selectedColor();
@@ -290,7 +311,8 @@ public:
         }
         switch(_box_type){
            case "cell.textbox.TextBOX":
-               _old_state ~= new TextBOX(_focused_table,cast(TextBOX)_maniped_box);
+           case "cell.textbox.CodeBOX":
+               // _old_state ~= new TextBOX(_focused_table,cast(TextBOX)_maniped_box);
                _manip_textbox.with_commit(str,targetbox);
                return;
            default:
@@ -301,7 +323,8 @@ public:
         _old_state ~= _maniped_box;
         switch(_box_type){
             case "cell.textbox.TextBOX":
-                _manip_textbox.backspace(cast(TextBOX)_maniped_box);
+            case "cell.textbox.CodeBOX":
+                _manip_textbox.backspace(targetbox);
                 return;
             default:
                 return;
@@ -375,6 +398,8 @@ public:
         auto file = std.stdio.File(file_name,"w");
         if(!file.isOpen()) return false;
         auto all_ibs = _focused_table.get_imageBoxes();
+        auto all_txt = _focused_table.get_textBoxes();
+        auto all_code = _focused_table.get_codeBoxes();
         const offset = Cell(_focused_table.edge(up),_focused_table.edge(left));
         writeln(offset);
         foreach(ib; all_ibs)
@@ -384,11 +409,15 @@ public:
                 file.write(rect.dat(offset));
             }
         }
-        auto all_txt = _focused_table.get_textBoxes();
         foreach(tb; all_txt)
         {
             if(!tb.text_empty())
-            file.write(tb.dat(offset));
+                file.write(tb.dat(offset));
+        }
+        foreach(cb; all_code)
+        {
+            if(!cb.text_empty())
+                file.write(cb.dat(offset));
         }
         return true;
     }
@@ -405,7 +434,6 @@ public:
             scope win = new Window("restore");
             _file_chooser = new FileChooserDialog("File Selection", win, FileChooserAction.OPEN,a,r);
         }
-        // _file_chooser.setFileChooserAction(FileChooserAction.OPEN);
         auto response = _file_chooser.run();
         if( response == ResponseType.ACCEPT )
         {
@@ -433,10 +461,11 @@ public:
                 ++i;
             line_buf[i-1] ~= l;
         }
-        foreach(l; line_buf)
+        foreach(l; line_buf.values)
         {
             writeln(l);
             auto box_type = split(chomp(l[1])," * ");
+            try{
             switch(box_type[0]){
                 case "RectBOX":
                     auto rb = new RectBOX(_focused_table,_pv,l);
@@ -446,9 +475,16 @@ public:
                     auto tb = new TextBOX(_focused_table,l);
                     tb.set_color(Color(box_type[1]));
                     break;
+                case "CodeBOX":
+                    auto tb = new CodeBOX(_focused_table,l);
+                    tb.set_color(Color(box_type[1]));
+                    break;
+
                 default:
                     break;
             }
+            }catch(Exception e)
+                return;
         }
         _pv.queueDraw();
     }
@@ -459,21 +495,26 @@ public:
         return _mode;
     }
     // このclassの役割って..?
-    // Textを扱うContentをたくさん作るつもりだ(った)からこいつで吸収してもらおうと考えた
-    final class ManipTextBOX {
-        // ManipTable _manip_table;
-        // IMMulticontext _imm;
-        // 上2つ使ってないかもしれない
+    final class TextController {
         this(){
             // _manip_table = mt;
         }
         void input(TextBOX box,string str){
             box.input(str);
         }
+        void input(CodeBOX box,string str){
+            box.input(str);
+        }
         void with_commit(string str,TextBOX box){
             input(box,str);
         }
+        void with_commit(string str,CodeBOX box){
+            input(box,str);
+        }
         void backspace(TextBOX box){
+            box.backspace();
+        }
+        void backspace(CodeBOX box){
             box.backspace();
         }
         bool feed(TextBOX box){

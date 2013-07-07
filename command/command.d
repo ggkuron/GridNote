@@ -152,7 +152,7 @@ public:
     COMMAND color_select_D;
 
     COMMAND create_TextBOX;
-    COMMAND create_MonoTextBOX;
+    COMMAND create_CodeBOX;
     COMMAND text_move_caretL;
     COMMAND text_move_caretR;
     COMMAND text_move_caretU;
@@ -303,7 +303,7 @@ public:
         register_key(move_selected_d,InputState.Normal,default_MOVE_BOX_D);
 
         create_TextBOX = cmd_template!("manip.create_TextBOX();")(this,_manip,_view);
-        create_MonoTextBOX = cmd_template!(`manip.create_TextBOX("Monospace","Normal",darkslateblue);`)(this,_manip,_view);
+        create_CodeBOX = cmd_template!(`manip.create_CodeBOX();`)(this,_manip,_view);
         im_focus_out = cmd_template!("inp.im_focusOut();")(this,_manip,_view);
         create_circle = cmd_template!("manip.create_RectBOX();")(this,_manip,_view);
         register_key(create_circle,InputState.Normal,default_ImageOpen);
@@ -374,7 +374,7 @@ public:
         normal_edit_textbox = new combined_COMMAND(grab_target,text_edit);
         register_key(normal_edit_textbox,InputState.Normal,default_EDIT);
         normal_start_edit_text = new combined_COMMAND(input_mode_edit,create_TextBOX,im_focus_in);
-        normal_start_edit_text_mono = new combined_COMMAND(input_mode_edit,create_MonoTextBOX,im_focus_in);
+        normal_start_edit_text_mono = new combined_COMMAND(input_mode_edit,create_CodeBOX,im_focus_in);
         register_key(normal_start_edit_text,InputState.Normal,default_INSERT);
         register_key(normal_start_edit_text_mono,InputState.Normal,default_mono_insert);
 

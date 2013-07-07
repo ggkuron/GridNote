@@ -98,7 +98,7 @@ private:
     void _when_preedit_changed(IMContext imc){
         if(_interpreter.is_enable_to_edit())
         {
-            auto inputted_box = cast(TextBOX)_manip_table.get_target();
+            auto inputted_box = _manip_table.targetbox;
             assert(inputted_box !is null);
             _render_text.prepare_preedit(_imm,inputted_box);
             // レイアウトのことは投げる
@@ -159,12 +159,10 @@ private:
                 cast(int)(_holding_area.w/_gridSpace),
                 cast(int)(_holding_area.h/_gridSpace));
     }
-    // void backDesign(Context cr){
-    // }
     bool _show_contents_border = true;
     void _renderTable(Context cr){
         if(_in_view.empty) return;
-        auto manip_t = _manip_table.get_target();
+        auto manip_t = _manip_table.targetbox;// _manip_table.get_target();
 
         if(manip_t)
         {
@@ -181,6 +179,17 @@ private:
             // if(manip_t) //  今の実装だと、描画前に舐めてるからmanip_tには何かしら入ってるというだけのあれ
             _render(cr,tb,(manip_t && manip_t.id != tb.id));
         }
+        foreach(cb; _in_view.get_codeBoxes())
+        {
+            writeln("34r3");
+            if(_show_contents_border)
+            {
+                _render_text.fill(cr,cb,cb.box_color);
+                _render_text.stroke(cr,cb,Color(gold,128),1);
+            }
+            _render(cr,cb,(manip_t && manip_t.id != cb.id));
+        }
+
         foreach(ib; _in_view.get_imageBoxes())
         {
             if(_show_contents_border)
@@ -199,9 +208,11 @@ private:
     void _render(Context cr,TextBOX b,bool fixed = false){
         _render_text.render(cr,b,fixed);
     }
-    
+     void _render(Context cr,CodeBOX b,bool fixed = false){
+        _render_text.render(cr,b,fixed);
+    }
+   
     bool _draw_callback(Context cr,Widget widget){
-        // backDesign(cr);
         if(_grid_show_flg) _renderGrid(cr);
         _renderTable(cr);
         _renderSelection(cr);
@@ -267,22 +278,24 @@ private:
     }
     // ConfigFileから読むようにしたい
     void _init_color_select(){
-        _manip_table.select_color(dimgray);
+        _manip_table.select_color(Color(48,48,48));
         _guide_view.add_color(dimgray);
         _guide_view.add_color(darkorange);
-        _guide_view.add_color(violet);
+        _guide_view.add_color(forestgreen);
         _guide_view.add_color(plum);
-        _guide_view.add_color(cadetblue);
+        _guide_view.add_color(linen);
+
+        _guide_view.add_color(firebrick);
         _guide_view.add_color(black);
         _guide_view.add_color(cyan);
-        _guide_view.add_color(firebrick);
-        _guide_view.add_color(peachpuff);
         _guide_view.add_color(mediumaquamarine);
         _guide_view.add_color(gold);
-        _guide_view.add_color(linen);
+        _guide_view.add_color(violet);
+
+        _guide_view.add_color(cadetblue);
+        _guide_view.add_color(peachpuff);
         _guide_view.add_color(darkgoldenrod);
         _guide_view.add_color(lemonchiffon);
-        _guide_view.add_color(forestgreen);
         _guide_view.display_color();
     }
 public:
@@ -386,8 +399,8 @@ public:
         return Cell(cast(int)(_holding_area.h / _gridSpace),
                     cast(int)(_holding_area.w / _gridSpace));
     }
-    // アクセサにする意味はない
-    @property GuideView guide_view(){
+    // 
+    GuideView guide_view(){
         return _guide_view;
     }
     void set_msg(string msg){
