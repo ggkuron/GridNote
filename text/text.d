@@ -753,7 +753,6 @@ span内の要素を削除する
 
 public:
     string markup_string(string pre_in=""){
-        writeln(_writing);
         if(_tag_pool.keys.empty)
             return _plane_string(pre_in);
         if(empty())

@@ -25,15 +25,13 @@ private:
         assert(get_cells.empty());
         }
     body{
-        debug(cell) writeln("set__pivot start");
         _pivot = p;
         super.create_in(_pivot);
-        debug(cell) writeln("end");
     }
     void pivot_bound(in Cell cl){
-        debug(cell) writeln("privot_bound start");
-        if(_pivot == cl)  super.create_in(_pivot); else
-        if(_pivot < cl) // _pivot.rowの方が小さいブロック。もしくは同じでcolumnが小さい。
+        if(_pivot == cl)
+            super.create_in(_pivot);
+        else if(_pivot < cl) // _pivot.rowの方が小さいブロック。もしくは同じでcolumnが小さい。
         {
             immutable d = diff(cl,_pivot);
             immutable dr = d.row+1;
@@ -56,20 +54,14 @@ private:
             else // 2
                 hold_br(_pivot,dr,dc);
         }
-        debug(cell) writeln("end");
     }
 public:
     void expand_to_focus()
-        in{
-        // assert(!get_cells.empty()); 呼ばれても問題はない
-        }
         out{
         assert(is_box(get_cells()));
         }
     body{
-        debug(cell) writeln("expand_to__focus start");
         pivot_bound(_focus);
-        debug(cell) writeln("end");
     }
     override void expand(in Direct dir,in int width=1){
         super.expand(dir,width);
@@ -112,31 +104,25 @@ public:
     }
 
     // ImageBOX create_ImageBOX(string filepath){
-    //     debug(cell) writeln("@@@@ create_ImageBOX @@@@");
     //     auto ib = new ImageBOX(_table,filepath);
     //     if(!ib.require_create_in(_focus)) return null;
     //     selection_clear();
-    //     debug(cell) writeln("#### create_ImageBOX ####");
     //     return ib;
     // }
     CircleBOX create_CircleCell(in Color c ,TableView tv){
-        debug(cell) writeln("@@@@ create_ImageBOX @@@@");
         auto ib = new CircleBOX(_table,tv);
         if(!ib.require_create_in(_focus)) return null;
         ib.set_drawer();
         ib.set_color(c);
         selection_clear();
-        debug(cell) writeln("#### create_ImageBOX ####");
         return ib;
     }
     RectBOX create_RectCell(in Color c ,TableView tv){
-        debug(cell) writeln("@@@@ create_ImageBOX @@@@");
         auto ib = new RectBOX(_table,tv);
         if(!ib.require_create_in(_focus)) return null;
         ib.set_drawer();
         ib.set_color(c);
         selection_clear();
-        debug(cell) writeln("#### create_ImageBOX ####");
         return ib;
     }
     void set_pivot(){

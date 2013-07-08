@@ -131,9 +131,6 @@ private:
             b.fill(cr);
         }
     }
-    // void _renderTag(Context cr){
-    //     _render_text.render(cr,_tag_view);
-    // }
     bool draw_callback(Context cr,Widget widget){
         if(!_c_cnt) return false;
         backDesign(cr);
@@ -149,7 +146,7 @@ private:
         _selected_color_box.hold_tl(Cell(start_row-3,1),2,2);
         _selected_color_box.set_drawer();
         _color_selector.reshape();
-        _debug_msg.hold_tl(Cell(0,0),5,max_col()+1);
+        _debug_msg.hold_tl(Cell(0,0),4,max_col()+1);
 
         _back_color.hold_tl(Cell(0,0),max_row()+1,max_col()+1);
         _back_color.set_drawer();
@@ -275,7 +272,6 @@ private:
         if(_debug_str)
             _render_text.render(cr,_debug_msg,true);
     }
-
 public:
     void set_msg(string d){
         _debug_msg.text_clear();
