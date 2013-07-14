@@ -43,10 +43,6 @@ public:
         assert(c == Cell(0,0));
         assert(d == Cell(15,15));
     }
-    // invariant(){
-    //     assert(row >= 0);
-    //     assert(column >= 0);
-    // }
     static Cell invalid(){
         return Cell(-1,-1);
     }
@@ -126,9 +122,8 @@ pure Cell if_moved(in Cell c,in Direct to,int width=1){
     return result;
 }
 
-// 矩形しか持たないならいらないかもしれない
-pure int count_lined(in Cell[] box,in Cell from,in Direct to){
-    // debug(cell) writeln("count_lined start");
+// test用
+pure int count_line(in Cell[] box,in Cell from,in Direct to){
     int result;
     Cell c = from;
     while(c.is_in(box))
@@ -140,7 +135,6 @@ pure int count_lined(in Cell[] box,in Cell from,in Direct to){
             break;
         c = c.if_moved(to);
     }
-        // debug(cell) writeln("end");
     return result-1; // if(box is null) return -1;
 }
 
@@ -160,10 +154,10 @@ bool is_box(in Cell[] box){
     int[] width;
     foreach(leftside_cell; col_table[all_col[0]])
     {
-        width ~= box.count_lined(leftside_cell,right);
+        width ~= box.count_line(leftside_cell,right);
     }
-    int i;
 
+    int i;
     assert(width.length != 0);
     foreach(r; width){
         if(i && r!=i) return false;
@@ -183,7 +177,7 @@ unittest{
 }
 
 // Cellで構成される集合
-    // 実際にはCellを遅延して生成するものも含む
+// 実際にはCellを遅延して生成するものも含む
 interface CellStructure{
     @property Cell top_left()const;
     @property Cell top_right()const;

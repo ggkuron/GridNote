@@ -10,7 +10,7 @@ import cell.flex_common;
 debug(collec) import std.stdio;
 debug(cell) import std.stdio;
 
-// 自由変形できる構造
+// 自由変形できるBOX
 class Collection : CellStructure{
 private:
 
@@ -26,7 +26,6 @@ private:
     Cell[][Direct] _edge_line;
     Cell[LR][UpDown] _edge;
 
-    // Range をクロスさせた状態を表現する
     int _min_row = int.max;
     int _min_col = int.max;
     int _max_row = int.min;
@@ -44,9 +43,8 @@ private:
         cb.create_in(Cell(5,5));
         cb.expand(right);
         cb.expand(down);
-        assert(cb.box.count_lined(Cell(5,5),right) == 1);
-        assert(cb.box.count_lined(Cell(5,5),down) == 1);
-        debug(cell) writeln("@@@@ update_info unittest start @@@@@");
+        assert(cb.box.count_line(Cell(5,5),right) == 1);
+        assert(cb.box.count_line(Cell(5,5),down) == 1);
         cb = new Collection();
         cb.create_in(Cell(5,5));
         assert(cb.top_left == Cell(5,5));
@@ -62,11 +60,8 @@ private:
         debug(cell) writeln("_numof_col:",cb._numof_col);
         assert(cb._numof_row == 5);
         assert(cb._numof_col == 5);
-        debug(cell) writeln("#### update_info unittest end ####");
     }
     final void expand1(in Direct dir){
-        debug(cell) writeln("@@@@ expand start @@@@");
-
         const Cell[] one_edges = edge_line[dir];
         _edge_line[dir].clear();
         foreach(c; one_edges) //one_edgesが配列でないとexpanded_edgeがsortされない
@@ -104,10 +99,8 @@ private:
         }
         _range.expand(dir);
 
-        debug(cell) writeln("#### expand end ####");
     }
     final void remove1(in Direct dir){
-        debug(cell) writeln("@@@@ Collection.remove start @@@@");
 
         if(dir.is_horizontal && _numof_col <= 1
         || dir.is_vertical && _numof_row <= 1 )
@@ -161,7 +154,6 @@ public:
         }
         this();
         hold_tl(ul,rw,cw);
-        debug(cell)writeln("ctor end");
     }
     // this(Collection oldone)
     //     in{
@@ -199,7 +191,6 @@ public:
         _edge_line[up] ~= c;
         _edge_line[down] ~= c;
     }
-    // 任意のタイミングで行う操作
     void add(in Cell c)
         in{
         assert(!box.empty);
@@ -268,7 +259,6 @@ public:
             remove1(dir);
     }
     void clear(){
-        import std.stdio;
         box.clear();
         _range.clear();
         _numof_row =1;
@@ -280,8 +270,6 @@ public:
         _edge.clear();
         _edge_line.clear();
     }
-    // 線形探索:要素数は小さいものしか想定してないから
-    // box.lenthでアルゴリズム切り分ける必要があるかも
     bool is_hold(in Cell c)const{
         return c.is_in(box);
     }
@@ -385,16 +373,14 @@ public:
         assert(h >= 0);
         assert(w >= 0);
         }
-        out{
-        // assert(is_box(box));
-        }
     body{
         clear();
         create_in(start);
 
-        if(!w && !h) return;
-        if(w)--w;
-        if(h)--h;
+        if(!w && !h)
+            return;
+        if(w--){}
+        if(h--){}
         while(w || h)
         {
             if(w > 0)
@@ -457,14 +443,12 @@ public:
         hold_tl(start,h,w);
     }
     unittest{
-        debug(cell) writeln("@@@@ hold_tr unittest start @@@@");
         auto cb = new Collection();
         cb.hold_tr(Cell(5,5),3,3);
 
         assert(cb.top_left == Cell(5,3));
         assert(cb._numof_row == 3);
         assert(cb._numof_col == 3);
-        debug(cell) writeln("#### hold_tr unittest start ####");
     }
     void hold_bl(in Cell ll,int h,int w)
         in{
@@ -483,17 +467,14 @@ public:
         hold_tl(start,h,w);
     }
     unittest{
-        debug(cell) writeln("@@@@ hold_bl unittest start @@@@");
         auto cb = new Collection();
         cb.hold_bl(Cell(5,5),3,3);
 
         assert(cb.top_left == Cell(3,5));
         assert(cb._numof_row == 3);
         assert(cb._numof_col == 3);
-        debug(cell) writeln("#### hold_bl unittest end ####");
     }
     unittest{
-        debug(cell) writeln("@@@@ hold_tl unittest start @@@@");
         auto cb = new Collection();
         cb.hold_tl(Cell(3,3),5,5);
 
@@ -503,7 +484,6 @@ public:
         cb.hold_tl(Cell(3,3),0,0);
         assert(cb.top_left == Cell(3,3));
         assert(cb.bottom_right == Cell(3,3));
-        debug(cell) writeln("#### hold_tl unittest end ####");
     }
 
     // getter:

@@ -143,11 +143,7 @@ public:
     // 継承関係がぐちゃりそうな確信のない嫌気
     // mixin-templateで分離するのには各実装ごとに差分存在するようなしないような
     // 妥協点は、各実装でこれをoverride
-    bool require_create_in(in Cell c)
-        out{
-        // assert(top_left != Cell.invalid);
-        }
-    body{
+    bool require_create_in(in Cell c) {
         if(is_registered())
         {
             remove_from_table();
@@ -156,21 +152,17 @@ public:
     }
     bool require_move(in Cell c){
         ubyte result;
-        if(c.row)
-        if(require_move(down,c.row))
-        {
+        if(c.row && require_move(down,c.row))
             ++result;
-        }
-        if(c.column)
-        if(require_move(left,c.column))
-        {
+        if(c.column && require_move(left,c.column))
             ++result;
-        }
-        if(result == 2) return true;
-        else return false;
+        if(result == 2)
+            return true;
+        else 
+            return false;
     }
     bool require_move(in Direct to,in int width=1){
-        return (_table.try_move(this,to,width));
+        return _table.try_move(this,to,width);
     }
     unittest{
         debug(cell) writeln("@@@@ TableBOX unittest start @@@@");
@@ -195,11 +187,7 @@ public:
     bool require_expand(in Direct to,in int width=1){
         return (_table.try_expand(this,to,width));
     }
-    bool require_hold(in Cell c,in int h,in int w)
-        out{
-        // assert(top_left != Cell(-1,-1));
-        }
-    body{
+    bool require_hold(in Cell c,in int h,in int w){
         const h_ = h-1;
         const w_ = w-1;
         if(require_create_in(c))
@@ -324,8 +312,8 @@ public:
         cb.create_in(Cell(5,5));
         cb.expand(Direct.right);
         cb.expand(Direct.down);
-        assert(cb.get_cells().count_lined(Cell(5,5),Direct.right) == 1);
-        assert(cb.get_cells().count_lined(Cell(5,5),Direct.down) == 1);
+        assert(cb.get_cells().count_line(Cell(5,5),Direct.right) == 1);
+        assert(cb.get_cells().count_line(Cell(5,5),Direct.down) == 1);
         debug(cell) writeln("@@@@ update_info unittest start @@@@@");
         cb = new TextBOX(table);
         cb.create_in(Cell(5,5));
@@ -347,8 +335,6 @@ public:
         debug(cell) writeln("@@@@ ContentBOX move unittest start @@@@");
         cb = new TextBOX(table,Cell(5,5),5,5);
         assert(cb.top_left == Cell(5,5));
-        import std.stdio;
-        writeln(cb.bottom_right);
         assert(cb.bottom_right == Cell(9,9));
         assert(cb.top_right == Cell(5,9));
         assert(cb.bottom_left == Cell(9,5));

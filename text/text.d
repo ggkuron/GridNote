@@ -697,7 +697,6 @@ span内の要素を削除する
     text.tag.Weight _current_weight;
 
     // 階層的にtag適用できる設計は必要だと思う
-
     bool _color_is_set = false;
     void _set_pooled_tag(TagType t,in TextSpan s,in Color v){
         assert(s in _tag_pool);

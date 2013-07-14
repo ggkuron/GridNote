@@ -5,7 +5,8 @@ alias Direct.left left;
 alias Direct.right right;
 alias Direct.up up;
 alias Direct.down down;
-// 制限付きの型違い
+
+// 左右上下に特殊化
 enum UpDown:Direct{ up=Direct.up,down=Direct.down };
 enum LR:Direct{ left=Direct.left,right=Direct.right };
 alias UpDown.up Up;

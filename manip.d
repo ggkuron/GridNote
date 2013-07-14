@@ -17,7 +17,6 @@ import gtk.FileChooserDialog;
 import std.array;
 import std.stdio;
 import std.string;
-debug(manip) import std.stdio;
 
 enum FocusMode{ normal,select,edit,point }
 
