@@ -6,64 +6,63 @@ import util.array;
 import std.exception;
 import std.math;
 import std.traits;
-
 import std.typecons;
+
 debug(cell) import std.stdio;
 debug(move) import std.stdio;
 debug(table) import std.stdio;
 debug(refer) import std.stdio;
 
-struct Cell
-{
-    int row;
-    int column;
-public:
-    Cell opBinary(string op)(in Cell rhs)const if(op =="+"){
-        return  Cell(row + rhs.row, column + rhs.column);
-    }
-    Cell opBinary(string op)(in Cell rhs)const if(op =="-"){
-        int minus_tobe_zero(int x){
-            return x<0?0:x;
+struct Cell {
+        int row;
+        int column;
+    public:
+        Cell opBinary(string op)(in Cell rhs)const if(op =="+"){
+            return  Cell(row + rhs.row, column + rhs.column);
         }
-        auto r = minus_tobe_zero(row - rhs.row);
-        auto c = minus_tobe_zero(column - rhs.column);
-        return Cell(r,c);
-    }
-    Cell opBinary(string op)(in int rhs)const if(op =="/"){
-        return  Cell(row/rhs, column/rhs);
-    }
-    Cell opBinary(string op)(in int rhs)const if(op =="*"){
-        return  Cell(row*rhs, column*rhs);
-    }
-    unittest{
-        Cell a = Cell(5,5);
-        Cell b = Cell(10,10);
-        auto c = a-b;
-        auto d = a+b;
-        assert(c == Cell(0,0));
-        assert(d == Cell(15,15));
-    }
-    static Cell invalid(){
-        return Cell(-1,-1);
-    }
-    int opCmp(in Cell rhs)const{
-        if(row == rhs.row)
-            return column - rhs.column;
-        else
-            return row - rhs.row;
-    }
-    unittest{
-        Cell c = Cell(3,3);
-        assert(c.opCmp(c) == 0);
-        Cell a = Cell(1,3);
-        Cell b = Cell(3,1);
-        Cell d = Cell(3,4);
-        Cell e = Cell(4,3);
-        assert(a < c);
-        assert(c > a);
-        assert(d > c);
-        assert(c == Cell(3,3));
-    }
+        Cell opBinary(string op)(in Cell rhs)const if(op =="-"){
+            int minus_tobe_zero(int x){
+                return x<0?0:x;
+            }
+            auto r = minus_tobe_zero(row - rhs.row);
+            auto c = minus_tobe_zero(column - rhs.column);
+            return Cell(r,c);
+        }
+        Cell opBinary(string op)(in int rhs)const if(op =="/"){
+            return  Cell(row/rhs, column/rhs);
+        }
+        Cell opBinary(string op)(in int rhs)const if(op =="*"){
+            return  Cell(row*rhs, column*rhs);
+        }
+        unittest{
+            Cell a = Cell(5,5);
+            Cell b = Cell(10,10);
+            auto c = a-b;
+            auto d = a+b;
+            assert(c == Cell(0,0));
+            assert(d == Cell(15,15));
+        }
+        static Cell invalid(){
+            return Cell(-1,-1);
+        }
+        int opCmp(in Cell rhs)const{
+            if(row == rhs.row)
+                return column - rhs.column;
+            else
+                return row - rhs.row;
+        }
+        unittest{
+            Cell c = Cell(3,3);
+            assert(c.opCmp(c) == 0);
+            Cell a = Cell(1,3);
+            Cell b = Cell(3,1);
+            Cell d = Cell(3,4);
+            Cell e = Cell(4,3);
+            assert(a < c);
+            assert(c > a);
+            assert(d > c);
+            assert(c == Cell(3,3));
+        }
 }
 
 pure Cell diff(in Cell a,in Cell b){
@@ -79,8 +78,8 @@ unittest{
     auto c = diff(a,b);
     assert(c == Cell(5,5));
 }
-void move(ref Cell cell,in Direct to,int width=1){
-    final switch(to){
+void move(ref Cell cell,in Direct dir,int width=1){
+    final switch(dir){
         case right: 
             cell.column += width;
             break;
@@ -99,9 +98,9 @@ void move(ref Cell cell,in Direct to,int width=1){
             break;
     }
 }
-pure Cell if_moved(in Cell c,in Direct to,int width=1){
+pure Cell if_moved(in Cell c,in Direct dir,int width=1){
     Cell result = c;
-    final switch(to){
+    final switch(dir){
         case right: 
             result.column += width;
             break;
@@ -123,22 +122,22 @@ pure Cell if_moved(in Cell c,in Direct to,int width=1){
 }
 
 // test用
-pure int count_line(in Cell[] box,in Cell from,in Direct to){
+// 各方向向きにCellがいくつ連続しているかを返す
+pure int count_line(in Cell[] box,in Cell from,in Direct dir){
     int result;
     Cell c = from;
     while(c.is_in(box))
     {
         ++result;
-        if(to == left && c.column == 0)
+        if(dir == left && c.column == 0
+        || dir == up && c.row == 0)
             break;
-        if(to == up && c.row == 0)
-            break;
-        c = c.if_moved(to);
+        c = c.if_moved(dir);
     }
     return result-1; // if(box is null) return -1;
 }
 
-// test 用
+// test用
 // CellBOX になれる構造かどうかチェック
 bool is_box(in Cell[] box){
     if(box.length == 1) return true;
@@ -177,7 +176,7 @@ unittest{
 }
 
 // Cellで構成される集合
-// 実際にはCellを遅延して生成するものも含む
+// 遅延して生成するものも含む
 interface CellStructure{
     @property Cell top_left()const;
     @property Cell top_right()const;
@@ -197,10 +196,7 @@ interface CellStructure{
 }
 
 import util.color;
-// 構造をTableに持たせる
-// Table上のCellContentと空間を共有する
-// TODO:各コンテンツに固定化した状態を定義させる
-//      変更を伴わない状態。
+// 構造をTableに持たせたCellStructure
 interface CellContent : CellStructure{
     @property int id()const;
     @property const(Cell[][Direct]) edge_line()const;
@@ -217,4 +213,3 @@ interface CellContent : CellStructure{
     @property Color box_color()const;
     const(Cell)[] get_cells()const;
 }
-

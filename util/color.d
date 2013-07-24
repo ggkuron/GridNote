@@ -4,6 +4,7 @@ import std.string;
 import std.array;
 import std.algorithm;
 import std.typecons;
+        import std.stdio;
 
 struct Color{
     int r,g,b,a;
