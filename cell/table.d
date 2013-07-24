@@ -205,6 +205,10 @@ class BoxTable{
             _type_table.remove(box_id);
             _content_table.remove(box_id);
 
+            _text_table.remove(box_id);
+            _code_table.remove(box_id);
+            _image_table.remove(box_id);
+
             return true;
         }
         final int edge(in Direct dir)const{
