@@ -18,6 +18,7 @@ import std.traits;
 import text.tag;
 debug(text) import std.stdio; 
 import std.stdio;
+import std.regex;
 
 /+  memo
     -範囲を持たないspanでsetされたtag
@@ -233,6 +234,8 @@ struct TextSpan{
         }
 }
 
+alias Tuple!(string,SpanTag) HighlightString;
+
 struct Text {   // TextBOX itemBOX で使われる文字列表現
         this(Text t){
             _lines = t._lines;
@@ -241,7 +244,9 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             _current.pos = t._current.pos;
             _writing = t._writing.dup;
             _line_length = t._line_length;
+            _highlight = t._highlight;
         }
+
         // 一時しのぎフォーマットもうかえない
         this(string[] dat){
             const lines = to!int(chomp(dat[0]));
@@ -260,10 +265,10 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 _line_length[l+lines] = to!int(chomp(dat[l+lines+5]));
             }
             _lines = lines; // append後の値と一致してればそれはそれでいい assert(lines == _lines); 
-            debug(text) writeln("caret:",dat[5+_lines*2]);
-            _caret = to!int(chomp(dat[5+_lines*2])); 
+            debug(text) writeln("caret:",dat[4+_lines*2]);
+            _caret = to!int(chomp(dat[4+_lines*2])); 
 
-            auto tag_line = chomp(dat[5+_lines*2+1]);
+            auto tag_line = chomp(dat[4+_lines*2+1]);
             if(!tag_line.empty && tag_line != "\n")
             {
                 tag_line = tag_line[1 .. $-1];
@@ -277,7 +282,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     _tag_pool[span] = tag;
                 }
             }
-            // set _current
+            // set cnt point
             auto c_str = (chomp(dat[2]))["TextPoint".length .. $];
             _current = TextPoint(removechars(c_str," "));
         }
@@ -299,7 +304,10 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         int _lines = 1;
         SpanTag[TextSpan] _tag_pool;
         dchar[Pos][Line] _writing;
+        string[Line] _stored_line;
         int[int] _line_length;
+
+        HighlightString[] _highlight;
 
         invariant(){
             assert(_current.line < _lines);
@@ -360,8 +368,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
 
             if(_text_end.line == line)
                 --_text_end.pos; // update text_end
-            if(_text_end.line == _current.line 
-                    && _text_end < _current)
+            if(_text_end.line == _current.line && _text_end < _current)
                 _current = _text_end; // currentが終端を超えていた場合、
 
             if(!_line_length[line])
@@ -452,8 +459,11 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
 
         // lineが存在しないなら""を返す
         // これに依存、str(TextPoint,TextPoint)
-        @property string _str(in int line,string pre_in = "")const{
-            if(!line_empty(line))
+        @property string _str(in int line,string pre_in = ""){
+            // if(!line_empty(line))
+
+            if(line == _current.line 
+                    || (line !in _stored_line && line_length(line) >= 1))
             {
                 string s;   
                 debug(text) writeln(_writing);
@@ -463,8 +473,19 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                         s ~= pre_in;
                     s ~= _writing[line][i];
                 }
-                return s;
-            }else return "";
+                s =  SimpleXML.escapeText(s,s.length);
+                foreach(h; _highlight)
+                {
+                    s = replace(s,regex(h[0]),h[1].tagging(h[0]));
+                    writeln("replaced");
+                }
+                _stored_line[line] = s;
+            }
+
+            if(line in _stored_line)
+                return _stored_line[line] ;
+            else
+                return "";
         }   
         dchar _get_char(in TextPoint tp)const{
             if(tp.line !in _writing || tp.pos !in _writing[tp.line])
@@ -477,18 +498,21 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             }
             return _writing[tp.line][tp.pos];
         }
-        @property string _plane_string(string pre_in="")const{
+        @property string _plane_string(string default_out=""){
             string result;
             foreach(l; 0 .. _lines)
-                result ~= _str(l,pre_in);
-            return SimpleXML.escapeText(result,result.length);
+            {
+                const str = _str(l,default_out);
+                result ~= str;
+            }
+            return result; 
         }
         bool _is_valid_pos(in TextPoint tp)const{
             return (tp.line in _writing)
                 && (tp.pos in _writing[tp.line]);
         }
         // endを含む
-        string _ranged_str(in TextPoint start,in TextPoint end)const{
+        string _ranged_str(in TextPoint start,in TextPoint end){
             if(!_is_valid_pos(start) || !_is_valid_pos(end))
             {
                 debug(text) writeln("start pos ",start);
@@ -515,13 +539,11 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 result ~= _writing[l].values;
             }
             foreach(i; 0 .. end.pos+1)
-            {
                 result ~= _writing[end.line][i];
-            }
 
             return toUTF8(result);
         }
-        string _ranged_str(in TextSpan span)const{
+        string _ranged_str(in TextSpan span){
             return _ranged_str(span.min,span.max);
         }
         unittest{
@@ -536,7 +558,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             Text t2;
             t2.append("12345");
             assert(t2.line_length(0) == 5);
-
         }
         void _set_end_point(){
             const line = _lines-1;
@@ -708,7 +729,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 }
             }
         }
-        // current位置に適用する
         /+
             現在位置を始点にtagを設定する
             現在のspanが開いていれば現在位置手前で閉じる
@@ -724,9 +744,10 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         }
 
     public:
-        string markup_string(string pre_in=""){
+        string markup_string(string default_out=""){
+            writeln(_highlight);
             if(_tag_pool.keys.empty)
-                return _plane_string(pre_in);
+                return _plane_string(default_out);
             if(empty())
                 return null;
 
@@ -773,7 +794,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                             result ~= tag;
                     }
                     if(_current == tp) // test
-                        result ~= pre_in;
+                        result ~= default_out;
                     // 一文字ずつエスケープしてる効率は
                     string one_char = [cast(char)(_writing[line][pos])];
                     // 二重にエスケープしてしまわないようにはじければいらない
@@ -788,10 +809,8 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             if(end_of_buffer in tag_pos)
                 foreach(end_tag; tag_pos[end_of_buffer])
                     result ~= end_tag;
-            // debug(text) writeln("opened:",opened_cnt);
             foreach(i;0 .. opened_cnt)
                 result ~= "</span>";
-            // debug(text) writeln(_tag_pool);
             debug(text) writeln(_writing);
             debug(text) writeln(result);
             return result;
@@ -861,6 +880,14 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             debug(text) writeln(str);
             _caret = cast(int)str.length;
         }
+        void set_highlight(HighlightString[] hi)
+        out{
+            assert(!_highlight.empty);
+        }
+        body{
+            _highlight ~= hi;
+        }
+
         unittest{
             Text t1;
             t1.append("012");
@@ -931,22 +958,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             assert(t1._line_length[0] == 10);
             debug(text) writeln(t1._caret);
             assert(t1._caret == 10);
-            // t1.deleteChar(TextPoint(0,5));
-            // assert(t1._plane_string == "012346789");
-            // assert(t1._line_length[0] == 9);
-            // assert(t1._caret == 9);
-            // t1.move_caret(left);
-            // t1.deleteChar();
-            // writeln(t1._current);
-            // writeln(t1._text_end);
-            // writeln(t1._plane_string());
-            // assert(t1._plane_string == "01234678");
-            // t1.deleteChar();
-            // t1.deleteChar();
-            // t1.deleteChar();
-            // t1.deleteChar();
         }
-
 
         // current.pos はこれから値が入る位置.既に入ってるわけではない
         // だから_line_lengthはcurrent.posを含まず考慮する
@@ -1047,14 +1059,13 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             assert(t1._line_length[0] == 10);
             debug(text) writeln(t1._plane_string);
             t1.insert(TextPoint(0,5),'x');
-            debug(text) writeln(t1._plane_string);
+            writeln(t1._plane_string);
             assert(t1._plane_string == "01234x56789");
             assert(t1._line_length[0] == 11);
         }
         void caret_move_forward(in ulong u){
             _caret += u;
         }
-        // TextBOXとは別パス。BOXの大きさの制約を受けないとき用途。TextBOXからは呼んではいけない。
         void append(string s){
             // caret_move_forward(s.length);
             foreach(dchar c; s)
@@ -1193,7 +1204,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             debug(text) writeln(t1._current);
             debug(text) writeln(plane);
             assert(plane == "0123456789");
-
         }
         unittest{
             Text t1;
@@ -1204,6 +1214,8 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             t1.move_caret(left);
             assert(t1._current == TextPoint(1,0));
             t1.backspace();
+            writeln(t1._str(0));
+            writeln(t1._str(1));
             assert(t1._str(0) == "12345\n");
             assert(t1._str(1) == "12345");
             debug(text) writeln(t1._current);
@@ -1269,6 +1281,8 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             {   // 
                 _writing[line][0] = '\n';
             }
+
+
             debug(text) writeln(line_tail);
 
             ++_current.line;
@@ -1292,7 +1306,21 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             if(next_line != _lines)
             {
                 _writing[next_line][next_line_len] = '\n';
-                // ++_line_length[next_line];
+            }
+
+            if(line in _stored_line)
+                _stored_line[line].clear;
+            foreach(i; _writing[line].keys.sort())
+            {   // 改行行の_stored_lineを更新する
+                _stored_line[line] ~= _writing[line][i];
+            }
+            auto line_str = _stored_line[line];
+            _stored_line[line] = SimpleXML.escapeText(line_str,line_str.length);
+            line_str = _stored_line[line];
+            foreach(h; _highlight)
+            {
+                _stored_line[line] = replace(line_str,regex(h[0]),h[1].tagging(h[0]));
+                writeln("OK");
             }
 
             ++_lines;
@@ -1394,6 +1422,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             assert(t1.markup_string() == "012345\n<span foreground=\"red\">5</span>");
             t1.backspace();
             debug(text) writeln(t1._tag_pool);
+            writeln(t1.markup_string());
             assert(t1.markup_string() == "012345\n");
             t1.backspace();
             debug(text) writeln(t1._tag_pool);
@@ -1430,8 +1459,10 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             result ~= to!string(_text_end) ~ '\n';
             _writing[_text_end.line][_text_end.pos] = '\n'; // !!!currentが行終端い
             foreach(l; 0 .. _lines)
-                result ~= _str(l);
-            result ~= '\n';
+                foreach(w; _writing[l].keys.sort)
+                    result ~= _writing[l][w];
+                // result ~= _str(l);
+            // result ~= '\n';
             foreach(l; 0 .. _lines)
                 if(l in _line_length)
                     result ~= to!string(_line_length[l]) ~ '\n';

@@ -246,7 +246,6 @@ final class ManipTable{
             _box_type = tb.toString();
             debug(manip) writeln("type in: ",tb.toString());
         }
-
         void select_color(in Direct dir){
             _pv.guide_view.select_color(dir);
             _selected_color = get_selectedColor();
@@ -286,7 +285,6 @@ final class ManipTable{
 
             foreach(i; 0 .. travel)
                 _pv.move_view(dir);
-
         }
         void create_RectBOX(){
             _mode = FocusMode.edit;
@@ -348,7 +346,6 @@ final class ManipTable{
              if(auto tb = cast(TextBOX)_maniped_box) 
                 tb.join();
         }
-
         void undo(){
             if(!_old_state.empty())
                 _maniped_box = _old_state[$-1];

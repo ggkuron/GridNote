@@ -255,6 +255,7 @@ public:
             cr.moveTo(_box_pos[box_id].x,line_y);
             PgCairo.showLayoutLine(cr,line_layout);
 
+            assert(line in _logicRect);
             line_layout.getPixelExtents(null,&_logicRect[line]);
             _width[box_id][line] = _logicRect[line].width;
             _height[box_id] = _logicRect[line].height;
