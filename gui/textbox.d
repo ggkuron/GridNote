@@ -107,8 +107,8 @@ public:
         _gridSize = get_gridSize();
         _box_pos[box_id] = context_position(box); // gui.render_box::get_position
         _box_pos[box_id].y += _gridSize;
-        _currentline = box.getText().current_line();
-        const numof_lines = box.getText().numof_lines();
+        _currentline = box.cursor_line();
+        const numof_lines = box.numof_lines();
             
         void _register_check(TextBOX box)
         {

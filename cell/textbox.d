@@ -46,6 +46,7 @@ class TextBOX : ContentBOX{
         this(BoxTable table){ 
             super(table);
         }
+        // 背景色の固定
         this(BoxTable table,string family,string style,in Color back,in Color fore,bool color_fixed){ 
             super(table);
             _box_fontfamly = family;
@@ -54,6 +55,7 @@ class TextBOX : ContentBOX{
             super.set_color(back);
             _color_fixed = color_fixed;
         }
+        // 通常
         this(BoxTable table,string family,string style,in Color back,in Color fore){ 
             super(table);
             _box_fontfamly = family;
@@ -65,15 +67,14 @@ class TextBOX : ContentBOX{
         this(BoxTable table,in Cell tl,in int w,in int h){
             super(table,tl,w,h);
         }
-        this(BoxTable table,TextBOX tb){
-            _text = tb._text;
-            _box_foreground = tb._box_foreground;
-
-            super(table,tb);
-        }
-        this(BoxTable table,string markup){
-            super(table);
-        }
+        // this(BoxTable table,TextBOX tb){
+        //     super(table,tb);
+        //     _text = tb._text;
+        //     _box_foreground = tb._box_foreground;
+        // }
+        // this(BoxTable table,string markup){
+        //     super(table);
+        // }
         this(BoxTable table,string[] dat){
             super(table);
             dat[0] = dat[0][6 .. $-1];
@@ -101,15 +102,14 @@ class TextBOX : ContentBOX{
             _text = Text(dat[4..$]);
         }        
         bool mark_caret = false;
-        void move_caret(in Direct dir){
-            _text.move_caret(dir);
+        bool move_caret(in Direct dir){
+            return _text.move_caret(dir);
         }
         void delete_char(){
             _text.deleteChar();
             if(_text.numof_lines < this.numof_row)
                 require_remove(down);
         }
-
         override bool require_create_in(in Cell c){
             return _table.try_create_in!(TextBOX)(this,c);
         }
@@ -173,10 +173,11 @@ class TextBOX : ContentBOX{
             }
             _text.caret_move_forward(s.length - feed_cnt);
         }
-        void backspace(){
-            _text.backspace(); // 行始でfalse
+        bool backspace(){
+            auto is_head = _text.backspace(); // 行始でfalse
             if(_text.numof_lines < this.numof_row)
                 require_remove(down);
+            return is_head;
         }
         void join(){
             if(_text.line_join())
@@ -203,9 +204,9 @@ class TextBOX : ContentBOX{
         override bool is_to_spoil()const{
             return super.is_to_spoil() || _text.empty();
         }
-        ref Text getText(){
-            return _text;
-        }
+        // ref Text getText(){
+        //     return _text;
+        // }
         @property int cursor_pos()const{
             return _text.current_pos;
         }
@@ -268,6 +269,7 @@ class TextBOX : ContentBOX{
             return super.empty && _text.empty;
         }
 }
+
 class CodeBOX : TextBOX{  
     private:
         HighlightString[] _code_hilight;

@@ -96,9 +96,9 @@ struct TextSpan{
         TextPoint _max ;
     public:
         void set(in TextPoint s,in TextPoint e)
-        in{
-        assert(s <= e);
-        }
+            in{
+            assert(s <= e);
+            }
         body{
             _min = s;
             _max = e;
@@ -815,7 +815,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             debug(text) writeln(result);
             return result;
         }
-        void move_caret(in Direct dir){
+        bool move_caret(in Direct dir){
             debug(text) writeln(_current);
             const back_pos = _backward_pos(_current);
             final switch(dir){
@@ -823,12 +823,14 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     if(_is_line_end(_current))
                     {
                         if(!_next_line_exist(current_line))
-                            return;
+                            return false;
                         _current = _forward_point(_current);
                         break;
                     }
                     else if(_current.pos < _line_length[_current.line])
                         ++_current.pos;
+                    else
+                        return false;
                     break;
                 case left:
                     if(_is_line_head(_current) && _current.line != 0)
@@ -839,10 +841,12 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     }
                     else if(!_is_line_head(_current))
                         --_current.pos;
+                    else 
+                        return false;
                     break;
                 case up:
                     if(current_line == 0)
-                        return;
+                        return false;
                     else 
                     {
                         --_current.line;
@@ -853,7 +857,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     break;
                 case down:
                     if(!_next_line_exist(current_line))
-                        return;
+                        return false;
                     else
                     {
                         ++_current.line;
@@ -864,6 +868,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     break;
             }
             _set_caret();
+            return true;
         }
         // _text_end は拡張方向のみチェック
         // _text_end の縮小方向はbackspace とかのdeleteCharとかの削除系でチェック
@@ -1111,7 +1116,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             assert(t1._tail == "345");
         }
 
-        // 行始でfalse 通常true
+        // 行始でfalse 
         bool backspace(){
             if(empty) return false;
             const bp = _backward_pos(_current);
