@@ -246,7 +246,6 @@ final class ManipTable{
             _box_type = tb.toString();
             debug(manip) writeln("type in: ",tb.toString());
         }
-
         void select_color(in Direct dir){
             _pv.guide_view.select_color(dir);
             _selected_color = get_selectedColor();
@@ -286,7 +285,6 @@ final class ManipTable{
 
             foreach(i; 0 .. travel)
                 _pv.move_view(dir);
-
         }
         void create_RectBOX(){
             _mode = FocusMode.edit;
@@ -327,7 +325,7 @@ final class ManipTable{
         }
         void text_feed(){
             if(auto tb = cast(TextBOX)_maniped_box) {
-                _old_state ~= new TextBOX(_focused_table,tb);
+                // _old_state ~= new TextBOX(_focused_table,tb);
                 if(_manip_textbox.feed(tb))
                     move_focus(down);
             }
@@ -338,17 +336,17 @@ final class ManipTable{
         }
         void move_caret(in Direct dir){
             if(auto tb = cast(TextBOX)_maniped_box) 
-                tb.move_caret(dir);
+                if(tb.move_caret(dir) && dir.is_vertical())
+                    move_focus(dir);
         }
         void delete_char(){
              if(auto tb = cast(TextBOX)_maniped_box) 
-                tb.delete_char();
+                 tb.delete_char();
         }
         void join(){
-             if(auto tb = cast(TextBOX)_maniped_box) 
-                tb.join();
+             if(auto tb = cast(TextBOX)_maniped_box)
+                 tb.join();
         }
-
         void undo(){
             if(!_old_state.empty())
                 _maniped_box = _old_state[$-1];
@@ -484,7 +482,6 @@ final class ManipTable{
         // このclassの役割って..?
         final class TextController {
             this(){
-                // _manip_table = mt;
             }
             void input(TextBOX box,string str){
                 box.input(str);
@@ -499,10 +496,12 @@ final class ManipTable{
                 input(box,str);
             }
             void backspace(TextBOX box){
-                box.backspace();
+                if(!box.backspace()) // 行始でfalse
+                    move_focus(up);
             }
             void backspace(CodeBOX box){
-                box.backspace();
+                if(!box.backspace())
+                    move_focus(up);
             }
             bool feed(TextBOX box){
                 return box.expand_with_text_feed();
