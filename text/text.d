@@ -246,7 +246,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             _line_length = t._line_length;
             _highlight = t._highlight;
         }
-
         // 一時しのぎフォーマットもうかえない
         this(string[] dat){
             const lines = to!int(chomp(dat[0]));
@@ -307,7 +306,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         string[Line] _stored_line;
         int[int] _line_length;
 
-        HighlightString[] _highlight;
+        Tuple!(string,SpanTag)[] _highlight;
 
         invariant(){
             assert(_current.line < _lines);
@@ -656,7 +655,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             text.line_feed();
             assert(text._line_end(0) == TextPoint(0,9));
             assert(text._is_line_end(TextPoint(0,9)));
-            // assert(text._is_line_end(TextPoint(0,10)));
             assert(text.numof_lines == 2);
             assert(text._next_line_exist(0));
             assert(text._current == TextPoint(1,0));
@@ -885,12 +883,12 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             debug(text) writeln(str);
             _caret = cast(int)str.length;
         }
-        void set_highlight(HighlightString[] hi)
+        void set_highlight(string word, SpanTag tag)
         out{
             assert(!_highlight.empty);
-        }
+            }
         body{
-            _highlight ~= hi;
+            _highlight ~= tuple(word,tag);
         }
 
         unittest{

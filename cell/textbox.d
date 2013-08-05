@@ -39,8 +39,8 @@ class TextBOX : ContentBOX{
         }
     protected:
         Text _text;
-        void set_highlight(HighlightString[] hi){
-            _text.set_highlight(hi);
+        void set_highlight(string word,SpanTag tag){
+            _text.set_highlight(word,tag);
         }
     public:
         this(BoxTable table){ 
@@ -63,7 +63,6 @@ class TextBOX : ContentBOX{
             _box_foreground = fore;
             this.set_color(back);
         }
-     
         this(BoxTable table,in Cell tl,in int w,in int h){
             super(table,tl,w,h);
         }
@@ -113,18 +112,13 @@ class TextBOX : ContentBOX{
         override bool require_create_in(in Cell c){
             return _table.try_create_in!(TextBOX)(this,c);
         }
-        void set_box_default_color(in Color c){
-            if(_color_fixed) return;
-            _box_foreground = c;
-        }
         void set_foreground_color(in Color c){
-            if(_color_fixed) return;
-            {
+            if(!_color_fixed)
                 _box_foreground = c;
-            }
         }
         override void set_color(in Color c){
-            super.set_color(Color(c,128));
+            if(!_color_fixed)
+                super.set_color(Color(c,128));
         }
         void set_background_color(in Color c){
             if(_text.empty) // box_colorを設定
@@ -274,11 +268,10 @@ class CodeBOX : TextBOX{
     private:
         HighlightString[] _code_hilight;
         void test_highlight(){
-            static SpanTag red_tag;
+            SpanTag red_tag;
             red_tag.set_foreground(red);
-            _code_hilight ~= [tuple("if",red_tag)];
 
-            super.set_highlight(_code_hilight);
+            super.set_highlight("red",red_tag);
         }
     public:
         this(BoxTable table,string family,string style,in Color back,in Color fore){ 

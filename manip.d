@@ -225,7 +225,7 @@ final class ManipTable{
             _mode = FocusMode.edit;
             if(_focused_table.has(_select.focus)) return;
             auto tb = _select.create_TextBOX(family,style,back,fore);
-            tb.set_box_default_color(_selected_color);
+            tb.set_foreground_color(_selected_color);
 
             _maniped_box = tb;
             _box_type = tb.toString();
@@ -466,7 +466,6 @@ final class ManipTable{
                         auto tb = new CodeBOX(_focused_table,l);
                         tb.set_color(Color(box_type[1]));
                         break;
-
                     default:
                         break;
                 }
