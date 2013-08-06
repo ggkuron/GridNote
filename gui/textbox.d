@@ -228,7 +228,7 @@ public:
         else
             markup_str = box.markup_string("");
 
-        // writeln(markup_str);
+        writeln(markup_str);
         if(markup_str)
         {
             const markup_len = cast(int)markup_str.length;

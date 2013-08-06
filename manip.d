@@ -224,7 +224,6 @@ final class ManipTable{
 
             _mode = FocusMode.edit;
             if(_focused_table.has(_select.focus)) return;
-            // auto tb = _select.create_TextBOX(family,style,back,fore);
             auto tb = new TextBOX(_focused_table,family,style,back,fore);
             if(!tb.require_create_in(_select.focus))
             {

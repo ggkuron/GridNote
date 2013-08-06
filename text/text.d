@@ -246,7 +246,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             _line_length = t._line_length;
             _highlight = t._highlight;
         }
-
         // 一時しのぎフォーマットもうかえない
         this(string[] dat){
             const lines = to!int(chomp(dat[0]));
@@ -307,7 +306,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         string[Line] _stored_line;
         int[int] _line_length;
 
-        HighlightString[] _highlight;
+        Tuple!(string[],SpanTag)[] _highlight;
 
         invariant(){
             assert(_current.line < _lines);
@@ -478,9 +477,12 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 s =  SimpleXML.escapeText(s,s.length);
                 foreach(h; _highlight)
                 {
-                    s = replace(s,regex(h[0],"g"),h[1].tagging(h[0]));
+                    foreach(word; h[0])
+                    s = replace(s,regex(word,"g"),h[1].tagging("$&"));
                 }
+
                 _stored_line[line] = s;
+
             }
 
             if(line in _stored_line)
@@ -657,7 +659,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             text.line_feed();
             assert(text._line_end(0) == TextPoint(0,9));
             assert(text._is_line_end(TextPoint(0,9)));
-            // assert(text._is_line_end(TextPoint(0,10)));
             assert(text.numof_lines == 2);
             assert(text._next_line_exist(0));
             assert(text._current == TextPoint(1,0));
@@ -886,12 +887,12 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             debug(text) writeln(str);
             _caret = cast(int)str.length;
         }
-        void set_highlight(HighlightString[] hi)
+        void set_highlight(string[] word, SpanTag tag)
         out{
             assert(!_highlight.empty);
-        }
+            }
         body{
-            _highlight ~= hi;
+            _highlight ~= tuple(word,tag);
         }
 
         unittest{
@@ -1288,7 +1289,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 _writing[line][0] = '\n';
             }
 
-
             debug(text) writeln(line_tail);
 
             ++_current.line;
@@ -1325,9 +1325,10 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             line_str = _stored_line[line];
             foreach(h; _highlight)
             {
-                _stored_line[line] = replace(line_str,regex(h[0],"g"),h[1].tagging(h[0]));
-                writeln("OK");
+                foreach(word; h[0])
+                    _stored_line[line] = replace(_stored_line[line],regex(word,"g"),h[1].tagging("$&"));
             }
+
 
             ++_lines;
             _set_end_point();

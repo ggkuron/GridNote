@@ -38,9 +38,9 @@ class TextBOX : ContentBOX{
             return _box_fontfamly~' '~_box_style~' '~to!string(_box_font_size);
         }
     protected:
-        public Text _text;
-        void set_highlight(HighlightString[] hi){
-            _text.set_highlight(hi);
+        Text _text;
+        void set_highlight(string[] word,SpanTag tag){
+            _text.set_highlight(word,tag);
         }
     public:
         this(BoxTable table){ 
@@ -63,7 +63,6 @@ class TextBOX : ContentBOX{
             _box_foreground = fore;
             this.set_color(back);
         }
-     
         this(BoxTable table,in Cell tl,in int w,in int h){
             super(table,tl,w,h);
         }
@@ -120,13 +119,12 @@ class TextBOX : ContentBOX{
                 _box_foreground = c;
         }
         void set_foreground_color(in Color c){
-            if(_color_fixed) return;
-            {
+            if(!_color_fixed)
                 _box_foreground = c;
-            }
         }
         override void set_color(in Color c){
-            super.set_color(Color(c,128));
+            if(!_color_fixed)
+                super.set_color(Color(c,128));
         }
         void set_background_color(in Color c){
             if(_text.empty) // box_colorを設定
@@ -274,13 +272,30 @@ class TextBOX : ContentBOX{
 
 class CodeBOX : TextBOX{  
     private:
-        HighlightString[] _code_hilight;
         void test_highlight(){
-            SpanTag red_tag;
-            red_tag.set_foreground(red);
-            _code_hilight ~= tuple("if",red_tag);
+            SpanTag Identifier_t,operator_t,number_t,turquoise_t,lightseagreen_t,wheat_t;
+            Identifier_t.set_foreground(gold);
+            string[] identifier = ["int","unsigned","void","float","double","string","char","ubyte",
+                "Int","Integer","Float","Double","Num","Ordered"];
+            string[] operators = [`\+`,`\-[^\&gt;]`,`\*`,];
+            string[] keywords = [`if\ `,`case\ `,`switch\ `,`for\ `,"foreach","foreach_reverse","return","else"];
+            operator_t.set_foreground(deepskyblue);
+            string[] numbers = [`\d+\ *`];
+            string[] equals = [`\=\=`,`\=\ `,`::`];
+            number_t.set_foreground(khaki);
+            string[] arrow = [`\-\&gt;`];
+            turquoise_t.set_foreground(turquoise);
+            string[] fat_arrow = [`\=\&gt;`];
+            lightseagreen_t.set_foreground(lightseagreen);
+            wheat_t.set_foreground(wheat);
 
-            super.set_highlight(_code_hilight);
+            super.set_highlight(keywords,wheat_t);
+            super.set_highlight(identifier,Identifier_t);
+            super.set_highlight(fat_arrow,lightseagreen_t);
+            super.set_highlight(arrow,turquoise_t);
+            super.set_highlight(operators,operator_t);
+            super.set_highlight(equals,turquoise_t);
+            super.set_highlight(numbers,number_t); // これは最後でないとだめ
         }
     public:
         this(BoxTable table,string family,string style,in Color back,in Color fore){ 
