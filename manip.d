@@ -224,7 +224,14 @@ final class ManipTable{
 
             _mode = FocusMode.edit;
             if(_focused_table.has(_select.focus)) return;
-            auto tb = _select.create_TextBOX(family,style,back,fore);
+            // auto tb = _select.create_TextBOX(family,style,back,fore);
+            auto tb = new TextBOX(_focused_table,family,style,back,fore);
+            if(!tb.require_create_in(_select.focus))
+            {
+                tb.clear();
+                return;
+            }
+
             tb.set_box_default_color(_selected_color);
 
             _maniped_box = tb;
@@ -232,7 +239,6 @@ final class ManipTable{
             debug(manip) writeln("type in: ",tb.toString());
         }
         void create_CodeBOX(){
-            // TODO back_color と fore_colorの設定読み出し
             string family="Monospace"; // このパラメータは設定ファイルから読めるようにする
             string style="Norml"; // 設定を読み出すのはここで、読む機能は別のところに。
             const Color fore=white;
@@ -240,11 +246,17 @@ final class ManipTable{
 
             _mode = FocusMode.edit;
             if(_focused_table.has(_select.focus)) return;
-            auto tb = _select.create_CodeBOX(family,style,back,fore);
+            // auto tb = _select.create_CodeBOX(family,style,back,fore);
+            auto cb = new CodeBOX(_focused_table,family,style,back,fore);
+            if(!cb.require_create_in(_select.focus))
+            {
+                cb.clear();
+                return;
+            }
 
-            _maniped_box = tb;
-            _box_type = tb.toString();
-            debug(manip) writeln("type in: ",tb.toString());
+            _maniped_box = cb;
+            _box_type = cb.toString();
+            debug(manip) writeln("type in: ",cb.toString());
         }
         void select_color(in Direct dir){
             _pv.guide_view.select_color(dir);
@@ -463,10 +475,9 @@ final class ManipTable{
                         tb.set_color(Color(box_type[1]));
                         break;
                     case "CodeBOX":
-                        auto tb = new CodeBOX(_focused_table,l);
-                        tb.set_color(Color(box_type[1]));
+                        auto tb = new CodeBOX(_focused_table,l,Color(box_type[1]));
+                        // tb.set_color(Color(box_type[1]));
                         break;
-
                     default:
                         break;
                 }

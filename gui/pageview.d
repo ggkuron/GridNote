@@ -181,7 +181,6 @@ final class PageView : DrawingArea,TableView{
             }
             foreach(cb; _in_view.get_codeBoxes())
             {
-                writeln("34r3");
                 if(_show_contents_border)
                 {
                     _render_text.fill(cr,cb,cb.box_color);

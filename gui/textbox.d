@@ -101,7 +101,9 @@ public:
         super(tv);
         _caret_rect = new Rect();
     }
-    void render(Context cr, TextBOX box, bool fixed = false){
+    alias renderT!(TextBOX) render;
+    alias renderT!(CodeBOX) render;
+    void renderT(TB:TextBOX)(Context cr, TB box, bool fixed = false){
         // get info and update class holded info
         immutable box_id = box.id();
         _gridSize = get_gridSize();

@@ -57,7 +57,7 @@ class ReferTable : BoxTable{
         auto get_contents(){
             return _master.get_contents(_offset,_max_range);
         }
-        override Tuple!(string,CellContent) get_content(const Cell c){
+        override Tuple!(string,CellContent) get_content(in Cell c){
             return _master.get_content(c+offset);
         }
         override TextBOX[] get_textBoxes(){

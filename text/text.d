@@ -445,7 +445,9 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     assert(0);
             }
         }
+
         // (現在使われている設定値に対応するtag)に対応するspanを返す
+        // deprecated
         TextSpan _used_span_in_tags(in TextPoint tp,TagType tt){
             TextSpan itr;
             foreach(span; _tag_pool.keys.sort)
@@ -476,8 +478,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 s =  SimpleXML.escapeText(s,s.length);
                 foreach(h; _highlight)
                 {
-                    s = replace(s,regex(h[0]),h[1].tagging(h[0]));
-                    writeln("replaced");
+                    s = replace(s,regex(h[0],"g"),h[1].tagging(h[0]));
                 }
                 _stored_line[line] = s;
             }
@@ -1324,7 +1325,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             line_str = _stored_line[line];
             foreach(h; _highlight)
             {
-                _stored_line[line] = replace(line_str,regex(h[0]),h[1].tagging(h[0]));
+                _stored_line[line] = replace(line_str,regex(h[0],"g"),h[1].tagging(h[0]));
                 writeln("OK");
             }
 

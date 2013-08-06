@@ -38,7 +38,7 @@ class TextBOX : ContentBOX{
             return _box_fontfamly~' '~_box_style~' '~to!string(_box_font_size);
         }
     protected:
-        Text _text;
+        public Text _text;
         void set_highlight(HighlightString[] hi){
             _text.set_highlight(hi);
         }
@@ -114,8 +114,10 @@ class TextBOX : ContentBOX{
             return _table.try_create_in!(TextBOX)(this,c);
         }
         void set_box_default_color(in Color c){
-            if(_color_fixed) return;
-            _box_foreground = c;
+            if(_color_fixed)
+                return;
+            else 
+                _box_foreground = c;
         }
         void set_foreground_color(in Color c){
             if(_color_fixed) return;
@@ -258,9 +260,9 @@ class TextBOX : ContentBOX{
         void text_clear(){
             _text.clear();
         }
-        override void clear(){
+        override void clear(){ // require_create_inの中で呼ばれる
             super.clear();
-            _text.clear();
+            _text.clear(); // _textの設定はすべて飛んでしまう
         }
         bool text_empty()const{
             return _text.empty();
@@ -274,24 +276,27 @@ class CodeBOX : TextBOX{
     private:
         HighlightString[] _code_hilight;
         void test_highlight(){
-            static SpanTag red_tag;
+            SpanTag red_tag;
             red_tag.set_foreground(red);
-            _code_hilight ~= [tuple("if",red_tag)];
+            _code_hilight ~= tuple("if",red_tag);
 
             super.set_highlight(_code_hilight);
         }
     public:
         this(BoxTable table,string family,string style,in Color back,in Color fore){ 
             super(table,family,style,back,fore,true);
-            test_highlight();
         }
-        this(BoxTable table,string[] dat){
+        this(BoxTable table,string[] dat,in Color back_color){
             super(table,dat);
             test_highlight();
+            ContentBOX.set_color(back_color);
         }        
-        alias TextBOX.set_color set_color;
+        override void set_color(in Color c){}
+        // alias TextBOX.set_color set_color;
         override bool require_create_in(in Cell c){
-            return _table.try_create_in!(CodeBOX)(this,c);
+            auto result = _table.try_create_in!(CodeBOX)(this,c);
+            test_highlight();
+            return result;
         }
         override string dat(in Cell offset=Cell(0,0)){
             return super.dat(offset,"CodeBOX");
