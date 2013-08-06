@@ -247,7 +247,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             _highlight = t._highlight;
         }
         // 一時しのぎフォーマットもうかえない
-        this(string[] dat){
+        this(string[] dat,Tuple!(string[],SpanTag)[] hi= []){
             const lines = to!int(chomp(dat[0]));
             int ln;
             debug(text) writeln("l:",_lines);
@@ -256,12 +256,24 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 debug(text) writeln(dat[4+l]);
 
                 auto line_str = dat[4+l];
+                const raw_line = chomp(line_str);
                 if(l == lines -1)
-                    append(chomp(line_str)); // dat()時に仕込んだ改行文字を取り除く
+                    append(raw_line); // dat()時に仕込んだ改行文字を取り除く
                 else
                     append(line_str);
                 debug(text) writeln("per line length:",dat[l+lines+5]);
                 _line_length[l+lines] = to!int(chomp(dat[l+lines+5]));
+
+                if(!hi.empty)
+                {
+                    _highlight = hi;
+                    foreach(h; _highlight)
+                    {
+                        foreach(word; h[0])
+                        line_str = replace(line_str,regex(word,"g"),h[1].tagging("$&"));
+                    }
+                    _stored_line[l] = line_str;
+                }
             }
             _lines = lines; // append後の値と一致してればそれはそれでいい assert(lines == _lines); 
             debug(text) writeln("caret:",dat[4+_lines*2]);
@@ -474,6 +486,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                         s ~= pre_in;
                     s ~= _writing[line][i];
                 }
+                if(s.length)
                 s =  SimpleXML.escapeText(s,s.length);
                 foreach(h; _highlight)
                 {

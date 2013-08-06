@@ -73,6 +73,9 @@ struct SpanTag{
         Weight  _weight;
         FontDesc _font_desc;
     public:
+        this(in Color fore){
+            set_foreground(fore);
+        }
         TagType[] tag_types()const{
             return _tags.keys;
         }

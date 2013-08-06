@@ -218,7 +218,7 @@ final class ManipTable{
         }
         void create_TextBOX(){
             string family="Sans"; // このパラメータは設定ファイルから読めるようにする
-            string style="Norml"; // 設定を読み出すのはここで、読む機能は別のところに。
+            string style="Normal"; // 設定を読み出すのはここで、読む機能は別のところに。
             const Color fore=black;
             const Color back=linen;
 
@@ -239,7 +239,7 @@ final class ManipTable{
         }
         void create_CodeBOX(){
             string family="Monospace"; // このパラメータは設定ファイルから読めるようにする
-            string style="Norml"; // 設定を読み出すのはここで、読む機能は別のところに。
+            string style="Normal"; // 設定を読み出すのはここで、読む機能は別のところに。
             const Color fore=white;
             const Color back=Color(48,48,48,210);
 
@@ -308,7 +308,7 @@ final class ManipTable{
         void commit_to_box(string str){
             debug(manip) writeln("send to box start with :",str);
             if(_mode!=FocusMode.edit)
-            {   // 本当はこんな状態になってるのがおかしいわけで
+            {   // こんな状態になってるのがおかしいわけで
                 assert(0);
                 _pv.IM_FocusOut();
                 return;
@@ -316,8 +316,7 @@ final class ManipTable{
             switch(_box_type){
                case "cell.textbox.TextBOX":
                case "cell.textbox.CodeBOX":
-                   // _old_state ~= new TextBOX(_focused_table,cast(TextBOX)_maniped_box);
-                   _manip_textbox.with_commit(str,targetbox);
+                   targetbox.input(str);
                    return;
                default:
                    return;
@@ -492,18 +491,6 @@ final class ManipTable{
         // このclassの役割って..?
         final class TextController {
             this(){
-            }
-            void input(TextBOX box,string str){
-                box.input(str);
-            }
-            void input(CodeBOX box,string str){
-                box.input(str);
-            }
-            void with_commit(string str,TextBOX box){
-                input(box,str);
-            }
-            void with_commit(string str,CodeBOX box){
-                input(box,str);
             }
             void backspace(TextBOX box){
                 if(!box.backspace()) // 行始でfalse

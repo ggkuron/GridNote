@@ -74,7 +74,7 @@ class TextBOX : ContentBOX{
         // this(BoxTable table,string markup){
         //     super(table);
         // }
-        this(BoxTable table,string[] dat){
+        this(BoxTable table,string[] dat,Tuple!(string[],SpanTag)[] hi=[]){
             super(table);
             dat[0] = dat[0][6 .. $-1];
             auto pos = std.string.split(dat[0],",");
@@ -98,7 +98,7 @@ class TextBOX : ContentBOX{
             _box_style = chomp(desc[1]);
             _box_font_size = to!ubyte(chomp(desc[2]));
             _box_foreground = Color(chomp(dat[3]));
-            _text = Text(dat[4..$]);
+            _text = Text(dat[4..$],hi);
         }        
         bool mark_caret = false;
         bool move_caret(in Direct dir){
@@ -272,38 +272,26 @@ class TextBOX : ContentBOX{
 
 class CodeBOX : TextBOX{  
     private:
+        Tuple!(string[],SpanTag)[] _code_highlight(){
+            return [
+            tuple!(string[],SpanTag)(["int","unsigned","void","float","double","string","char","ubyte", "Int","Integer","Float","Double","Num","Ordered"],SpanTag(gold)),
+            tuple!(string[],SpanTag)([`\+`,`\-[^\&gt;]`,`\*`,],SpanTag(deepskyblue)),
+            tuple!(string[],SpanTag)([`if\ `,`case\ `,`switch\ `,`for\ `,"foreach","foreach_reverse","return","else","data","newtype"],SpanTag(wheat)),
+            tuple!(string[],SpanTag)([`\d+\ *`],SpanTag(khaki)),
+            tuple!(string[],SpanTag)([`\-\&gt;`],SpanTag(turquoise)),
+            tuple!(string[],SpanTag)([`\=\&gt;`],SpanTag(lightseagreen)),
+            tuple!(string[],SpanTag)([`\=\=`,`\=\ `,`::`],SpanTag(turquoise))];
+        }
         void test_highlight(){
-            SpanTag Identifier_t,operator_t,number_t,turquoise_t,lightseagreen_t,wheat_t;
-            Identifier_t.set_foreground(gold);
-            string[] identifier = ["int","unsigned","void","float","double","string","char","ubyte",
-                "Int","Integer","Float","Double","Num","Ordered"];
-            string[] operators = [`\+`,`\-[^\&gt;]`,`\*`,];
-            string[] keywords = [`if\ `,`case\ `,`switch\ `,`for\ `,"foreach","foreach_reverse","return","else"];
-            operator_t.set_foreground(deepskyblue);
-            string[] numbers = [`\d+\ *`];
-            string[] equals = [`\=\=`,`\=\ `,`::`];
-            number_t.set_foreground(khaki);
-            string[] arrow = [`\-\&gt;`];
-            turquoise_t.set_foreground(turquoise);
-            string[] fat_arrow = [`\=\&gt;`];
-            lightseagreen_t.set_foreground(lightseagreen);
-            wheat_t.set_foreground(wheat);
-
-            super.set_highlight(keywords,wheat_t);
-            super.set_highlight(identifier,Identifier_t);
-            super.set_highlight(fat_arrow,lightseagreen_t);
-            super.set_highlight(arrow,turquoise_t);
-            super.set_highlight(operators,operator_t);
-            super.set_highlight(equals,turquoise_t);
-            super.set_highlight(numbers,number_t); // これは最後でないとだめ
+            foreach(ch; _code_highlight)
+            super.set_highlight(ch[0],ch[1]);
         }
     public:
         this(BoxTable table,string family,string style,in Color back,in Color fore){ 
             super(table,family,style,back,fore,true);
         }
         this(BoxTable table,string[] dat,in Color back_color){
-            super(table,dat);
-            test_highlight();
+            super(table,dat,_code_highlight);
             ContentBOX.set_color(back_color);
         }        
         override void set_color(in Color c){}
