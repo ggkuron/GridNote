@@ -480,6 +480,8 @@ final class ManipTable{
                         break;
                 }
             }
+
+            _maniped_box = null;
             _pv.queueDraw();
         }
         const(SelectBOX) select()const{

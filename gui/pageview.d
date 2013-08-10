@@ -123,7 +123,6 @@ final class PageView : DrawingArea,TableView{
         }
         import std.stdio;
         bool _focus_in(Event ev,Widget w){
-            // if(_interpreter.is_using_im)
             _interpreter.im_focusIn();
             return true;
         }
@@ -161,13 +160,12 @@ final class PageView : DrawingArea,TableView{
         }
         bool _show_contents_border = true;
         void _renderTable(Context cr){
-            if(_in_view.empty) return;
-            auto manip_t = _manip_table.targetbox;// _manip_table.get_target();
+            if(_in_view.empty) 
+                return;
+            auto manip_t = _manip_table.targetbox;
 
             if(manip_t)
-            {
                 _render_text.stroke(cr,manip_t,_manip_box_color,_manipLineWidth);
-            }
 
             foreach(tb; _in_view.get_textBoxes())
             {
@@ -177,7 +175,7 @@ final class PageView : DrawingArea,TableView{
                     _render_text.stroke(cr,tb,Color(gold,128),1);
                 }
                 // if(manip_t) //  今の実装だと、描画前に舐めてるからmanip_tには何かしら入ってるというだけ
-                _render(cr,tb,(manip_t && manip_t.id != tb.id));
+                _render(cr,tb,(!manip_t || (manip_t.id != tb.id)));
             }
             foreach(cb; _in_view.get_codeBoxes())
             {
@@ -186,7 +184,7 @@ final class PageView : DrawingArea,TableView{
                     _render_text.fill(cr,cb,cb.box_color);
                     _render_text.stroke(cr,cb,Color(gold,128),1);
                 }
-                _render(cr,cb,(manip_t && manip_t.id != cb.id));
+                _render(cr,cb,(!manip_t || (manip_t.id != cb.id)));
             }
 
             foreach(ib; _in_view.get_imageBoxes())

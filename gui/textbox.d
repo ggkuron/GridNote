@@ -228,7 +228,7 @@ public:
         else
             markup_str = box.markup_string("");
 
-        writeln(markup_str);
+        debug(gui) writeln(markup_str);
         if(markup_str)
         {
             const markup_len = cast(int)markup_str.length;
@@ -236,7 +236,7 @@ public:
             _layout[box_id].setMarkup(markup_str,markup_len);
 
             if(!fixed)
-            {   // 
+            {    
                 _im_target_id = box.id;
                 _update_caret_rect();
                 _caret_rect.set_color(Color(lime,128));
@@ -245,9 +245,7 @@ public:
         }
         const box_lines = box.numof_lines;
         const layout_lines = _layout[box_id].getLineCount();
-        // writeln(box_lines);
-        // writeln(layout_lines);
-        // assert(box_lines == layout_lines); // 改行文字をただしく捌いてないと..
+
         for(int line; line < box_lines; ++line )
         {
             auto line_layout = _layout[box_id].getLineReadonly(line);

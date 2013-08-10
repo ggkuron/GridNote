@@ -116,8 +116,7 @@ struct TextSpan{
                 || (_min != TextPoint.init && _max == TextPoint.init)
                 || (_max != TextPoint.init && _min == TextPoint.init);
         }
-        void re_open(LR tail = Right)
-        {
+        void re_open(LR tail = Right){
             if(tail == Right)
                 _max = TextPoint(-1,-1);
             else
@@ -137,8 +136,7 @@ struct TextSpan{
                     return -1;
                 else 
                     return 0;
-            }else if(_min > rhs._min)
-            {
+            }else if(_min > rhs._min) {
                 if(_max > rhs._max)
                     return 1;
                 else
