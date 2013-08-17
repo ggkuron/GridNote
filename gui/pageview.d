@@ -110,8 +110,7 @@ final class PageView : DrawingArea,TableView{
         // ascii mode に切り替わったことを期待してみるようなところ(IMの実装依存)
         void _when_preedit_end(IMContext imc){
             if(_interpreter.state == InputState.Edit)
-            {
-            }
+            {}
         }
         void _when_preedit_start(IMContext imc){
             _when_preedit_changed(imc);
@@ -138,7 +137,7 @@ final class PageView : DrawingArea,TableView{
         }
         void _when_unrealize(Widget w){
             _imm.focusOut();
-            // _imm.reset();
+            _imm.reset();
             _imm.setClientWindow(null);
         }
         void _set_holding_area()
@@ -394,7 +393,6 @@ final class PageView : DrawingArea,TableView{
             return Cell(cast(int)(_holding_area.h / _gridSpace),
                         cast(int)(_holding_area.w / _gridSpace));
         }
-        // 
         GuideView guide_view(){
             return _guide_view;
         }

@@ -21,11 +21,11 @@ struct Cell {
             return  Cell(row + rhs.row, column + rhs.column);
         }
         Cell opBinary(string op)(in Cell rhs)const if(op =="-"){
-            int minus_tobe_zero(int x){
+            int negative_upto_zero(int x){
                 return x<0?0:x;
             }
-            auto r = minus_tobe_zero(row - rhs.row);
-            auto c = minus_tobe_zero(column - rhs.column);
+            auto r = negative_upto_zero(row - rhs.row);
+            auto c = negative_upto_zero(column - rhs.column);
             return Cell(r,c);
         }
         Cell opBinary(string op)(in int rhs)const if(op =="/"){

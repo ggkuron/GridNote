@@ -11,12 +11,7 @@ import shape.shape;
 import shape.drawer;
 
 /+
-    描画部分はこのinterfaceの
-    default実装を用いて実装する。
-    このdefault実装自体は
-    各所で使われる。
-    見分けがつけやすいように
-    大文字始まりのメソッド名にしてみる。
+    Viewの大本インタフェース
 +/
 
 interface TableView{
