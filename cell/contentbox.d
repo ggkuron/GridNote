@@ -11,8 +11,7 @@ import data.content;
 debug(cb) import std.stdio;
 debug(cell) import std.stdio;
 
-// ContentBOX
-abstract class ContentBOX : CellContent{
+abstract class ContentBOX : CellContent {
     private:
         int _box_id;
         Color _box_color = Color(linen,96);
@@ -39,35 +38,26 @@ abstract class ContentBOX : CellContent{
             out{
             assert(top_left != Cell.invalid);
             }
-        body{ // create initial box
+        body{ 
             clear(); // <- range.clear()
             _inner_range_cell.add(c);
         }
         this(BoxTable t,in Cell ul,in int cw,in int rw){
             debug(cell){ 
-                writeln("ctor start");
-                writefln("rw %d cw %d",cw,rw);
+                writefln("rw %d cw %d contentbox creating..",cw,rw);
             }
             this(t);
             require_hold(ul,rw,cw);
-            debug(cell)writeln("ctor end");
         }
         this(BoxTable t,BoxShape bs){
             this(t,bs.pivot,bs.w,bs.h);
         }
 
         this(BoxTable t,ContentBOX oldone){
-            debug(cell) writeln("take after start");
-
             clear();
             _table = t;
             _inner_range_cell = RangeCell(oldone);
-            debug(cell) writeln("end");
         }
-        // 構造の実装なので持ちたくはないけど
-        // 描かれるための構造でもあるので
-        // 抽象クラスとしては、描かれるためにフックする部分も必要なわけでもにょる
-        // 実装は具現クラスで委譲させる
         void move(in Cell c){
             _inner_range_cell.move(c);
         }
@@ -78,8 +68,6 @@ abstract class ContentBOX : CellContent{
             _inner_range_cell.expand(dir,width);
         }
         void remove(in Direct dir,in int width=1){
-            debug(cell) writeln("@@@@ ContentBOX.remove start @@@@");
-
             if(dir.is_horizontal && numof_col <= 1
             || dir.is_vertical && numof_row <= 1 )
                 return;
@@ -231,7 +219,6 @@ abstract class ContentBOX : CellContent{
             return _box_id;
         }
         @property const (Cell[][Direct]) edge_line()const{
-            debug(cell) writefln("min_row %d max_row %d\n min_col %d max_col %d",min_row,max_row,min_col,max_col);
             return  [Direct.right:all_in_column(max_col),
                      Direct.left:all_in_column(min_col),
                      Direct.up:all_in_row(min_row),
@@ -267,10 +254,10 @@ abstract class ContentBOX : CellContent{
         @property Cell bottom_left()const{
             return _inner_range_cell.bottom_left;
         }
-        @property int numof_row()const{
+        int numof_row()const{
             return _inner_range_cell.numof_row;
         }
-        @property int numof_col()const{
+        int numof_col()const{
             return _inner_range_cell.numof_col;
         }
         bool is_on_edge(const Cell c)const{
@@ -282,13 +269,13 @@ abstract class ContentBOX : CellContent{
         @property bool empty()const{
             return _inner_range_cell.empty();
         }
-        @property Cell[] edge_forward_cells(const Direct dir)const{
+        Cell[] edge_forward_cells(const Direct dir)const{
             return _inner_range_cell.edge_forward_cells(dir);
         }
         void set_color(in Color c){
             _box_color = c;
         }
-        @property Color box_color()const{
+        Color box_color()const{
             return _box_color;
         }
 }
@@ -405,7 +392,6 @@ unittest{
     assert(cb.top_left == Cell(3,3));
     assert(cb.bottom_right == Cell(7,7));
     cb = new TextBOX(table);
-    // cb.hold_tl(Cell(3,3),0,0);
     cb.create_in(Cell(3,3));
     assert(cb.top_left == Cell(3,3));
     assert(cb.bottom_right == Cell(3,3));

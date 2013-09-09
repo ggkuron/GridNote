@@ -310,7 +310,7 @@ final class ManipTable{
             if(_mode!=FocusMode.edit)
             {   // こんな状態になってるのがおかしいわけで
                 assert(0);
-                _pv.IM_FocusOut();
+                // _pv.IM_FocusOut();
                 return;
             }
             switch(_box_type){

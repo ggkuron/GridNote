@@ -20,13 +20,7 @@ debug(text) import std.stdio;
 import std.stdio;
 import std.regex;
 
-/+  memo
-    -範囲を持たないspanでsetされたtag
-     を_tag_poolから取り除くようにする
-    -各tagを統一的に扱えるようにする
-+/
-
-unittest{
+unittest {
     auto lower = TextPoint(1,1);
     auto upper = TextPoint(1,5);
     assert(lower < upper);
@@ -35,6 +29,7 @@ unittest{
     auto middle = TextPoint(2,0);
     assert(upper < middle);
 }
+
 struct TextPoint{
         int line = -1;
         int pos = -1;
@@ -60,7 +55,7 @@ struct TextPoint{
             line = l;
             pos = p;
         }
-        // 渡すstring例: "(12,4)" 
+        // : "(12,4)" 
         this(string dat){
             debug(text) writeln(dat);
             dat = dat[1 .. $-1];
@@ -86,10 +81,6 @@ unittest{
     assert((t1+t2) == t3);
 }
 
-// Span!(int)のような操作は提供しない
-// lineの持つpos幅を知る必要があるため
-// 範囲を特定するためのマーカーとしてTextが使う
-
 struct TextSpan{
     private:
         TextPoint _min ;
@@ -109,7 +100,6 @@ struct TextSpan{
         void set_end(in TextPoint e){
             _max = e;
         }
-        // has_no_spanとis_openedの違い
         // is_opened ならば has_no_span
         bool has_no_span()const{
             return _min == _max 
@@ -173,7 +163,7 @@ struct TextSpan{
         bool is_hold(in TextPoint v)const{
             return _min <= v && v <= _max;
         }
-        // 包含するか
+        // 含まれているか
         bool is_hold(in TextSpan s)const{
             return _min <= s._min && _max >= s._max;
         }
@@ -211,8 +201,8 @@ struct TextSpan{
             _min = TextPoint(-1,-1);
             _max = TextPoint(-1,-1);
         }
-        // この２つを違う値にするとText::_apply_tagsとかが死ぬ
         static TextSpan init(){
+            assert (init == invalid);// これを
             return invalid;
         }
         static TextSpan invalid(){
@@ -234,7 +224,7 @@ struct TextSpan{
 
 alias Tuple!(string,SpanTag) HighlightString;
 
-struct Text {   // TextBOX itemBOX で使われる文字列表現
+struct Text {   // TextBOX itemBOX で使われる
         this(Text t){
             _lines = t._lines;
             _caret = t._caret;
@@ -244,7 +234,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             _line_length = t._line_length;
             _highlight = t._highlight;
         }
-        // 一時しのぎフォーマットもうかえない
         this(string[] dat,Tuple!(string[],SpanTag)[] hi= []){
             const lines = to!int(chomp(dat[0]));
             int ln;
@@ -256,7 +245,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 auto line_str = dat[4+l];
                 const raw_line = chomp(line_str);
                 if(l == lines -1)
-                    append(raw_line); // dat()時に仕込んだ改行文字を取り除く
+                    append(raw_line); // dat()時に改行文字を取り除く
                 else
                     append(line_str);
                 debug(text) writeln("per line length:",dat[l+lines+5]);
@@ -273,7 +262,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                     _stored_line[l] = line_str;
                 }
             }
-            _lines = lines; // append後の値と一致してればそれはそれでいい assert(lines == _lines); 
+            _lines = lines; // append後の値と一致してればいい assert(lines == _lines); 
             debug(text) writeln("caret:",dat[4+_lines*2]);
             _caret = to!int(chomp(dat[4+_lines*2])); 
 
@@ -297,14 +286,10 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         }
     private:
         // 各tagの種類ごとに現在の適用範囲を記録しておく
-        // 適応する範囲はそれぞれ異なることができないといけない
-        // TextSpan[TagType] _opened_span;
 
-        // 現在位置と最終位置
-        TextPoint _current = TextPoint(0,0);
+        TextPoint _current = TextPoint(0,0); // 現在位置
         TextPoint _text_end = TextPoint(0,0); // Textの終わりに一致、_currentが動ける最大範囲
-        // byte数での現在位置。Pangoはこちらで指定しなければいけない。
-        int _caret; 
+        int _caret; // byte数での現在位置。Pangoはこちらで指定。
 
         alias int Pos;
         alias int Line;
@@ -432,7 +417,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         TextPoint _backward_pos(){
             return _backward_pos(_current);
         }
-        // 多態させるためのスイッチャー
         void _set_current_value(in TagType tt,in Color c){
             switch(tt){
                 case foreground_tag:
@@ -456,17 +440,17 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         }
 
         // (現在使われている設定値に対応するtag)に対応するspanを返す
-        // deprecated
-        TextSpan _used_span_in_tags(in TextPoint tp,TagType tt){
-            TextSpan itr;
-            foreach(span; _tag_pool.keys.sort)
-            {
-                if(span.is_hold(tp) && _tag_pool[span].is_set(tt)
-                        && itr < span)
-                    itr = span;
-            }
-            return itr;
-        }
+        // 
+        // TextSpan _used_span_in_tags(in TextPoint tp,TagType tt){
+        //     TextSpan itr;
+        //     foreach(span; _tag_pool.keys.sort)
+        //     {
+        //         if(span.is_hold(tp) && _tag_pool[span].is_set(tt)
+        //                 && itr < span)
+        //             itr = span;
+        //     }
+        //     return itr;
+        // }
 
         // lineが存在しないなら""を返す
         // これに依存、str(TextPoint,TextPoint)
@@ -576,18 +560,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
         void _set_end_point(){
             const line = _lines-1;
             _text_end = TextPoint(line,_line_length[line]);
-            debug(text)
-            {
-                Text calc_another;
-                auto line = _line_length.keys.sort[$-1];
-                auto pos = line_length(line);
-                if(pos)
-                    calc_another = TextPoint(line,pos-1);
-                else
-                    calc_another = TextPoint(line,0);
-
-                assert(_text_end == calc_another);
-            }
         }
         // 行終端\nが入るか、入力位置となっている場所で最下行に当たる場所
         TextPoint _end_point()const{
@@ -742,11 +714,8 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 }
             }
         }
-        /+
-            現在位置を始点にtagを設定する
-            現在のspanが開いていれば現在位置手前で閉じる
 
-        +/
+        // 現在位置を始点にtagを設定する.  現在のspanが開いていれば現在位置手前で閉じる
         void _set_tag(TagType tt,T)(in T val,ref T state_val){
             TextSpan ts;
             ts.set_start(_current);
@@ -915,58 +884,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             t1.append("56");
             t1.set_foreground(blue);
             t1.append("789");
-            // assert(t1._current == TextPoint(1,5));
-            // t1.move_caret(left);
-            // assert(t1._current == TextPoint(1,4));
-            // t1.move_caret(up);
-            // assert(t1._current == TextPoint(0,4));
-            // t1.move_caret(left);
-            // assert(t1._current == TextPoint(0,3));
-            // t1.deleteChar();
-            // assert(t1._current == TextPoint(0,3));
-            // assert(t1._line_length[0] == 5);
-            // t1.deleteChar();
-            // write("\n");
-            // assert(t1._line_length[0] == 4);
-            // assert(t1._current == TextPoint(0,3));
-            // writeln(t1.markup_string());
-            // t1.deleteChar();
-            // write("\n");
-            // writeln(t1.markup_string());
-            // assert(t1._line_length[0] == 4);
-            // assert(t1._current == TextPoint(0,3));
-            // t1.move_caret(left);
-            // t1.deleteChar();
-            // write("\n");
-            // writeln(t1.markup_string());
-            // writeln(t1._current);
-            // assert(t1._line_length[0] == 3);
-            // assert(t1._current == TextPoint(0,2));
-            // t1.move_caret(left);
-            // write("\n");
-            // t1.deleteChar();
-            // writeln(t1._current);
-            // writeln(t1.markup_string());
-            // t1.move_caret(right);
-            // writeln(t1._line_length[0]);
-            // assert(t1._line_length[0] == 1);
-            // assert(t1._current == TextPoint(0,1));
-            // t1.move_caret(right);
-            // assert(t1._current == TextPoint(0,1));
-            // t1.deleteChar();
-            // assert(t1._current == TextPoint(0,1));
-            // assert(t1._line_length[0] == 1);
-            // t1.insert(t1._current,'a');
-            // write("\n");
-            // writeln(t1._current);
-            // writeln(t1.markup_string());
-            // t1.insert(t1._current,'b');
-            // write("\n");
-            // writeln(t1._current);
-            // writeln(t1.markup_string());
-            // write("\n");
-            // writeln(t1._current);
-            // writeln(t1.markup_string());
         }
 
         unittest{
@@ -978,28 +895,29 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             assert(t1._caret == 10);
         }
 
-        // current.pos はこれから値が入る位置.既に入ってるわけではない
-        // だから_line_lengthはcurrent.posを含まず考慮する
-        // ただ、長さなのでcurrent.posと一致することになる
+        /+
+           current.pos はこれから値が入る位置.既に入ってるわけではない
+           だから_line_lengthはcurrent.posの位置を含まない
+           長さなのでcurrent.posと一致する
+        +/
 
-        // _line_lengthの伸ばす方向の変更は今のところここのみ
-        // Textに文字を入れる操作は最終的にここを通る
-        // byte数ここではもうとらない
         ulong append(in dchar c){
-            debug(text) writeln(_text_end);
-            debug(text) writeln(_current);
-    //         assert(_text_end == _current);
-    //         _writing[current_line][_current.pos] = c;
-    //         if(c != '\n')
-    //             ++_current.pos;
-    //         else // if(c == '\n')
-    //             line_feed();
-    //         const cp = current_pos;
-    //         _line_length[current_line] = cp;
-    //         _text_end = _current;
-    //         _caret += toUTF8([c]).length;
+            debug(text){
+                writeln(_text_end);
+                writeln(_current);
+            }
+            _writing[current_line][_current.pos] = c;
+            if(c != '\n')
+                ++_current.pos;
+            else // if(c == '\n')
+                line_feed();
+            const cp = current_pos;
+            _line_length[current_line] = cp;
+            _text_end = _current;
+            _caret += toUTF8([c]).length;
 
-            insert(c);
+            // insert(c);
+            assert(_text_end == _current);
             return _current.pos;
         }
         void insert(in TextPoint tp,in dchar c){
@@ -1021,20 +939,17 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 auto tag = _tag_pool[span];
                 _tag_pool.remove(span);
 
-                // if(!span.is_opened)
+                if(span.max >= tp && span.max.line == line && !span.is_opened)
                 {
-                    if(span.max >= tp && span.max.line == line && !span.is_opened)
-                    {
-                        with(span)
-                        set_end(TextPoint(max.line,min.pos+1));
-                    }
-                    if(span.min > tp && span.min.line == line)
-                    {
-                        with(span)
-                        set_start(TextPoint(min.line,min.pos+1));
-                    }
-
+                    with(span)
+                    set_end(TextPoint(max.line,min.pos+1));
                 }
+                if(span.min > tp && span.min.line == line)
+                {
+                    with(span)
+                    set_start(TextPoint(min.line,min.pos+1));
+                }
+
                 _tag_pool[span] = tag;
             }
             const line_len = _line_length[tp.line];
@@ -1043,8 +958,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 line_p = _writing[tp.line].dup;
             _writing[tp.line][tp.pos] = c;
 
-            // 増加方向へ文字位置をスライド
-            foreach(p; tp.pos+1 .. line_len +1)
+            foreach(p; tp.pos+1 .. line_len +1) // 増加方向へ文字位置をスライド
                 _writing[tp.line][p] = line_p[p-1];
             assert(_line_length[tp.line] == line_len);
             if(tp.line != _text_end.line)
@@ -1397,7 +1311,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 _text_end.pos = _line_length[upper_line];
             }
             return true;
-            // return false;
         }
         bool line_join(){
             return _line_join(_current.line);
@@ -1417,7 +1330,8 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             t1.append("abcde");
             debug(text) writeln(t1.line_length(1));
             debug(text) writeln(t1._current);
-            assert(t1.line_length(1) == 10);
+            writeln(t1.line_length(1));
+            assert(t1.line_length(1) == 5);
         }
         void set_foreground(in Color c){
             _set_tag!(foreground_tag,Color)(c,_current_foreground.value);
@@ -1479,8 +1393,6 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
             foreach(l; 0 .. _lines)
                 foreach(w; _writing[l].keys.sort)
                     result ~= _writing[l][w];
-                // result ~= _str(l);
-            // result ~= '\n';
             foreach(l; 0 .. _lines)
                 if(l in _line_length)
                     result ~= to!string(_line_length[l]) ~ '\n';
@@ -1491,8 +1403,7 @@ struct Text {   // TextBOX itemBOX で使われる文字列表現
                 if(!(span.is_set && span.has_no_span))
                 result ~= "<"~span.dat ~"*"~tag.dat() ~">";
             result ~= "\n";
-            // foreach(span; _opened_span)
-            //     result ~= to!string(span) ~ '\n';
+
             return result;
         }
 }
