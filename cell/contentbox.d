@@ -124,12 +124,9 @@ abstract class ContentBOX : CellContent {
             assert(cb.bottom_right == Cell(3,3));
             debug(cell) writeln("#### hold_tl unittest end ####");
         }
-        // これだけはoverrideさせないとTableに型情報残らない
-        bool require_create_in(in Cell c) {
-            if(is_registered())
-            {
+        bool require_create_in(in Cell c) { // これだけはoverrideさせないとTableに型情報残らない
+            if(is_registered()) 
                 remove_from_table();
-            }
             return _table.try_create_in(this,c);
         }
         bool require_move(in Cell c){
@@ -171,8 +168,7 @@ abstract class ContentBOX : CellContent {
         bool require_hold(in Cell c,in int h,in int w){
             const h_ = h-1;
             const w_ = w-1;
-            if(require_create_in(c))
-            {
+            if(require_create_in(c)) {
                 if(w_)
                     require_expand(right,w-1);
                 if(h_)
@@ -397,5 +393,4 @@ unittest{
     assert(cb.bottom_right == Cell(3,3));
     debug(cell) writeln("#### hold_tl unittest end ####");
 }
-
 

@@ -34,6 +34,7 @@ import pango.PgTabArray;
 import shape.shape;
 
 /+ memo
+
 PgLayout::indexToPos で矩形範囲をとれる
 PgLayout::xyToPos
 PgLayout::getCursorPos
@@ -55,9 +56,7 @@ PgLayout::getLineReadonly(int line) getLineより高速
 
 +/
 
-// 描くだけじゃなく描画域によってBOXを書き換えてしまう
-// IMがPixelに反映する領域を他の部分(描画部分以外)から知り得ないから、
-// 分離するのだとしてもここからたらい回しするほかないと思う
+// 描くだけじゃなく描画域によってBOXを書き換えてしまってる
 class RenderTextBOX : BoxRenderer{
 private: 
     alias int Line;
@@ -65,7 +64,6 @@ private:
     TextBOX _im_target; // IM使ってるであろうcurrentBOX 
     int _im_target_id;
 
-    // stored info to show table
     alias int BoxId;
     Rect[BoxId] _box_pos;
     PgLayout[BoxId] _layout;
@@ -88,10 +86,10 @@ private:
 
     // Rectを取得して入れてる.その取得元のx,yは_box_posを使って設定されてる
     // Rectで保持するとその依存関係がわかりにくくなりそう
-    // 根本的には、LayoutLineでPixelWidth取るのがめんどくさそうなの直せばいい
+    // 根本的には、LayoutLineでPixelWidth取るのがめんどくさそうなのをどうにかすれば分離できてよさそう
     int[BoxId][Line] _width;
     int[BoxId] _height;
-    // 一応保持しとく
+    // 一応保持してる
     Rect _caret_rect;
     PangoRectangle[Line] _logicRect;
     PangoRectangle _caretRect;
@@ -103,8 +101,7 @@ public:
     }
     alias renderT!(TextBOX) render;
     alias renderT!(CodeBOX) render;
-    void renderT(TB:TextBOX)(Context cr, TB box, bool fixed = false){
-        // get info and update class holded info
+    void renderT(TB:TextBOX)(Context cr, TB box, bool fixed = false){ // get info and update class held info
         immutable box_id = box.id();
         _gridSize = get_gridSize();
         _box_pos[box_id] = context_position(box); // gui.render_box::get_position
@@ -135,9 +132,7 @@ public:
         void _update_caret_rect(){
             if(!is_preediting) _im_pos = 0;
             assert(box_id == _im_target_id);
-            // _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
-            _layout[box_id].indexToPos(box.get_caret,&_caretRect);
-            writeln(_caretRect);
+            _layout[box_id].indexToPos(box.get_caret,&_caretRect); // _layout[box_id].getCursorPos(box.get_caret,&_caretRect,null);
             _caret_rect.set_by(_caretRect);
             _caret_rect.x /= 1024;
             _caret_rect.x += _box_pos[box_id].x;
@@ -147,8 +142,7 @@ public:
             if(_caret_rect.w == 0) // 挿入位置に何もまだ入ってない状態
                 _caret_rect.w = _gridSize/4;
         }
-        void render_preedit()
-        {   // 固定化されているBOXならここを通らなくていい
+        void render_preedit() {   // 固定化されているBOXならここを通らなくていい
             if(_im_target_id !in _width || _currentline !in _width[_im_target_id])   
                 _width[_im_target_id][_currentline] = 0;
 
@@ -165,16 +159,15 @@ public:
             _imc.setCursorLocation(im_rect);
 
             cr.set_color(box.current_foreground);
-            cr.moveTo(_caret_rect.x,// _box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
-                      _caret_rect.y);//_box_pos[_im_target_id].y + _currentline * _gridSize - _im_target.current_fontsize() - 5);
+            cr.moveTo(_caret_rect.x,  // _box_pos[_im_target_id].x + _width[_im_target_id][_currentline],
+                      _caret_rect.y); //_box_pos[_im_target_id].y + _currentline * _gridSize - _im_target.current_fontsize() - 5);
             PgCairo.updateLayout(cr,layout);
             PgCairo.showLayout(cr,layout);
-            // layout.getPixelExtents(null,&_caretRect);
 
             set_preeditting(false);
         }
-        void  modify_boxsize()
-        {   /+
+        void  modify_boxsize() {   
+            /+
               描画された領域のサイズでBOXを変形させる
               フォントの大きさを順守するため
               1Cell1Charモードならここは通るな通すな
@@ -190,8 +183,7 @@ public:
             +/
             if(box_id !in _width) return;
 
-            do
-            {
+            do {
                 const cells_snap = box.get_cells();
                 const box_width = _gridSize * box.numof_col();
                 debug(gui) writefln("box width %d",box_width);
@@ -202,15 +194,13 @@ public:
                 // 次のループではbox_widthの大きさは変わってる
                 if(calced_width > box_width)
                     box.require_expand(Direct.right); 
-                else
-                if(calced_width < box_width-_gridSize)
-                {
+                else if(calced_width < box_width-_gridSize) {
                     box.require_remove(Direct.right);
                 }
                 // 整形後と前が揺らがず一致したら終了
                 if(cells_snap == box.get_cells())
                     break;
-            }while(1);
+            } while(1);
         }
 
         _register_check(box);
@@ -220,23 +210,19 @@ public:
             return;
 
         string markup_str;
-        if(!fixed && is_preediting() && _im_target_id == box_id)
-        {
+        if(!fixed && is_preediting() && _im_target_id == box_id) {
             markup_str = box.markup_string(_preedit);
             render_preedit();
-        }
-        else
+        } else
             markup_str = box.markup_string("");
 
         debug(gui) writeln(markup_str);
-        if(markup_str)
-        {
+        if(markup_str) {
             const markup_len = cast(int)markup_str.length;
             PgAttribute.parseMarkup(markup_str,markup_len,0,_attrilst[box_id],_strings[box_id],null);
             _layout[box_id].setMarkup(markup_str,markup_len);
 
-            if(!fixed)
-            {    
+            if(!fixed) {    
                 _im_target_id = box.id;
                 _update_caret_rect();
                 _caret_rect.set_color(Color(lime,128));
@@ -246,8 +232,7 @@ public:
         const box_lines = box.numof_lines;
         const layout_lines = _layout[box_id].getLineCount();
 
-        for(int line; line < box_lines; ++line )
-        {
+        for(int line; line < box_lines; ++line ) {
             auto line_layout = _layout[box_id].getLineReadonly(line);
             int newIndex,newTraing;
 
@@ -278,14 +263,10 @@ public:
 
         set_preeditting(true);
     }
-    void retrieve_surrouding(IMContext imc){
-    }
+    void retrieve_surrouding(IMContext imc){ }
     Tuple!(string,int) get_surrounding(){
-        // _im_target.set_cursor_pos(_im_target.getText.caret().column);
-        // writeln("cursor_pos: ",_im_target.cursor_pos); 
         if(_im_target_id !in _strings)
             _strings[_im_target_id] = "";
         return tuple(_strings[_im_target_id],_im_target.cursor_pos);
     }
 }
- 

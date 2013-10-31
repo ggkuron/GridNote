@@ -15,8 +15,8 @@ interface Drawer{
         void stroke(Context);
         void stroke_p(Context);
         void clip(Context);
-        void set_width(Context); // indicate to format with default value, shape.width
-                                 // but not all shapes have width so keep it blank
+        void set_width(Context); // indicate to format with default value
+                                 // but not all shapes have the width, so that case nothing return 
         void set_width(in double w);
     private:
     final:

@@ -10,10 +10,6 @@ import util.array;
 import shape.shape;
 import shape.drawer;
 
-/+
-    Viewの大本インタフェース
-+/
-
 interface TableView{
         int get_gridSize()const;
         const(Rect) get_holdingArea()const;
@@ -21,17 +17,16 @@ interface TableView{
         double get_y(in Cell c)const;
         void set_msg(string);
     final:
-        // Cellの順ではなく、x(column方向),y(row方向)順なのに注意
+        // x:column方向,y:row方向順に入ってる。Cellとは逆。
         double[2] get_pos(in Cell c)const{
             return [get_x(c),get_y(c)]; 
         }
-        // double[2] get_window_pos(in Cell c)const;
         double[2] get_window_pos(in Cell c)const{
             auto holding_area = get_holdingArea;
             return [get_x(c)+holding_area.x,get_y(c)+holding_area.y]; 
         }
-        // Cellの座標と次のCellの座標、例えば入力Cell(5,5)に対してCell(5,5) とCell(6,6)の中間座標を返す
-        // Cellに対する割り算には切り捨て方向に働きCell(5,5)/2 == Cell(2,2)になる。
+        // 入力Cell(5,5)に対してCell(5,5)とCell(6,6)の中間位置を返す
+        // get_center_pos(Cell(5,5)/2) == Cell(2,2)
         double[2] get_center_pos(in Cell c)const{
             immutable gridSpace = get_gridSize;
             return [get_x(c) + gridSpace/2, get_y(c) + gridSpace/2]; 
@@ -97,12 +92,10 @@ interface TableView{
             perimeters.set_color(color);
             perimeters.set_width(grid_width);
 
-            foreach(c; cells)
-            {
+            foreach(c; cells) {
                 const ad_info = adjacent_info(cells,c);
-                foreach(dir; EnumMembers!Direct)
-                {
-                    if(!ad_info[dir]){ // 隣接してない方向の境界を書く
+                foreach(dir; EnumMembers!Direct) {
+                    if(!ad_info[dir]){ // 隣接してない方向の境界
                         perimeters.add_line(CellLine(c,dir,color,grid_width));
                     }
                 }
@@ -146,9 +139,7 @@ interface TableView{
         }
         void FillGrids(Context cr,in Cell[] cells,in Color color){
             foreach(c; cells)
-            {
                 FillCell(cr,c,color);
-            }
         }
         void FillBox(Context cr,in ContentBOX rb,in Color color){
             immutable top_left = rb.top_left();

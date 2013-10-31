@@ -40,11 +40,11 @@ debug(gui) import std.stdio;
 final class PageView : DrawingArea,TableView{
     private:
         GtkAllocation _holding; // この2つの表すのは同じもの
-        Rect _holding_area;  // 内部処理はこちらを使う
+        Rect _holding_area;  // 内部処理用
 
-        ManipTable _manip_table; // tableに対する操作: 操作に伴う状態を読み取り描画する必要がある
+        ManipTable _manip_table; // tableに対する操作: 
         BoxTable _table;    // 描画すべき対象: 
-        ReferTable _in_view;    // table にattachされた 表示領域
+        ReferTable _in_view;    // table の表示領域を切り取ったように振る舞う。
         Menu _menu;
 
         InputInterpreter _interpreter;
@@ -72,14 +72,11 @@ final class PageView : DrawingArea,TableView{
         bool _on_key_release(Event ev,Widget w){
             return cast(bool)_imm.filterKeypress(ev.key());
         }
-        bool _onButtonPress(Event event, Widget widget)
-        {
-            if(event.type == EventType.BUTTON_PRESS )
-            {
+        bool _onButtonPress(Event event, Widget widget) {
+            if(event.type == EventType.BUTTON_PRESS ) {
                 GdkEventButton* buttonEvent = event.button;
 
-                if(buttonEvent.button == 3)
-                {
+                if(buttonEvent.button == 3) {
                     _menu.showAll();
                     _menu.popup(buttonEvent.button, buttonEvent.time);
                     return true;
@@ -89,28 +86,25 @@ final class PageView : DrawingArea,TableView{
         }
         // IM起動時以外でも入力はここを通る
         void _when_commit(string str,IMContext imc){
-            if(_interpreter.is_enable_to_edit())
-            {
+            if(_interpreter.is_enable_to_edit()) {
                 _manip_table.commit_to_box(str);
                 queueDraw();
             }
         }
         void _when_preedit_changed(IMContext imc){
-            if(_interpreter.is_enable_to_edit())
-            {
+            if(_interpreter.is_enable_to_edit()) {
                 auto inputted_box = _manip_table.targetbox;
                 assert(inputted_box !is null);
                 _render_text.prepare_preedit(_imm,inputted_box);
-                // レイアウトのことは投げる
-                // IMContextごと
-                queueDraw();
-                // Preeditを描かせるため必要
+                // レイアウト処理は_render_textに任せる
+                queueDraw(); // Preeditを描かせるため必要
             }
         }
         // ascii mode に切り替わったことを期待してみるようなところ(IMの実装依存)
         void _when_preedit_end(IMContext imc){
-            if(_interpreter.state == InputState.Edit)
-            {}
+            if(_interpreter.state == InputState.Edit) {
+                // Nothing
+            }
         }
         void _when_preedit_start(IMContext imc){
             _when_preedit_changed(imc);
@@ -120,12 +114,10 @@ final class PageView : DrawingArea,TableView{
             imc.setSurrounding(surround[0],surround[1]);
             return true;
         }
-        import std.stdio;
         bool _focus_in(Event ev,Widget w){
             _interpreter.im_focusIn();
             return true;
         }
-        // private bool _last_im_state;
         bool _focus_out(Event ev,Widget w){
             if(!_interpreter.is_using_im)
                 _interpreter.im_focusOut();
@@ -142,11 +134,11 @@ final class PageView : DrawingArea,TableView{
         }
         void _set_holding_area()
             in{
-            assert(_holding_area);
+                assert(_holding_area);
             }
             out{
-            assert(_holding_area.w > 0);
-            assert(_holding_area.h > 0);
+                assert(_holding_area.w > 0);
+                assert(_holding_area.h > 0);
             }
         body{
             getAllocation(_holding);
@@ -166,41 +158,30 @@ final class PageView : DrawingArea,TableView{
             if(manip_t)
                 _render_text.stroke(cr,manip_t,_manip_box_color,_manipLineWidth);
 
-            foreach(tb; _in_view.get_textBoxes())
-            {
-                if(_show_contents_border)
-                {
+            foreach(tb; _in_view.get_textBoxes()) {
+                if(_show_contents_border) {
                     _render_text.fill(cr,tb,tb.box_color);
                     _render_text.stroke(cr,tb,Color(gold,128),1);
                 }
-                // if(manip_t) //  今の実装だと、描画前に舐めてるからmanip_tには何かしら入ってるというだけ
-                _render(cr,tb,(!manip_t || (manip_t.id != tb.id)));
+                if(manip_t) //  描画前にmanip_tにnull な場合がある（切り替え時とか、exposeされた段階でコールバックされるだろう）
+                    _render(cr,tb,(!manip_t || (manip_t.id != tb.id)));
             }
-            foreach(cb; _in_view.get_codeBoxes())
-            {
-                if(_show_contents_border)
-                {
+            foreach(cb; _in_view.get_codeBoxes()) {
+                if(_show_contents_border) {
                     _render_text.fill(cr,cb,cb.box_color);
                     _render_text.stroke(cr,cb,Color(gold,128),1);
                 }
                 _render(cr,cb,(!manip_t || (manip_t.id != cb.id)));
             }
-
-            foreach(ib; _in_view.get_imageBoxes())
-            {
-                if(_show_contents_border)
-                {
+            foreach(ib; _in_view.get_imageBoxes()) {
+                if(_show_contents_border) 
                     _render_text.stroke(cr,ib,Color(gold,128),1);
-                }
                 ib.fill(cr);
             }
 
         }
         // renderするだけじゃなく描画域によってCellのサイズを修正する
-        // Pangoしか知り得ないことを迂回して教えるよりはいいかと
-        //      迂回してでも責任の分離はしておくべきやも
-        // BoxSizeの修正くらいならいいだろう
-                // BoxSize修正のためのInterfaceをCMDに晒したほうがいい
+        // Pangoが持っている描画時の情報を使うため。
         void _render(Context cr,TextBOX b,bool fixed = false){
             _render_text.render(cr,b,fixed);
         }
@@ -213,19 +194,17 @@ final class PageView : DrawingArea,TableView{
             _renderTable(cr);
             _renderSelection(cr);
             _renderFocus(cr);
-            cr.resetClip(); // end of rendering
+            cr.resetClip(); 
             return true;
         }
         void _setGrid(){
             Line[] lines;
-            for(double y = 0; y < _holding_area.h; y += _gridSpace)
-            {
+            for(double y = 0; y < _holding_area.h; y += _gridSpace) {
                 auto start = new Point(0,y);
                 auto end = new Point(_holding_area.w,y);
                 lines ~= new Line(start,end,_grid_width);
             }
-            for(double x = 0; x < _holding_area.w; x += _gridSpace)
-            {
+            for(double x = 0; x < _holding_area.w; x += _gridSpace) {
                 auto start = new Point(x,0);
                 auto end = new Point(x, _holding_area.h);
                 lines ~= new Line(start,end,_grid_width);
@@ -241,7 +220,7 @@ final class PageView : DrawingArea,TableView{
         void _renderFocus(Context cr){
             // 現在は境界色を変えてるだけだけど
             // 考えられる他の可能性のために
-            // e.g. cell内部色を変えるとか（透過させるとか
+            // e.g. cell内部色を変えるとか,透過させるとか
             final switch(_manip_table.mode)
             {
                 case FocusMode.normal:
@@ -253,7 +232,6 @@ final class PageView : DrawingArea,TableView{
                 case FocusMode.edit:
                     // FillCell(cr,_manip_table.select.focus,_selected_focus_color); 
                     // Text編集中,IMに任せるため
-                    // editモード細分化する?
                     break;
                 case FocusMode.point:
                     PointCell(cr,_manip_table.select.focus,green);
@@ -272,7 +250,7 @@ final class PageView : DrawingArea,TableView{
             _setGrid();
             _table.set_gridsize(_gridSpace);
         }
-        // ConfigFileから読むようにしたい
+        // TODO ConfigFileから読むようにしたい
         void _init_color_select(){
             _manip_table.select_color(Color(48,48,48));
             _guide_view.add_color(dimgray);
@@ -337,7 +315,6 @@ final class PageView : DrawingArea,TableView{
             _imm.addOnPreeditChanged(&_when_preedit_changed);
             _imm.addOnPreeditStart(&_when_preedit_start);
             _imm.addOnPreeditEnd(&_when_preedit_end);
-            // _imm.addOnRetrieveSurrounding(&_when_retrieve_surrounding);
 
             _menu.append( new ImageMenuItem(StockID.CUT, cast(AccelGroup)null) );
             _menu.append( new ImageMenuItem(StockID.COPY, cast(AccelGroup)null) );
@@ -373,7 +350,6 @@ final class PageView : DrawingArea,TableView{
         double get_x(in Cell c)const{ return (c.column - _in_view.offset.column) * _gridSpace ; }
         double get_y(in Cell c)const{ return (c.row - _in_view.offset.row) * _gridSpace ; }
 
-       // アクセサ
         ReferTable get_view(){
             return _in_view;
         }
@@ -400,4 +376,3 @@ final class PageView : DrawingArea,TableView{
             _guide_view.set_msg(msg);
         }
 }
-

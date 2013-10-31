@@ -119,19 +119,18 @@ struct TextSpan{
             assert(0);
         }
         int opCmp(in TextSpan rhs)const{
-            if(_min < rhs._min)
-            {
+            if(_min < rhs._min) {
                 if(_max < rhs._max
                         || rhs._max == invalid)
                     return -1;
                 else 
                     return 0;
-            }else if(_min > rhs._min) {
+            } else if(_min > rhs._min) {
                 if(_max > rhs._max)
                     return 1;
                 else
                     return 0;
-            }else
+            } else
                 return 0;
         }
         unittest{
@@ -238,8 +237,7 @@ struct Text {   // TextBOX itemBOX で使われる
             const lines = to!int(chomp(dat[0]));
             int ln;
             debug(text) writeln("l:",_lines);
-            foreach(l; 0 .. lines)
-            {
+            foreach(l; 0 .. lines) {
                 debug(text) writeln(dat[4+l]);
 
                 auto line_str = dat[4+l];
@@ -251,11 +249,9 @@ struct Text {   // TextBOX itemBOX で使われる
                 debug(text) writeln("per line length:",dat[l+lines+5]);
                 _line_length[l+lines] = to!int(chomp(dat[l+lines+5]));
 
-                if(!hi.empty)
-                {
+                if(!hi.empty) {
                     _highlight = hi;
-                    foreach(h; _highlight)
-                    {
+                    foreach(h; _highlight) {
                         foreach(word; h[0])
                         line_str = replace(line_str,regex(word,"g"),h[1].tagging("$&"));
                     }
@@ -267,12 +263,10 @@ struct Text {   // TextBOX itemBOX で使われる
             _caret = to!int(chomp(dat[4+_lines*2])); 
 
             auto tag_line = chomp(dat[4+_lines*2+1]);
-            if(!tag_line.empty && tag_line != "\n")
-            {
+            if(!tag_line.empty && tag_line != "\n") {
                 tag_line = tag_line[1 .. $-1];
                 auto pairs = split(tag_line,"><");
-                foreach(one_pair; pairs)
-                {   // spanとtagは既に一対にまとめられている。同じSpanならSpanTagひとつで表現される。
+                foreach(one_pair; pairs) {   // spanとtagは既に一対にまとめられている。同じSpanならSpanTagひとつで表現される。
                     auto elems = split(one_pair,"*");
                     auto span = TextSpan(elems[0]);
                     auto tag = SpanTag(elems[1]);
@@ -332,8 +326,7 @@ struct Text {   // TextBOX itemBOX で使われる
             const line_len = _line_length[line];
             const fp = _forward_point(_current);
 
-            if(_is_line_end(_current) && _next_line_exist(_current.line)) 
-            {   // 右端では下の行との結合
+            if(_is_line_end(_current) && _next_line_exist(_current.line)) {   // 右端では下の行との結合
                 const result = _line_join(_current.line+1);
                 _current.line = line;
                 _set_end_point();
@@ -341,22 +334,18 @@ struct Text {   // TextBOX itemBOX で使われる
                 return result;
             }
           
-            foreach(p; _current.pos .. line_len-1)
-            {   // 現在行の要素をずらす
+            foreach(p; _current.pos .. line_len-1) {   // 現在行の要素をずらす
                 _writing[line][p] = _writing[line][p+1];
             }
 
             --_line_length[line];
-            if(line_len in _writing[line]) 
-            {
+            if(line_len in _writing[line]) {
                // 行終端の\nの移動と削除。'\n'は最終行では入っていない。
                 _writing[line][line_len-1] = _writing[line][line_len];
                 writefln("%d",_writing[line][line_len]);
                 assert(_writing[line][line_len] == '\n');
                 _writing[line].remove(line_len);
-            }
-            else
-            {   // ずらしたことに依る重複文字の削除
+            } else {   // ずらしたことに依る重複文字の削除
                 enforce(_writing[line].remove(line_len-1));
             }
 
@@ -365,17 +354,12 @@ struct Text {   // TextBOX itemBOX で使われる
             if(_text_end.line == _current.line && _text_end < _current)
                 _current = _text_end; // currentが終端を超えていた場合、
 
-            if(!_line_length[line])
-            {   // 行がもはやなければ上行と結合
-                if(_lines != 1) 
-                {
-                    if(_line_join(line+1)) // 同一行に_currentがあれば--_current.line
-                    {
+            if(!_line_length[line]) {   // 行がもはやなければ上行と結合
+                if(_lines != 1) {
+                    if(_line_join(line+1)) { // 同一行に_currentがあれば--_current.line
                         _current = _line_head(line);
                         _set_caret();
-                    }
-                    else if(line == 0)
-                    {   // 0行目がなくなったときは下からスライド
+                    } else if(line == 0) {   // 0行目がなくなったときは下からスライド
                         foreach(l; 1 .. _lines)
                         {
                             _writing[l-1] = _writing[l];
@@ -401,17 +385,15 @@ struct Text {   // TextBOX itemBOX で使われる
             _writing[current_line].remove(pos);
         }
         TextPoint _backward_pos(in TextPoint tp){
-            if(!tp.pos)
-            {
-                if(tp.line)
-                {
+            if(!tp.pos) {
+                if(tp.line) {
                     auto above_line = tp.line-1;
                     debug(text) writeln(above_line);
                     debug(text) writeln(_writing);
                     return TextPoint(above_line,_writing[above_line].keys.sort[$-1]);
-                }else
+                } else
                     return TextPoint(0,0);
-            }else 
+            } else 
                 return TextPoint(tp.line,tp.pos-1);
         }
         TextPoint _backward_pos(){
@@ -439,39 +421,22 @@ struct Text {   // TextBOX itemBOX で使われる
             }
         }
 
-        // (現在使われている設定値に対応するtag)に対応するspanを返す
-        // 
-        // TextSpan _used_span_in_tags(in TextPoint tp,TagType tt){
-        //     TextSpan itr;
-        //     foreach(span; _tag_pool.keys.sort)
-        //     {
-        //         if(span.is_hold(tp) && _tag_pool[span].is_set(tt)
-        //                 && itr < span)
-        //             itr = span;
-        //     }
-        //     return itr;
-        // }
-
         // lineが存在しないなら""を返す
-        // これに依存、str(TextPoint,TextPoint)
+        // これに依存,str(TextPoint,TextPoint)は依存する
         @property string _str(in int line,string pre_in = ""){
-            // if(!line_empty(line))
 
             if(line == _current.line 
-                    || (line !in _stored_line && line_length(line) >= 1))
-            {
+                    || (line !in _stored_line && line_length(line) >= 1)) {
                 string s;   
                 debug(text) writeln(_writing);
-                foreach(i; _writing[line].keys.sort())
-                {
+                foreach(i; _writing[line].keys.sort()) {
                     if(_current == TextPoint(line,i))
                         s ~= pre_in;
                     s ~= _writing[line][i];
                 }
                 if(s.length)
                 s =  SimpleXML.escapeText(s,s.length);
-                foreach(h; _highlight)
-                {
+                foreach(h; _highlight) {
                     foreach(word; h[0])
                     s = replace(s,regex(word,"g"),h[1].tagging("$&"));
                 }
@@ -486,8 +451,7 @@ struct Text {   // TextBOX itemBOX で使われる
                 return "";
         }   
         dchar _get_char(in TextPoint tp)const{
-            if(tp.line !in _writing || tp.pos !in _writing[tp.line])
-            {
+            if(tp.line !in _writing || tp.pos !in _writing[tp.line]) {
                 debug(text) writeln(tp);
                 debug(text) writeln(_writing);
                 debug(text) writeln(tp.line !in _writing);
@@ -498,8 +462,7 @@ struct Text {   // TextBOX itemBOX で使われる
         }
         @property string _plane_string(string default_out=""){
             string result;
-            foreach(l; 0 .. _lines)
-            {
+            foreach(l; 0 .. _lines) {
                 const str = _str(l,default_out);
                 result ~= str;
             }
@@ -509,31 +472,27 @@ struct Text {   // TextBOX itemBOX で使われる
             return (tp.line in _writing)
                 && (tp.pos in _writing[tp.line]);
         }
-        // endを含む
+        // endを含んで返す
         string _ranged_str(in TextPoint start,in TextPoint end){
-            if(!_is_valid_pos(start) || !_is_valid_pos(end))
-            {
+            if(!_is_valid_pos(start) || !_is_valid_pos(end)) {
                 debug(text) writeln("start pos ",start);
                 debug(text) writeln("end pos ",end);
                 throw new Exception("not in range"); 
             }
             assert(end.pos != -1);
             auto start_line = _writing[start.line];
-            if(start.line == end.line)
-            {
+            if(start.line == end.line) {
                 if(start.pos == end.pos)
                     return [_str(start.line)[start.pos]];
 
                 dstring result;
-                foreach(i; start.pos .. end.pos+1)
-                {
+                foreach(i; start.pos .. end.pos+1) {
                     result ~= _writing[start.line][i];
                 }
                 return toUTF8(result);
             }
             auto result = _writing[start.line].values;
-            foreach(l; start.line+1 .. end.line)
-            {   // 間に空行が存在してもstrが""返してくれるのを期待してる
+            foreach(l; start.line+1 .. end.line) {   // 間に空行が存在してもstrが""返してくれるのを期待してる
                 result ~= _writing[l].values;
             }
             foreach(i; 0 .. end.pos+1)
@@ -570,8 +529,7 @@ struct Text {   // TextBOX itemBOX で使われる
             if(endp.pos == 0)
                 if(endp.line == 0)
                     return TextPoint(0,0);
-                else
-                {
+                else {
                     auto l = endp.line -1;
                     auto p = _line_length[l] -1;
                     return TextPoint(l,p);
@@ -604,8 +562,7 @@ struct Text {   // TextBOX itemBOX で使われる
         void _move_to_next_head(){
             if(!_next_line_exist(_current.line))
                 line_feed();
-            else 
-            {
+            else {
                 ++_current.line;
                 _current.pos = 0;
             }
@@ -615,15 +572,12 @@ struct Text {   // TextBOX itemBOX で使われる
         }
         TextPoint _forward_point(in TextPoint tp = _current)const{
             TextPoint p = tp;
-            if(_is_line_end(p))
-            {
+            if(_is_line_end(p)) {
                 if(_next_line_exist(p.line)) 
                     return _line_head(p.line+1);
                 else
                     return _line_end(p.line);
-            }
-            else
-            {
+            } else {
                 ++p.pos;
                 debug(text) writeln(p.line);
                 debug(text) writeln(_line_length);
@@ -655,15 +609,12 @@ struct Text {   // TextBOX itemBOX で使われる
 
         TextPoint _backward_point(in TextPoint tp)const{
             TextPoint result = tp;
-            if(_is_line_head(result))
-            {
+            if(_is_line_head(result)) {
                 if(_above_line_exist(result.line))
                     return _line_head(result.line);
                 else
                     return TextPoint(0,0);
-            }
-            else
-            {
+            } else {
                 --result.pos;
                 assert(result.pos >= 0);
                 return result;
@@ -703,10 +654,8 @@ struct Text {   // TextBOX itemBOX で使われる
             }
         }
         void _cut_tagpool(in TextPoint end){
-            foreach(span; _tag_pool.keys)
-            {
-                if(span.is_set && span.max < end)
-                {
+            foreach(span; _tag_pool.keys) {
+                if(span.is_set && span.max < end) {
                     auto tag = _tag_pool[span];
                     _tag_pool.remove(span);
                     span.re_open();
@@ -739,39 +688,31 @@ struct Text {   // TextBOX itemBOX で使われる
             int opened_cnt;
             
             foreach(line,char_arry; _writing)
-            foreach(pos,dc; char_arry)
-            {
+            foreach(pos,dc; char_arry) {
                 auto tp = TextPoint(line,pos);
                 auto bp = _backward_point(tp);
                 auto fp = _forward_point(tp);
-                foreach(span; _tag_pool.keys)
-                {   
-                    if(span.is_set && span.max == tp)
-                    {   // tag打ち後に文字を入れるので
+                foreach(span; _tag_pool.keys) {   
+                    if(span.is_set && span.max == tp) {   // tag打ち後に文字を入れるので
                         tag_pos[fp] ~= _tag_pool[span].end_tag();
                     }
-                    if(span.min == fp)
-                    {
+                    if(span.min == fp) {
                         auto tag = _tag_pool[span].start_tag();
                         tag_pos[fp] ~= tag;
                     }
                 }
             }
-            foreach(span; _tag_pool.keys)
-            {   // "</span>" for opened span
+            foreach(span; _tag_pool.keys) {   // "</span>" for opened span
                 if(span.is_opened)
                     ++opened_cnt;
             }
             if(opened_cnt < 0) 
                 opened_cnt = 0;
             string result;
-            foreach(line; _writing.keys.sort)
-            {
-                foreach(pos; _writing[line].keys.sort())
-                {
+            foreach(line; _writing.keys.sort) {
+                foreach(pos; _writing[line].keys.sort()) {
                     auto tp = TextPoint(line,pos);
-                    if(tp in tag_pos)
-                    {
+                    if(tp in tag_pos) {
                         foreach(tag; tag_pos[tp].sort)
                             result ~= tag;
                     }
@@ -780,7 +721,6 @@ struct Text {   // TextBOX itemBOX で使われる
                     // 一文字ずつエスケープしてる効率は
                     string one_char = [cast(char)(_writing[line][pos])];
                     // 二重にエスケープしてしまわないようにはじければいらない
-                    // どっちの処理が軽いか知らない
                     if(one_char == "&" || one_char == "<" || one_char == ">")
                         result ~= SimpleXML.escapeText(one_char,one_char.length);
                     else
@@ -802,8 +742,7 @@ struct Text {   // TextBOX itemBOX で使われる
             const back_pos = _backward_pos(_current);
             final switch(dir){
                 case right:
-                    if(_is_line_end(_current))
-                    {
+                    if(_is_line_end(_current)) {
                         if(!_next_line_exist(current_line))
                             return false;
                         _current = _forward_point(_current);
@@ -815,8 +754,7 @@ struct Text {   // TextBOX itemBOX で使われる
                         return false;
                     break;
                 case left:
-                    if(_is_line_head(_current) && _current.line != 0)
-                    {
+                    if(_is_line_head(_current) && _current.line != 0) {
                         --_current.line;
                         _current.pos = _line_length[_current.line];
                         break;
@@ -829,8 +767,7 @@ struct Text {   // TextBOX itemBOX で使われる
                 case up:
                     if(current_line == 0)
                         return false;
-                    else 
-                    {
+                    else {
                         --_current.line;
                         const lens = line_length(current_line);
                         if(current_pos > lens)
@@ -840,8 +777,7 @@ struct Text {   // TextBOX itemBOX で使われる
                 case down:
                     if(!_next_line_exist(current_line))
                         return false;
-                    else
-                    {
+                    else {
                         ++_current.line;
                         const lens = line_length(current_line);
                         if(current_pos > lens)
@@ -858,8 +794,7 @@ struct Text {   // TextBOX itemBOX で使われる
             if(_current > _text_end)
                 _text_end = _current;
 
-            if(_current == TextPoint(0,0))
-            {
+            if(_current == TextPoint(0,0)) {
                 _caret = 0;
                 return;
             }
@@ -868,8 +803,8 @@ struct Text {   // TextBOX itemBOX で使われる
             _caret = cast(int)str.length;
         }
         void set_highlight(string[] word, SpanTag tag)
-        out{
-            assert(!_highlight.empty);
+            out{
+                assert(!_highlight.empty);
             }
         body{
             _highlight ~= tuple(word,tag);
@@ -909,29 +844,25 @@ struct Text {   // TextBOX itemBOX で使われる
             _writing[current_line][_current.pos] = c;
             if(c != '\n')
                 ++_current.pos;
-            else // if(c == '\n')
+            else // if (c == '\n')
                 line_feed();
             const cp = current_pos;
             _line_length[current_line] = cp;
             _text_end = _current;
             _caret += toUTF8([c]).length;
 
-            // insert(c);
             assert(_text_end == _current);
             return _current.pos;
         }
         void insert(in TextPoint tp,in dchar c){
-            if(!_is_valid_pos(tp))
-            {
-                if(!_is_line_end(tp))
-                {
+            if(!_is_valid_pos(tp)) {
+                if(!_is_line_end(tp)) {
                     debug(text) writeln("invalid point:",tp);
                     assert(0);
                 }
             }
             const line = tp.line;
-            foreach(span; _tag_pool.keys)
-            {
+            foreach(span; _tag_pool.keys) {
                 debug(text) writeln("");
                 debug(text) writeln(span);
                 debug(text) writeln(tp);
@@ -939,13 +870,11 @@ struct Text {   // TextBOX itemBOX で使われる
                 auto tag = _tag_pool[span];
                 _tag_pool.remove(span);
 
-                if(span.max >= tp && span.max.line == line && !span.is_opened)
-                {
+                if(span.max >= tp && span.max.line == line && !span.is_opened) {
                     with(span)
                     set_end(TextPoint(max.line,min.pos+1));
                 }
-                if(span.min > tp && span.min.line == line)
-                {
+                if(span.min > tp && span.min.line == line) {
                     with(span)
                     set_start(TextPoint(min.line,min.pos+1));
                 }
@@ -961,14 +890,12 @@ struct Text {   // TextBOX itemBOX で使われる
             foreach(p; tp.pos+1 .. line_len +1) // 増加方向へ文字位置をスライド
                 _writing[tp.line][p] = line_p[p-1];
             assert(_line_length[tp.line] == line_len);
-            if(tp.line != _text_end.line)
-            {   // 最終行以外は'\n'で終端
+            if(tp.line != _text_end.line) {   // 最終行以外は'\n'で終端
                 _writing[tp.line][line_len+1] = '\n';
             }
 
             ++_line_length[tp.line];
-            if(tp.line == _text_end.line)
-            {
+            if(tp.line == _text_end.line) {
                 ++_text_end.pos;
             }
             debug(text) writeln(_writing);
@@ -1001,9 +928,7 @@ struct Text {   // TextBOX itemBOX で使われる
         void append(string s){
             // caret_move_forward(s.length);
             foreach(dchar c; s)
-            {
                 append(c);
-            }
         }
         @property bool empty()const{
             return (_writing.keys.empty())
@@ -1025,8 +950,7 @@ struct Text {   // TextBOX itemBOX で使われる
         void _devide_line(in TextPoint tp){
             _head.clear();
             _tail.clear();
-            foreach(n; _writing[tp.line].keys.sort)
-            {
+            foreach(n; _writing[tp.line].keys.sort) {
                 if(n < tp.pos)
                     _head ~= _writing[tp.line][n];
                 else
@@ -1043,22 +967,20 @@ struct Text {   // TextBOX itemBOX で使われる
             assert(t1._tail == "345");
         }
 
-        // 行始でfalse 
+        // 行始ならfalse 
         bool backspace(){
             if(empty) return false;
             const bp = _backward_pos(_current);
             const line_len = _line_length[_current.line];
 
-            foreach(span; _tag_pool.keys)
-            {
+            foreach(span; _tag_pool.keys) {
                 const snap = span;
 
                 if(span.max == bp && span.min == bp
                 || span.min == bp && span.is_opened)
                     _tag_pool.remove(snap);
                     // span.set_end(_backward_pos(bp));
-                else
-                {
+                else {
                     if(span.max == bp)
                         span.set_end(_backward_pos(bp));
                     if(span.min == bp)
@@ -1066,13 +988,11 @@ struct Text {   // TextBOX itemBOX で使われる
                 }
             }
 
-            if(current_pos)
-            {
+            if(current_pos) {
                 // _move_back_tag!(true)(bp);
                 foreach(p; _current.pos .. line_len-1)
                     _writing[_current.line][p] = _writing[_current.line][p+1];
-                if(line_len in _writing[_current.line]) // maybe in '\n'
-                {   // 行終端の\nは入ってないかも知れない
+                if(line_len in _writing[_current.line]) {   // 行終端の\nは入ってないかも知れない
                     // あれば、それもスライドして保存する
                     _writing[_current.line][line_len-1] = _writing[_current.line][line_len];
                     debug(text) writeln(_writing[current_line][line_len]);
@@ -1080,8 +1000,7 @@ struct Text {   // TextBOX itemBOX で使われる
                     _writing[current_line].remove(line_len);
                     --_line_length[current_line];
                 }
-                else
-                {
+                else {
                     --_line_length[current_line];
                     enforce(_writing[current_line].remove(line_len-1));
                 }
@@ -1091,15 +1010,11 @@ struct Text {   // TextBOX itemBOX で使われる
                 _set_end_point();
 
                 return true;
-            }
-            else if(_current.line)
-            {
+            } else if(_current.line) {
                 const upper_len = _line_length[_current.line-1];
-                if(_line_length[_current.line] == 0)
-                {
+                if(_line_length[_current.line] == 0) {
                     enforce(_line_join(current_line)); // _currentは操作されて上の行に移動する
-                }
-                else
+                } else
                     --_current.line;
                 // なので、move_caretは使わない
                 _current.pos = upper_len;
@@ -1110,8 +1025,7 @@ struct Text {   // TextBOX itemBOX で使われる
                 _set_caret();
                 _set_end_point();
                 return false;
-            }
-            else 
+            } else 
                 return false;
         }
         unittest{
@@ -1196,21 +1110,16 @@ struct Text {   // TextBOX itemBOX で使われる
             dchar[] line_tail;
             const line = _current.line;
             const line_len = _line_length[line];
-            if(current_line in _writing)
-            {
-                if(!_is_line_end(_current)) 
-                {
-                    foreach(p; current_pos .. line_len)
-                    {
+            if(current_line in _writing) {
+                if(!_is_line_end(_current)) {
+                    foreach(p; current_pos .. line_len) {
                         line_tail ~= _writing[line][p];
                         _writing[line].remove(p);
                     }
                     _writing[line].remove(line_len); // 改行文字があれば
                 }
                 _writing[line][current_pos] = '\n';
-            }
-            else 
-            {   // 
+            } else {   // 
                 _writing[line][0] = '\n';
             }
 
@@ -1223,8 +1132,7 @@ struct Text {   // TextBOX itemBOX で使われる
             _line_length[line] = _current.pos;
             const next_line_len = cast(int)line_tail.length;
             _current.pos = 0;
-            foreach(l; next_line .. _lines)
-            {
+            foreach(l; next_line .. _lines) {
                 _writing.remove(l+1);
                 _writing[l+1] = _writing[l].dup;
                 _line_length[l+1] = _line_length[l];
@@ -1234,26 +1142,23 @@ struct Text {   // TextBOX itemBOX で使われる
             foreach(int i,dc; line_tail)
                 _writing[next_line][i] = dc;
             _line_length[next_line] = next_line_len;
-            if(next_line != _lines)
-            {
+
+            if(next_line != _lines) {
                 _writing[next_line][next_line_len] = '\n';
             }
 
             if(line in _stored_line)
                 _stored_line[line].clear;
-            foreach(i; _writing[line].keys.sort())
-            {   // 改行行の_stored_lineを更新する
+            foreach(i; _writing[line].keys.sort()) {   // 改行行の_stored_lineを更新する
                 _stored_line[line] ~= _writing[line][i];
             }
             auto line_str = _stored_line[line];
             _stored_line[line] = SimpleXML.escapeText(line_str,line_str.length);
             line_str = _stored_line[line];
-            foreach(h; _highlight)
-            {
+            foreach(h; _highlight) {
                 foreach(word; h[0])
                     _stored_line[line] = replace(_stored_line[line],regex(word,"g"),h[1].tagging("$&"));
             }
-
 
             ++_lines;
             _set_end_point();
@@ -1279,10 +1184,9 @@ struct Text {   // TextBOX itemBOX で使われる
 
         // 指定行を上の行と結合.指定行より下の行は繰り上がり
         // 同一行に_currentがあれば移動させる
-        // 結合したらtrue
+        // 結合したらtrue、それ以外false
         private bool _line_join(in int line){
-            // 0行目では結合できない
-            if(line == 0 || line >= _lines) 
+            if(line == 0 || line >= _lines) // 0行目では結合できない
                 return false;
      
             immutable cl = _str(line);
@@ -1361,7 +1265,6 @@ struct Text {   // TextBOX itemBOX で使われる
             assert(t1.markup_string() == "012345");
             t1.markup_string();
         }
-        // アクセサ
         @property int current_line()const{
             return _current.line;
         }
@@ -1389,7 +1292,7 @@ struct Text {   // TextBOX itemBOX で使われる
             result ~= to!string(_color_is_set) ~ '\n';
             result ~= to!string(_current) ~ '\n';
             result ~= to!string(_text_end) ~ '\n';
-            _writing[_text_end.line][_text_end.pos] = '\n'; // !!!currentが行終端い
+            _writing[_text_end.line][_text_end.pos] = '\n'; // currentが行終端
             foreach(l; 0 .. _lines)
                 foreach(w; _writing[l].keys.sort)
                     result ~= _writing[l][w];

@@ -24,7 +24,7 @@ import pango.PgFontDescription;
 import pango.PgAttribute;
 import pango.PgAttributeList;
 
-// Text自体をTableに取り付けるためにBOX領域を管理する
+// TextをTableに取り付けるためのBOX領域を管理する
 class TextBOX : ContentBOX{  
     private:
         string _box_fontfamly = "Sans";
@@ -66,14 +66,6 @@ class TextBOX : ContentBOX{
         this(BoxTable table,in Cell tl,in int w,in int h){
             super(table,tl,w,h);
         }
-        // this(BoxTable table,TextBOX tb){
-        //     super(table,tb);
-        //     _text = tb._text;
-        //     _box_foreground = tb._box_foreground;
-        // }
-        // this(BoxTable table,string markup){
-        //     super(table);
-        // }
         this(BoxTable table,string[] dat,Tuple!(string[],SpanTag)[] hi=[]){
             super(table);
             dat[0] = dat[0][6 .. $-1];
@@ -295,7 +287,6 @@ class CodeBOX : TextBOX{
             ContentBOX.set_color(back_color);
         }        
         override void set_color(in Color c){}
-        // alias TextBOX.set_color set_color;
         override bool require_create_in(in Cell c){
             auto result = _table.try_create_in!(CodeBOX)(this,c);
             test_highlight();

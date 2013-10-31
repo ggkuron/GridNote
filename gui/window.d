@@ -22,11 +22,10 @@ immutable int start_size_w = 480;
 immutable int start_size_h = 480;
 immutable double max_guide_area_percentage = 0.2;
 
-class Window : MainWindow{
+class Window : MainWindow {
     private:
         int width = start_size_w;
         int height = start_size_h;
-
     public:
         this(){
             super(appname);
@@ -40,10 +39,8 @@ class Window : MainWindow{
             box.packStart(page_view,1,1,0);
             guide_view.setSizeRequest(100,-1);
             page_view.setSizeRequest(start_size_w,-1);
-            // setOpacity(0.5);
 
             add(box);
-            // add(page_view);
 
             box.showAll();
             showAll();
@@ -54,10 +51,10 @@ class Window : MainWindow{
         void toggle_opacity(){
             static bool swt;
             swt = !swt;
+
             if(swt)
-            {
                 setOpacity(0.5);
-            }else
+            else
                 setOpacity(1);
         }
 }

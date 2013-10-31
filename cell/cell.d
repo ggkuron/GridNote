@@ -121,7 +121,6 @@ pure Cell if_moved(in Cell c,in Direct dir,int width=1){
     return result;
 }
 
-// test用
 // 各方向向きにCellがいくつ連続しているかを返す
 pure int count_line(in Cell[] box,in Cell from,in Direct dir){
     int result;
@@ -137,7 +136,6 @@ pure int count_line(in Cell[] box,in Cell from,in Direct dir){
     return result-1; // if(box is null) return -1;
 }
 
-// test用
 // CellBOX になれる構造かどうかチェック
 bool is_box(in Cell[] box){
     if(box.length == 1) return true;
@@ -176,7 +174,6 @@ unittest{
 }
 
 // Cellで構成される集合
-// 遅延して生成するものも含む
 interface CellStructure{
     @property Cell top_left()const;
     @property Cell top_right()const;

@@ -21,15 +21,12 @@ import std.string;
 enum FocusMode{ normal,select,edit,point }
 
 // Tableに対する操作
-// CMDは指示を投げるだけってことをやるかってこと
-// このコメントを消そうとするときに考える
 
-// Table に関する操作
-   // ここからCellBOXに対する操作も行う
-   // 表示位置の移動ってここでやってしまおうか
-   // 指示棒をここがもってるから
-   // 指示棒自体はCell::SelectBOX
+   // ここからCellBOXに対する操作も
+   // 指示棒はCell::SelectBOX
+
 // 
+
 final class ManipTable{
     private:
         BoxTable  _focused_table;
@@ -78,10 +75,10 @@ final class ManipTable{
         }
         void change_mode_select()
             in{
-            assert(_mode != FocusMode.select);
+                assert(_mode != FocusMode.select);
             }
             out{
-            assert(_mode == FocusMode.select);
+                assert(_mode == FocusMode.select);
             }
         body{
             _mode = FocusMode.select;
@@ -110,7 +107,7 @@ final class ManipTable{
         // 必要ならexpand_to_focus(no args)書いてそれをCMD化すればいい
         void expand_to_focus(in Direct dir)
             out{
-            assert(_mode==FocusMode.select || _mode==FocusMode.edit);
+                assert(_mode==FocusMode.select || _mode==FocusMode.edit);
             }
         body{
             if(_mode == FocusMode.normal)
@@ -121,10 +118,10 @@ final class ManipTable{
         }
         void expand_select(in Direct dir)
             in{
-            assert(_mode==FocusMode.select || _mode==FocusMode.edit);
+                assert(_mode==FocusMode.select || _mode==FocusMode.edit);
             }
             out{
-            assert(_mode==FocusMode.select || _mode==FocusMode.edit);
+                assert(_mode==FocusMode.select || _mode==FocusMode.edit);
             }
         body{
             _mode = FocusMode.select;
@@ -149,37 +146,29 @@ final class ManipTable{
             immutable view_min = _pv.get_view_min();
             immutable view_max = _pv.get_view_max();
             if(target is null) return;
-            else{
-                if(target.top_left.row <= view_min.row && to == up)
-                {   // viewを動かしたあとそれに合わせるためにmoveする
+            else{ // TODO fix
+                if(target.top_left.row <= view_min.row && to == up) {   // viewを動かしたあとそれに合わせるためにmoveする
                     // このrequire_moveは必ず通る
                     _pv.move_view(to);
                     target.require_move(to);
                         move_focus(to);
                     if(!view_min.row)
                         _select.move(to.reverse);
-                }
-                else if(target.top_left.column <= view_min.column && to == left)
-                {
+                } else if(target.top_left.column <= view_min.column && to == left) {
                     _pv.move_view(to);
                     target.require_move(to);
                         move_focus(to);
                     if(!view_min.column)
                          _select.move(to.reverse);
-                }
-                else if(target.bottom_right.row >= view_max.row && to == down)
-                {   // 
+                } else if(target.bottom_right.row >= view_max.row && to == down) {   
                     _pv.move_view(to);
                     if(target.require_move(to))
                         move_focus(to);
-                }
-                else if(target.bottom_right.column >= view_max.column && to==right)
-                {
+                } else if(target.bottom_right.column >= view_max.column && to==right) {
                     _pv.move_view(to);
                     if(target.require_move(to))
                         move_focus(to);
-                }
-                else if(target.require_move(to)
+                } else if(target.require_move(to)
                      ||(target.top_left.column == view_min.column && to == left)
                      ||(target.top_left.row == view_min.row && to == up))
                    _select.move(to);
@@ -225,8 +214,7 @@ final class ManipTable{
             _mode = FocusMode.edit;
             if(_focused_table.has(_select.focus)) return;
             auto tb = new TextBOX(_focused_table,family,style,back,fore);
-            if(!tb.require_create_in(_select.focus))
-            {
+            if(!tb.require_create_in(_select.focus)) {
                 tb.clear();
                 return;
             }
@@ -245,10 +233,8 @@ final class ManipTable{
 
             _mode = FocusMode.edit;
             if(_focused_table.has(_select.focus)) return;
-            // auto tb = _select.create_CodeBOX(family,style,back,fore);
             auto cb = new CodeBOX(_focused_table,family,style,back,fore);
-            if(!cb.require_create_in(_select.focus))
-            {
+            if(!cb.require_create_in(_select.focus)) {
                 cb.clear();
                 return;
             }
@@ -307,11 +293,8 @@ final class ManipTable{
         }
         void commit_to_box(string str){
             debug(manip) writeln("send to box start with :",str);
-            if(_mode!=FocusMode.edit)
-            {   // こんな状態になってるのがおかしいわけで
+            if(_mode!=FocusMode.edit) {   // こんな状態になってるのがおかしい
                 assert(0);
-                // _pv.IM_FocusOut();
-                return;
             }
             switch(_box_type){
                case "cell.textbox.TextBOX":
@@ -335,7 +318,6 @@ final class ManipTable{
         }
         void text_feed(){
             if(auto tb = cast(TextBOX)_maniped_box) {
-                // _old_state ~= new TextBOX(_focused_table,tb);
                 if(_manip_textbox.feed(tb))
                     move_focus(down);
             }
@@ -381,9 +363,8 @@ final class ManipTable{
             _file_chooser.setFileChooserAction(FileChooserAction.SAVE);
             auto response = _file_chooser.run();
             if(response == ResponseType.ACCEPT )
-            {
                 _opened_file = file_name = _file_chooser.getFilename();
-            }else
+            else
                 _opened_file = "";
             _file_chooser.hide();
             return file_name;
@@ -404,18 +385,15 @@ final class ManipTable{
             auto all_code = _focused_table.get_codeBoxes();
             const offset = Cell(_focused_table.edge(up),_focused_table.edge(left));
             writeln(offset);
-            foreach(ib; all_ibs)
-            {
+            foreach(ib; all_ibs) {
                 if(auto rect = cast(RectBOX)ib)
                     file.write(rect.dat(offset));
             }
-            foreach(tb; all_txt)
-            {
+            foreach(tb; all_txt) {
                 if(!tb.text_empty())
                     file.write(tb.dat(offset));
             }
-            foreach(cb; all_code)
-            {
+            foreach(cb; all_code) {
                 if(!cb.text_empty())
                     file.write(cb.dat(offset));
             }
@@ -453,17 +431,15 @@ final class ManipTable{
 
             string[][int] line_buf;
             int i;
-            foreach(string l; lines(file))
-            {   
+            foreach(string l; lines(file)) {   
                 if(l[0] == '[')
                     ++i;
                 line_buf[i-1] ~= l;
             }
-            foreach(l; line_buf.values)
-            {
-                writeln(l);
+            foreach(l; line_buf.values) {
                 auto box_type = split(chomp(l[1])," * ");
-                switch(box_type[0]){
+                switch(box_type[0])
+                {
                     case "RectBOX":
                         auto rb = new RectBOX(_focused_table,_pv,l);
                         rb.set_color(Color(box_type[1]));
@@ -474,7 +450,6 @@ final class ManipTable{
                         break;
                     case "CodeBOX":
                         auto tb = new CodeBOX(_focused_table,l,Color(box_type[1]));
-                        // tb.set_color(Color(box_type[1]));
                         break;
                     default:
                         break;
